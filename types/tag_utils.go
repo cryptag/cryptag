@@ -16,14 +16,20 @@ import (
 	"github.com/thecloakproject/utils/crypt"
 )
 
-func FetchByPlainTags(url string, plain []string) (Rows, error) {
-	randtags, err := RandomTagsFromPlain(plain)
+func FetchByPlainTags(plaintags []string) (Rows, error) {
+	randtags, err := RandomFromPlain(plaintags)
 	if err != nil {
 		return nil, fmt.Errorf("Error from RandomTagsFromPlain: %v", err)
 	}
-	log.Printf("After RandomTagsFromPlain: randtags == `%v`\n", randtags)
+	if Debug {
+		log.Printf("After RandomTagsFromPlain: randtags == `%#v`\n", randtags)
+	}
 
-	fullURL := url + "?tags=" + strings.Join(randtags, "+")
+	fullURL := SERVER_BASE_URL + "?tags=" + strings.Join(randtags, ",")
+	if Debug {
+		log.Printf("fullURL == `%s`\n", fullURL)
+	}
+
 	rows, err := GetRowsFrom(fullURL)
 	if err != nil {
 		return nil, fmt.Errorf("Error from GetRowsFrom: %v", err)
@@ -32,7 +38,7 @@ func FetchByPlainTags(url string, plain []string) (Rows, error) {
 	return rows, nil
 }
 
-func RandomTagsFromPlain(plain []string) ([]string, error) {
+func RandomFromPlain(plaintags []string) ([]string, error) {
 	// Download encrypted JSON containing the tag pairs, decrypt JSON,
 	// unmarshal.  for p in plain, find *TagPair with pair.plain ==
 	// plain, append pair.Random to results
@@ -41,24 +47,35 @@ func RandomTagsFromPlain(plain []string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error from GetTagPairs: %v", err)
 	}
-	log.Printf("pairs fetched from GetTagPairs: ")
-	for _, pair := range pairs {
-		log.Printf("  * %#v\n", pair)
+
+	if Debug {
+		log.Printf("%d pairs fetched from GetTagPairs: ", len(pairs))
+		for _, pair := range pairs {
+			log.Printf("  * %#v\n", pair)
+		}
 	}
 
-	random := pairs.FilterByPlainTags(plain).AllRandom()
+	var randoms []string
+	for _, plain := range plaintags {
+		for _, pair := range pairs {
+			if pair.plain == plain {
+				randoms = append(randoms, pair.Random)
+				break
+			}
+		}
+	}
 
-	return random, nil
+	if Debug && len(plaintags) != len(randoms) {
+		log.Printf("Mapped plain `%#v` to random `%#v`\n", plaintags, randoms)
+	}
+
+	return randoms, nil
 }
 
-func GetTagPairsFromRandom(randtags ...string) (TagPairs, error) {
+func GetTagPairsFromRandom(randtags []string) (TagPairs, error) {
 	if len(randtags) == 0 {
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
-
-	// TODO: Implement this. Currently simulates a remote
-	// lookup. Should GET, unmarshal to Rows, probably unmarshal each
-	// row.Data to a custom data type, then... ? It's late...
 
 	return GetTagsFrom(SERVER_BASE_URL + "/tags?tags=" + strings.Join(randtags, "+"))
 }
@@ -67,6 +84,7 @@ func GetTagPairsFromRandom(randtags ...string) (TagPairs, error) {
 // and unmarshals them into a TagPairs value
 func GetTagsFrom(url string) (TagPairs, error) {
 	var pairs TagPairs
+
 	if err := fun.FetchInto(url, HttpGetTimeout, &pairs); err != nil {
 		return nil, fmt.Errorf("Error from FetchInto: %v", err)
 	}
@@ -76,19 +94,6 @@ func GetTagsFrom(url string) (TagPairs, error) {
 	}
 
 	return pairs, nil
-}
-
-func GetTagPairFromRandom(randtag string) (*TagPair, error) {
-	pairs, err := GetTagPairsFromRandom(randtag)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(pairs) != 1 {
-		return nil, fmt.Errorf("GetTags returned %d results, wanted 1", len(pairs))
-	}
-
-	return pairs[0], nil
 }
 
 //
@@ -112,7 +117,11 @@ func CreateTagsFromPlain(plaintags []string) (allPairs TagPairs, newPairs TagPai
 			// TODO: Parallelize
 			pair, err := CreateTag(plain)
 			if err != nil {
+				log.Printf("Error calling CreateTag(%q): %v\n", plain, err)
 				continue
+			}
+			if Debug {
+				log.Printf("Created tag pair `%#v` (%p)\n", pair, pair)
 			}
 			newPairs = append(newPairs, pair)
 		}
@@ -134,6 +143,10 @@ func CreateTag(plaintag string) (*TagPair, error) {
 	pair := &TagPair{PlainEncrypted: plainEnc, plain: plaintag, Random: rand}
 	pairBytes, _ := json.Marshal(pair)
 
+	if Debug {
+		log.Printf("POSTing tag pair data: `%s`\n", pairBytes)
+	}
+
 	resp, err := http.Post(SERVER_BASE_URL+"/tags", "application/json",
 		bytes.NewReader(pairBytes))
 	if err != nil {
@@ -146,13 +159,19 @@ func CreateTag(plaintag string) (*TagPair, error) {
 			return nil, fmt.Errorf("Got HTTP %d from server. Error decoding resp: %v",
 				resp.StatusCode, err)
 		}
-		_ = rows.setUnexported()
+
+		err2 := rows.setUnexported()
+		if err2 != nil {
+			log.Printf("setUnexported err2: %v\n", err2)
+		}
 
 		return nil, fmt.Errorf("Got HTTP %d from server for data: `%s`",
 			resp.StatusCode, rows)
 	}
 
-	log.Printf("New *TagPair created: `%#v`\n", pair)
+	if Debug {
+		log.Printf("New *TagPair created: `%#v`\n", pair)
+	}
 
 	return pair, nil
 }

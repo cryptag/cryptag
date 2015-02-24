@@ -27,9 +27,7 @@ type Row struct {
 }
 
 func NewRow(decrypted []byte, plainTags []string) *Row {
-	row := &Row{decrypted: decrypted, plainTags: plainTags}
-	log.Printf("New Row created: `%#v`\n", row)
-	return row
+	return &Row{decrypted: decrypted, plainTags: plainTags}
 }
 
 func (row *Row) Save() error {
@@ -55,8 +53,6 @@ func (row *Row) Save() error {
 		}
 	}
 
-	log.Printf("row, just before POST: `%#v`\n", row)
-
 	// POST to server
 	if err := row.post(); err != nil {
 		return fmt.Errorf("Error POSTing row to server: %v", err)
@@ -69,6 +65,10 @@ func (row *Row) post() error {
 	rowBytes, err := json.Marshal(row)
 	if err != nil {
 		return fmt.Errorf("Error marshaling row: %v", err)
+	}
+
+	if Debug {
+		log.Printf("POSTing row data: `%s`\n", rowBytes)
 	}
 
 	resp, err := http.Post(SERVER_BASE_URL, "application/json",
@@ -105,7 +105,7 @@ func (row *Row) decryptData() error {
 		return fmt.Errorf("no data to decrypt")
 	}
 
-	dec, err := crypt.AESDecryptBytes(Block, row.decrypted)
+	dec, err := crypt.AESDecryptBytes(Block, row.Encrypted)
 	if err != nil {
 		return fmt.Errorf("Error decrypting: %v", err)
 	}
@@ -118,13 +118,15 @@ func (row *Row) decryptData() error {
 // setPlainTags uses row.RandomTags and retrieved TagPairs to set
 // row.plainTags
 func (row *Row) setPlainTags() error {
-	pairs, err := GetTagPairsFromRandom(row.RandomTags...)
+	pairs, err := GetTagPairsFromRandom(row.RandomTags)
 	if err != nil {
 		return err
 	}
 
 	row.plainTags = pairs.AllPlain()
-	log.Printf("row.plainTags set to `%v`\n", row.plainTags)
+	if Debug {
+		log.Printf("row.plainTags set to `%#v`\n", row.plainTags)
+	}
 
 	return nil
 }

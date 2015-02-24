@@ -26,6 +26,7 @@ func init() {
 	// TODO: Clean this up
 	types.Block = block
 	types.SERVER_BASE_URL = SERVER_BASE_URL
+	types.Debug = true
 }
 
 func main() {
@@ -53,11 +54,11 @@ func main() {
 
 	default: // GET
 		plaintags := os.Args[1:]
-		rows, err := types.FetchByPlainTags(SERVER_BASE_URL, plaintags)
+		rows, err := types.FetchByPlainTags(plaintags)
 		if err != nil {
 			log.Fatalf("Error from FetchByPlainTags: %v\n", err)
 		}
-		print(rows.String())
+		print(rows.Format())
 	}
 }
 

@@ -12,6 +12,7 @@ var (
 	// Set by main
 	SERVER_BASE_URL string
 	Block           cipher.Block // Used for encryption/decryption
+	Debug           bool
 
 	// Tag-related
 	RANDOM_TAG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/222Labs/help"
 	"github.com/elimisteve/cryptag/types"
@@ -45,23 +46,20 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 		help.WriteJSON(w, allRows)
 		return
 	}
+	tags = strings.Split(tags[0], ",")
 
-	log.Printf("tags == `%v`\n", tags)
-	rows := allRows.FilterByRandomTags(tags)
+	log.Printf("tags == `%#v`\n", tags)
+	rows := allRows.HaveAllRandomTags(tags)
 
 	log.Printf("%d/%d Rows retrieved:\n%s", len(rows), len(allRows), rows)
 	help.WriteJSON(w, rows)
 }
 
 func PostRow(w http.ResponseWriter, req *http.Request) {
-	// log.Printf("len(allRows) == %d\n", len(allRows))
-	// defer func() {
-	// 	log.Printf("len(allRows) == %d\n", len(allRows))
-	// }()
-
 	row := &types.Row{}
 	if err := help.ReadInto(req.Body, row); err != nil {
-		http.Error(w, "Error reading rows: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error reading rows: "+err.Error(),
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -72,25 +70,14 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetTags(w http.ResponseWriter, req *http.Request) {
-	_ = req.ParseForm()
-
-	randtags := req.Form["tags"]
-	if len(randtags) == 0 {
-		log.Printf("All %d TagPairs retrieved:\n%s", len(allTagPairs), allTagPairs)
-		help.WriteJSON(w, allTagPairs)
-		return
-	}
-
-	pairs := allTagPairs.FilterByRandomTags(randtags)
-
-	log.Printf("TagPairs retrieved:\n%s", pairs)
-	help.WriteJSON(w, pairs)
+	help.WriteJSON(w, allTagPairs)
 }
 
 func PostTag(w http.ResponseWriter, req *http.Request) {
 	pair := &types.TagPair{}
 	if err := help.ReadInto(req.Body, pair); err != nil {
-		http.Error(w, "Error reading tag pair: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error reading tag pair: "+err.Error(),
+			http.StatusInternalServerError)
 		return
 	}
 

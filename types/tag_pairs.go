@@ -4,9 +4,8 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
-	"log"
-	"strings"
 
 	"github.com/thecloakproject/utils/crypt"
 )
@@ -18,16 +17,17 @@ type TagPair struct {
 	plain string
 }
 
+// setUnexported sets pair.plain based off of pair.PlainEncrypted
 func (pair *TagPair) setUnexported() error {
-	log.Printf("\nPlainEncrypted: %v (%s)\n", pair.PlainEncrypted, pair.PlainEncrypted)
 	plain, err := crypt.AESDecryptBytes(Block, pair.PlainEncrypted)
 	if err != nil {
 		return fmt.Errorf("Error decrypting plain tag: %v", err)
 	}
+	// TODO: crypt.AESDecryptBytes should do this for me unless some
+	// trailing '\x00's are valid
+	plain = bytes.TrimRight(plain, "\x00")
 
-	log.Printf("plain == %v\n", plain)
-	pair.plain = strings.TrimSpace(string(plain))
-	log.Printf("string(plain) == %s\n\n", plain)
+	pair.plain = string(plain)
 
 	return nil
 }
@@ -44,14 +44,6 @@ func (pairs TagPairs) String() string {
 	return s
 }
 
-func (pairs TagPairs) AllRandom() []string {
-	random := make([]string, 0, len(pairs))
-	for _, p := range pairs {
-		random = append(random, p.Random)
-	}
-	return random
-}
-
 func (pairs TagPairs) AllPlain() []string {
 	plain := make([]string, 0, len(pairs))
 	for _, p := range pairs {
@@ -60,44 +52,17 @@ func (pairs TagPairs) AllPlain() []string {
 	return plain
 }
 
-func (pairs TagPairs) FilterByRandomTags(random []string) (filtered TagPairs) {
-	filtered = pairs[:] // TODO: Ensure this is good enough
-	for _, randtag := range random {
-		filtered = filtered.FilterByRandomTag(randtag)
-	}
-	return filtered
-}
-
-func (pairs TagPairs) FilterByRandomTag(randtag string) (filtered TagPairs) {
-	filtered = pairs[:] // TODO: Ensure this is good enough
+func (pairs TagPairs) HaveAllPlainTags(plaintags []string) TagPairs {
+	var matches TagPairs
 	for _, pair := range pairs {
-		log.Printf("Does `%s` == `%s`?\n", pair.Random, randtag)
-		if pair.Random == randtag {
-			log.Printf("Yes!\n")
-			filtered = append(filtered, pair)
-		} else {
-			log.Printf("No!\n")
+		for _, plain := range plaintags {
+			if pair.plain == plain {
+				matches = append(matches, pair)
+				break
+			}
 		}
 	}
-	return filtered
-}
-
-func (pairs TagPairs) FilterByPlainTags(plaintags []string) (filtered TagPairs) {
-	filtered = pairs[:] // TODO: Ensure this is good enough
-	for _, plain := range plaintags {
-		filtered = filtered.FilterByPlainTag(plain)
-	}
-	return filtered
-}
-
-func (pairs TagPairs) FilterByPlainTag(plain string) (filtered TagPairs) {
-	filtered = pairs[:] // TODO: Ensure this is good enough
-	for _, pair := range pairs {
-		if pair.plain == plain {
-			filtered = append(filtered, pair)
-		}
-	}
-	return filtered
+	return matches
 }
 
 func (pairs TagPairs) setUnexported() error {
