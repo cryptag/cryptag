@@ -1,0 +1,64 @@
+// Steve Phillips / elimisteve
+// 2015.02.24
+
+package main
+
+import (
+	"crypto/aes"
+	"log"
+	"os"
+
+	"github.com/elimisteve/cryptag/types"
+)
+
+var (
+	SERVER_BASE_URL = ""
+	SHARED_SECRET   = ""
+)
+
+func init() {
+	// Set global `Block` for AES encryption/decryption
+	block, err := aes.NewCipher([]byte(SHARED_SECRET))
+	if err != nil {
+		log.Fatalf("Error from aes.NewCipher: %v\n", err)
+	}
+
+	// TODO: Clean this up
+	types.Block = block
+	types.SERVER_BASE_URL = SERVER_BASE_URL
+}
+
+func main() {
+	if len(os.Args) == 1 {
+		log.Fatalf(usage)
+	}
+
+	switch os.Args[1] {
+	case "create":
+		if len(os.Args) < 4 {
+			log.Printf("At least 3 command line arguments must be included\n")
+			log.Fatalf(usage)
+		}
+
+		// TODO: Call CreateTag(), cache result(?), create new remote
+		// Row with given tag(s)
+		data := os.Args[2]
+		tags := os.Args[3:]
+		row := types.NewRow([]byte(data), tags)
+
+		if err := row.Save(); err != nil {
+			log.Fatalf("Error saving new row: %v\n", err)
+		}
+		print(row.Format())
+
+	default: // GET
+		plaintags := os.Args[1:]
+		rows, err := types.FetchByPlainTags(SERVER_BASE_URL, plaintags)
+		if err != nil {
+			log.Fatalf("Error from FetchByPlainTags: %v\n", err)
+		}
+		print(rows.String())
+	}
+}
+
+var usage = "Usage: " + os.Args[0] + " data tag1 [tag2 ...]"
