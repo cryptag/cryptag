@@ -77,7 +77,7 @@ func GetTagPairsFromRandom(randtags []string) (TagPairs, error) {
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
 
-	return GetTagsFrom(SERVER_BASE_URL + "/tags?tags=" + strings.Join(randtags, "+"))
+	return GetTagsFrom(SERVER_BASE_URL + "/tags?tags=" + strings.Join(randtags, ","))
 }
 
 // GetTagsFrom fetches the encrypted tag pairs at url, decrypts them,
