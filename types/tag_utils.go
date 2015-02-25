@@ -76,7 +76,6 @@ func GetTagPairsFromRandom(randtags []string) (TagPairs, error) {
 	if len(randtags) == 0 {
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
-
 	return GetTagsFrom(SERVER_BASE_URL + "/tags?tags=" + strings.Join(randtags, ","))
 }
 
@@ -112,18 +111,35 @@ func CreateTagsFromPlain(plaintags []string) (allPairs TagPairs, newPairs TagPai
 
 	existingPlain := allPairs.AllPlain()
 
+	// Concurrent Tag creation ftw
+	ch := make(chan *TagPair)
+	numNewPairs := 0
+
 	for _, plain := range plaintags {
 		if !fun.SliceContains(existingPlain, plain) {
-			// TODO: Parallelize
-			pair, err := CreateTag(plain)
-			if err != nil {
-				log.Printf("Error calling CreateTag(%q): %v\n", plain, err)
-				continue
-			}
-			if Debug {
-				log.Printf("Created tag pair `%#v` (%p)\n", pair, pair)
-			}
-			newPairs = append(newPairs, pair)
+			numNewPairs++
+			go func(plain string) {
+				pair, err := CreateTag(plain)
+				if err != nil {
+					log.Printf("Error calling CreateTag(%q): %v\n", plain, err)
+					ch <- nil
+					return
+				}
+				if Debug {
+					log.Printf("Created tag pair `%#v` (%p)\n", pair, pair)
+				}
+				ch <- pair
+				return
+			}(plain)
+		}
+	}
+
+	// Append successfully-created *TagPair values to `newPairs`
+	//
+	// TODO: Consider timing out in case CreateTag() never returns
+	for i := 0; i < numNewPairs; i++ {
+		if p := <-ch; p != nil {
+			newPairs = append(newPairs, p)
 		}
 	}
 
