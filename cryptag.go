@@ -49,7 +49,7 @@ func main() {
 		if err := row.Save(); err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Println(row.Format())
+		fmt.Print(row.Format())
 
 	default: // Search
 		plaintags := os.Args[1:]
@@ -60,7 +60,7 @@ func main() {
 		if err = rows.FirstToClipboard(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing first result to clipboard: %v\n", err)
 		}
-		fmt.Println(rows.Format())
+		fmt.Print(rows.Format())
 	}
 }
 
