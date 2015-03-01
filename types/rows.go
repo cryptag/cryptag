@@ -53,38 +53,3 @@ func (rows Rows) HaveAllRandomTags(random []string) Rows {
 	}
 	return matches
 }
-
-// Sets each .decrypted and .plainTags field
-func (rows Rows) setUnexported() error {
-	var err error
-
-	if err = rows.decryptData(); err != nil {
-		return err
-	}
-
-	if err = rows.setPlainTags(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (rows Rows) decryptData() error {
-	var err error
-	for i := range rows {
-		if err = rows[i].decryptData(); err != nil {
-			return fmt.Errorf("Error decrypting data of row %d: %v", i, err)
-		}
-	}
-	return nil
-}
-
-func (rows Rows) setPlainTags() error {
-	var err error
-	for i := range rows {
-		if err = rows[i].setPlainTags(); err != nil {
-			return fmt.Errorf("Error decrypting tags of row %d: %v", i, err)
-		}
-	}
-	return nil
-}

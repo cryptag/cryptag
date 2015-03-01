@@ -4,12 +4,10 @@
 package types
 
 import (
-	"bytes"
+	"crypto/cipher"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"strings"
 
 	"github.com/elimisteve/clipboard"
@@ -31,63 +29,24 @@ func NewRow(decrypted []byte, plainTags []string) *Row {
 	return &Row{decrypted: decrypted, plainTags: plainTags}
 }
 
-func (row *Row) Save() error {
-	// Fetch all tags.  For each element of row.plainTags that doesn't
-	// match an existing tag, call CreateTag().  Encrypt row.decrypted
-	// and store it in row.Encrypted.  POST to server.
-
-	// TODO: Call this in parallel with AES encryption below
-	allTagPairs, _, err := CreateTagsFromPlain(row.plainTags)
-	if err != nil {
-		return fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
+func NewRowFromBytes(body []byte) (*Row, error) {
+	row := &Row{}
+	if err := json.Unmarshal(body, row); err != nil {
+		return nil, fmt.Errorf("Error creating new row: `%v`. Input: `%s`", err,
+			body)
 	}
-
-	// Set row.Encrypted
-	encData, err := crypt.AESEncryptBytes(Block, row.decrypted)
-	if err != nil {
-		return fmt.Errorf("Error encrypting data: %v", err)
+	if Debug {
+		log.Printf("Created new Row `%#v` from bytes: `%s`\n", row, body)
 	}
-	row.Encrypted = encData
-
-	// Set row.RandomTags
-	for _, pair := range allTagPairs {
-		if row.HasPlainTag(pair.plain) {
-			row.RandomTags = append(row.RandomTags, pair.Random)
-		}
-	}
-
-	// POST to server
-	if err := row.post(); err != nil {
-		return fmt.Errorf("Error POSTing row to server: %v", err)
-	}
-
-	return nil
+	return row, nil
 }
 
-func (row *Row) post() error {
-	rowBytes, err := json.Marshal(row)
-	if err != nil {
-		return fmt.Errorf("Error marshaling row: %v", err)
-	}
+func (row *Row) Decrypted() []byte {
+	return row.decrypted
+}
 
-	if Debug {
-		log.Printf("POSTing row data: `%s`\n", rowBytes)
-	}
-
-	resp, err := http.Post(SERVER_BASE_URL, "application/json",
-		bytes.NewReader(rowBytes))
-
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		body, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("Got HTTP %d from server: `%s`", resp.StatusCode, body)
-	}
-
-	return nil
+func (row *Row) PlainTags() []string {
+	return row.plainTags
 }
 
 func (row *Row) ToClipboard() error {
@@ -110,13 +69,13 @@ func (row *Row) Format() string {
 	return fmt.Sprintf("%s\t%s\n", row.decrypted, strings.Join(row.plainTags, "  "))
 }
 
-// decryptData sets row.decrypted based upon row.Encrypted
-func (row *Row) decryptData() error {
+// DecryptData sets row.decrypted based upon row.Encrypted
+func (row *Row) Decrypt(block cipher.Block) error {
 	if len(row.Encrypted) == 0 {
 		return fmt.Errorf("no data to decrypt")
 	}
 
-	dec, err := crypt.AESDecryptBytes(Block, row.Encrypted)
+	dec, err := crypt.AESDecryptBytes(block, row.Encrypted)
 	if err != nil {
 		return fmt.Errorf("Error decrypting: %v", err)
 	}
@@ -126,10 +85,10 @@ func (row *Row) decryptData() error {
 	return nil
 }
 
-// setPlainTags uses row.RandomTags and retrieved TagPairs to set
+// SetPlainTags uses row.RandomTags and retrieved TagPairs to set
 // row.plainTags
-func (row *Row) setPlainTags() error {
-	pairs, err := GetTagPairsFromRandom(row.RandomTags)
+func (row *Row) SetPlainTags(getPairsFromRandom func(plain []string) (TagPairs, error)) error {
+	pairs, err := getPairsFromRandom(row.RandomTags)
 	if err != nil {
 		return err
 	}

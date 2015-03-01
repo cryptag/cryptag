@@ -3,36 +3,7 @@
 
 package types
 
-import (
-	"bytes"
-	"fmt"
-
-	"github.com/thecloakproject/utils/crypt"
-)
-
-type TagPair struct {
-	PlainEncrypted []byte `json:"plain_encrypted"`
-	Random         string `json:"random"`
-
-	plain string
-}
-
-// setUnexported sets pair.plain based off of pair.PlainEncrypted
-func (pair *TagPair) setUnexported() error {
-	plain, err := crypt.AESDecryptBytes(Block, pair.PlainEncrypted)
-	if err != nil {
-		return fmt.Errorf("Error decrypting plain tag: %v", err)
-	}
-	// TODO: crypt.AESDecryptBytes should do this for me unless some
-	// trailing '\x00's are valid
-	plain = bytes.TrimRight(plain, "\x00")
-
-	pair.plain = string(plain)
-
-	return nil
-}
-
-// TagPairs
+import "fmt"
 
 type TagPairs []*TagPair
 
@@ -63,14 +34,4 @@ func (pairs TagPairs) HaveAllPlainTags(plaintags []string) TagPairs {
 		}
 	}
 	return matches
-}
-
-func (pairs TagPairs) setUnexported() error {
-	var err error
-	for _, pair := range pairs {
-		if err = pair.setUnexported(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
