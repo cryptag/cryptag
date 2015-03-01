@@ -35,6 +35,8 @@ func (row *Row) Save() error {
 	// Fetch all tags.  For each element of row.plainTags that doesn't
 	// match an existing tag, call CreateTag().  Encrypt row.decrypted
 	// and store it in row.Encrypted.  POST to server.
+
+	// TODO: Call this in parallel with AES encryption below
 	allTagPairs, _, err := CreateTagsFromPlain(row.plainTags)
 	if err != nil {
 		return fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)

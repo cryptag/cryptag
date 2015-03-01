@@ -42,8 +42,6 @@ func main() {
 			log.Fatalf(usage)
 		}
 
-		// TODO: Call CreateTag(), cache result(?), create new remote
-		// Row with given tag(s)
 		data := os.Args[2]
 		tags := os.Args[3:]
 		row := types.NewRow([]byte(data), tags)
@@ -53,7 +51,7 @@ func main() {
 		}
 		fmt.Println(row.Format())
 
-	default: // GET
+	default: // Search
 		plaintags := os.Args[1:]
 		rows, err := types.FetchByPlainTags(plaintags)
 		if err != nil {
