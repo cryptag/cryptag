@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/fun"
 	"github.com/thecloakproject/utils/crypt"
 )
@@ -85,6 +86,14 @@ func (row *Row) post() error {
 	}
 
 	return nil
+}
+
+func (row *Row) ToClipboard() error {
+	dec := row.decrypted
+	if Debug {
+		log.Printf("Writing this to clipboard: `%s`\n", dec)
+	}
+	return clipboard.WriteAll(dec)
 }
 
 func (row *Row) HasRandomTag(randtag string) bool {

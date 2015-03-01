@@ -26,6 +26,13 @@ func (rows Rows) Format() string {
 	return s
 }
 
+func (rows Rows) FirstToClipboard() error {
+	if len(rows) == 0 {
+		return nil // TODO: Is this right?
+	}
+	return rows[0].ToClipboard()
+}
+
 // HaveAllRandomTags returns the Rows within rows that has all the
 // random strings in random
 func (rows Rows) HaveAllRandomTags(random []string) Rows {

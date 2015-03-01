@@ -5,6 +5,7 @@ package main
 
 import (
 	"crypto/aes"
+	"fmt"
 	"log"
 	"os"
 
@@ -50,7 +51,7 @@ func main() {
 		if err := row.Save(); err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		print(row.Format())
+		fmt.Println(row.Format())
 
 	default: // GET
 		plaintags := os.Args[1:]
@@ -58,7 +59,10 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error from FetchByPlainTags: %v\n", err)
 		}
-		print(rows.Format())
+		if err = rows.FirstToClipboard(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing first result to clipboard: %v\n", err)
+		}
+		fmt.Println(rows.Format())
 	}
 }
 
