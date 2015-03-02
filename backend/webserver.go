@@ -50,7 +50,7 @@ func (wb *WebserverBackend) Block() cipher.Block {
 }
 
 func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
-	return getTagsFrom(wb, wb.serverBaseUrl+"/tags")
+	return getTagsFromUrl(wb, wb.serverBaseUrl+"/tags")
 }
 
 func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
@@ -142,7 +142,7 @@ func (wb *WebserverBackend) TagPairsFromRandomTags(randtags []string) (types.Tag
 	}
 
 	url := wb.serverBaseUrl + "/tags?tags=" + strings.Join(randtags, ",")
-	return getTagsFrom(wb, url)
+	return getTagsFromUrl(wb, url)
 }
 
 func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, error) {
@@ -159,15 +159,15 @@ func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, e
 		log.Printf("fullURL == `%s`\n", fullURL)
 	}
 
-	return getRowsFrom(wb, fullURL)
+	return getRowsFromUrl(wb, fullURL)
 }
 
 //
 // Helpers
 //
 
-// getRowsFrom fetches the encrypted rows from url, decrypts them, then
-func getRowsFrom(backend Backend, url string) (types.Rows, error) {
+// getRowsFromUrl fetches the encrypted rows from url, decrypts them, then
+func getRowsFromUrl(backend Backend, url string) (types.Rows, error) {
 	var rows types.Rows
 	var err error
 
@@ -184,9 +184,9 @@ func getRowsFrom(backend Backend, url string) (types.Rows, error) {
 	return rows, nil
 }
 
-// getTagsFrom fetches the encrypted tag pairs at url, decrypts them,
+// getTagsFromUrl fetches the encrypted tag pairs at url, decrypts them,
 // and unmarshals them into a TagPairs value
-func getTagsFrom(backend Backend, url string) (types.TagPairs, error) {
+func getTagsFromUrl(backend Backend, url string) (types.TagPairs, error) {
 	var pairs types.TagPairs
 	var err error
 
