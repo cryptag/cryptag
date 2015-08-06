@@ -9,7 +9,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
 )
@@ -54,14 +53,6 @@ func (row *Row) Decrypted() []byte {
 
 func (row *Row) PlainTags() []string {
 	return row.plainTags
-}
-
-func (row *Row) ToClipboard() error {
-	dec := row.decrypted
-	if Debug {
-		log.Printf("Writing this to clipboard: `%s`\n", dec)
-	}
-	return clipboard.WriteAll(dec)
 }
 
 func (row *Row) HasRandomTag(randtag string) bool {

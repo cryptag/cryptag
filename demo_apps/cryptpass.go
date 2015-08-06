@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/types"
 )
@@ -57,14 +58,26 @@ func main() {
 		fmt.Print(row.Format())
 
 	default: // Search
+		// Empty clipboard
+		clipboard.WriteAll(nil)
+
 		plaintags := os.Args[1:]
 		rows, err := db.RowsFromPlainTags(plaintags)
 		if err != nil {
 			log.Fatalf("Error from RowsFromPlainTags: %v\n", err)
 		}
-		if err = rows.FirstToClipboard(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error writing first result to clipboard: %v\n", err)
+
+		if len(rows) == 0 {
+			log.Fatalf("No rows found\n")
 		}
+
+		// Add first row's contents to clipboard
+		dec := rows[0].Decrypted()
+		if err = clipboard.WriteAll(dec); err != nil {
+			log.Fatalf("Error writing first result to clipboard: %v\n", err)
+		}
+		log.Printf("Added first result `%s` to clipboard\n", dec)
+
 		fmt.Print(rows.Format())
 	}
 }
