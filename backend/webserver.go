@@ -168,7 +168,11 @@ func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, e
 		log.Printf("fullURL == `%s`\n", fullURL)
 	}
 
-	return getRowsFromUrl(wb, fullURL)
+	rows, err := getRowsFromUrl(wb, fullURL)
+	if err != nil {
+		return nil, fmt.Errorf("Error from getRowsFromUrl: %v", err)
+	}
+	return rows, nil
 }
 
 //
@@ -181,12 +185,12 @@ func getRowsFromUrl(backend Backend, url string) (types.Rows, error) {
 	var err error
 
 	if err = fun.FetchInto(url, HttpGetTimeout, &rows); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error from FetchInto: %v", err)
 	}
 
 	for _, row := range rows {
 		if err = PopulateRowAfterGet(backend, row); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Error from PopulateRowAfterGet: %v", err)
 		}
 	}
 
