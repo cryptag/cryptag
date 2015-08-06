@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var secretRoot = ""
+var secretRoot = "/"
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -27,8 +27,8 @@ func main() {
 	router.HandleFunc(secretRoot, PostRow).Methods("POST")
 
 	// Tags
-	router.HandleFunc(secretRoot+"/tags", GetTags).Methods("GET")
-	router.HandleFunc(secretRoot+"/tags", PostTag).Methods("POST")
+	router.HandleFunc(secretRoot+"tags", GetTags).Methods("GET")
+	router.HandleFunc(secretRoot+"tags", PostTag).Methods("POST")
 
 	http.Handle("/", router)
 

@@ -35,6 +35,7 @@ func NewWebserverBackend(key []byte, serverBaseUrl string) (*WebserverBackend, e
 	if serverBaseUrl == "" {
 		return nil, fmt.Errorf("Invalid serverBaseUrl `%s`", serverBaseUrl)
 	}
+	serverBaseUrl = strings.TrimRight(serverBaseUrl, "/")
 
 	goodKey, err := cryptag.ConvertKey(key)
 	if err != nil {
@@ -162,7 +163,7 @@ func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, e
 		log.Printf("After randomTagsFromPlain: randtags == `%#v`\n", randtags)
 	}
 
-	fullURL := wb.serverBaseUrl + "?tags=" + strings.Join(randtags, ",")
+	fullURL := wb.serverBaseUrl + "/?tags=" + strings.Join(randtags, ",")
 	if types.Debug {
 		log.Printf("fullURL == `%s`\n", fullURL)
 	}
