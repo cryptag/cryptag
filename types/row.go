@@ -21,7 +21,7 @@ type Row struct {
 	// Populated locally
 	decrypted []byte
 	plainTags []string
-	Nonce     *[24]byte
+	Nonce     *[24]byte `json:"nonce"`
 }
 
 func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
