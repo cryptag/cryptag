@@ -3,25 +3,21 @@
 
 package types
 
-import (
-	"bytes"
-	"crypto/cipher"
-	"fmt"
-
-	"github.com/thecloakproject/utils/crypt"
-)
+import "fmt"
 
 type TagPair struct {
-	PlainEncrypted []byte `json:"plain_encrypted"`
-	Random         string `json:"random"`
+	PlainEncrypted []byte    `json:"plain_encrypted"`
+	Random         string    `json:"random"`
+	Nonce          *[24]byte `json:"nonce"`
 
 	plain string
 }
 
-func NewTagPair(plainEnc []byte, random, plaintag string) *TagPair {
+func NewTagPair(plainEnc []byte, random string, nonce *[24]byte, plaintag string) *TagPair {
 	return &TagPair{
 		PlainEncrypted: plainEnc,
 		Random:         random,
+		Nonce:          nonce,
 		plain:          plaintag,
 	}
 }
@@ -31,14 +27,12 @@ func (pair *TagPair) Plain() string {
 }
 
 // Decrypt sets pair.plain based off of pair.PlainEncrypted
-func (pair *TagPair) Decrypt(block cipher.Block) error {
-	plain, err := crypt.AESDecryptBytes(block, pair.PlainEncrypted)
+func (pair *TagPair) Decrypt(decrypt func(enc []byte, nonce *[24]byte) ([]byte, error)) error {
+	plain, err := decrypt(pair.PlainEncrypted, pair.Nonce)
 	if err != nil {
-		return fmt.Errorf("Error decrypting plain tag: %v", err)
+		return fmt.Errorf("Error decrypting plain tag `%s` (%v): %v",
+			pair.PlainEncrypted, pair.PlainEncrypted, err)
 	}
-	// TODO: crypt.AESDecryptBytes should do this for me unless some
-	// trailing '\x00's are valid
-	plain = bytes.TrimRight(plain, "\x00")
 
 	pair.plain = string(plain)
 

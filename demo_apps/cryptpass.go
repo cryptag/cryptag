@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/types"
@@ -44,7 +45,10 @@ func main() {
 		data := os.Args[2]
 		tags := os.Args[3:]
 
-		newRow := types.NewRow([]byte(data), tags)
+		newRow, err := types.NewRow([]byte(data), tags)
+		if err != nil {
+			log.Fatalf("Error creating new row: %v\n", err)
+		}
 
 		row, err := db.SaveRow(newRow)
 		if err != nil {
@@ -65,4 +69,4 @@ func main() {
 	}
 }
 
-var usage = "Usage: " + os.Args[0] + " data tag1 [tag2 ...]"
+var usage = "Usage: " + filepath.Base(os.Args[0]) + " data tag1 [tag2 ...]"

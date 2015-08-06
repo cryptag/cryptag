@@ -5,8 +5,6 @@ package backend
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
 	"github.com/elimisteve/fun"
 )
@@ -29,24 +28,33 @@ type WebserverBackend struct {
 	// cachedTags types.TagPairs
 
 	// Used for encryption/decryption
-	block cipher.Block
+	key *[32]byte
 }
 
-func NewWebserverBackend(aesKey []byte, serverBaseUrl string) (*WebserverBackend, error) {
-	wb := &WebserverBackend{serverBaseUrl: serverBaseUrl}
+func NewWebserverBackend(key []byte, serverBaseUrl string) (*WebserverBackend, error) {
+	if serverBaseUrl == "" {
+		return nil, fmt.Errorf("Invalid serverBaseUrl `%s`", serverBaseUrl)
+	}
 
-	// Set wb.block
-	block, err := aes.NewCipher(aesKey)
+	goodKey, err := cryptag.ConvertKey(key)
 	if err != nil {
 		return nil, err
 	}
-	wb.block = block
 
-	return wb, nil
+	ws := &WebserverBackend{
+		key:           goodKey,
+		serverBaseUrl: serverBaseUrl,
+	}
+
+	return ws, nil
 }
 
-func (wb *WebserverBackend) Block() cipher.Block {
-	return wb.block
+func (wb *WebserverBackend) Encrypt(plain []byte, nonce *[24]byte) (cipher []byte, err error) {
+	return cryptag.Encrypt(plain, nonce, wb.key)
+}
+
+func (wb *WebserverBackend) Decrypt(cipher []byte, nonce *[24]byte) (plain []byte, err error) {
+	return cryptag.Decrypt(cipher, nonce, wb.key)
 }
 
 func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
@@ -195,8 +203,8 @@ func getTagsFromUrl(backend Backend, url string) (types.TagPairs, error) {
 	}
 
 	for _, pair := range pairs {
-		if err = pair.Decrypt(backend.Block()); err != nil {
-			return nil, err
+		if err = pair.Decrypt(backend.Decrypt); err != nil {
+			return nil, fmt.Errorf("Error from pair.Decrypt: %v", err)
 		}
 	}
 

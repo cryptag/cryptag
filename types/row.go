@@ -4,15 +4,14 @@
 package types
 
 import (
-	"crypto/cipher"
 	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/elimisteve/clipboard"
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
-	"github.com/thecloakproject/utils/crypt"
 )
 
 type Row struct {
@@ -23,10 +22,18 @@ type Row struct {
 	// Populated locally
 	decrypted []byte
 	plainTags []string
+	Nonce     *[24]byte
 }
 
-func NewRow(decrypted []byte, plainTags []string) *Row {
-	return &Row{decrypted: decrypted, plainTags: plainTags}
+func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
+	nonce, err := cryptag.RandomNonce()
+	if err != nil {
+		return nil, err
+	}
+
+	row := &Row{decrypted: decrypted, plainTags: plainTags, Nonce: nonce}
+
+	return row, nil
 }
 
 func NewRowFromBytes(body []byte) (*Row, error) {
@@ -69,13 +76,13 @@ func (row *Row) Format() string {
 	return fmt.Sprintf("%s\t%s\n", row.decrypted, strings.Join(row.plainTags, "  "))
 }
 
-// DecryptData sets row.decrypted based upon row.Encrypted
-func (row *Row) Decrypt(block cipher.Block) error {
+// DecryptData sets row.decrypted, row.nonce based upon row.Encrypted, nonce
+func (row *Row) Decrypt(decrypt func(data []byte, nonce *[24]byte) ([]byte, error)) error {
 	if len(row.Encrypted) == 0 {
 		return fmt.Errorf("no data to decrypt")
 	}
 
-	dec, err := crypt.AESDecryptBytes(block, row.Encrypted)
+	dec, err := decrypt(row.Encrypted, row.Nonce)
 	if err != nil {
 		return fmt.Errorf("Error decrypting: %v", err)
 	}

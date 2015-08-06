@@ -4,13 +4,12 @@
 package backend
 
 import (
-	"crypto/cipher"
 	"fmt"
 	"log"
 
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
 	"github.com/elimisteve/fun"
-	"github.com/thecloakproject/utils/crypt"
 )
 
 var (
@@ -19,7 +18,8 @@ var (
 )
 
 type Backend interface {
-	Block() cipher.Block
+	Encrypt(plain []byte, nonce *[24]byte) ([]byte, error)
+	Decrypt(cipher []byte, nonce *[24]byte) ([]byte, error)
 
 	AllTagPairs() (types.TagPairs, error)
 	TagPairsFromRandomTags(randtags []string) (types.TagPairs, error)
@@ -117,12 +117,17 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
 	rand := fun.RandomString(RANDOM_TAG_ALPHABET, RANDOM_TAG_LENGTH)
 
-	plainEnc, err := crypt.AESEncryptBytes(backend.Block(), []byte(plaintag))
+	nonce, err := cryptag.RandomNonce()
 	if err != nil {
 		return nil, err
 	}
 
-	pair := types.NewTagPair(plainEnc, rand, plaintag)
+	plainEnc, err := backend.Encrypt([]byte(plaintag), nonce)
+	if err != nil {
+		return nil, err
+	}
+
+	pair := types.NewTagPair(plainEnc, rand, nonce, plaintag)
 	return backend.SaveTagPair(pair)
 }
 
@@ -131,7 +136,7 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row) (*types.Row, error) 
 	// match an existing tag, call CreateTag().  Encrypt row.decrypted
 	// and store it in row.Encrypted.  POST to server.
 
-	// TODO: Call this in parallel with AES encryption below
+	// TODO: Call this in parallel with encryption below
 	allTagPairs, _, err := CreateTagsFromPlain(backend, row.PlainTags())
 	if err != nil {
 		return nil, fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
@@ -146,8 +151,8 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row) (*types.Row, error) 
 
 	// Set row.Encrypted
 
-	// Could also do something like `row.Encrypt(wb.Block())`
-	encData, err := crypt.AESEncryptBytes(backend.Block(), row.Decrypted())
+	// Could also do something like `row.Encrypt(wb.Encrypt)`
+	encData, err := backend.Encrypt(row.Decrypted(), row.Nonce)
 	if err != nil {
 		return nil, fmt.Errorf("Error encrypting data: %v", err)
 	}
@@ -157,7 +162,7 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row) (*types.Row, error) 
 }
 
 func PopulateRowAfterGet(backend Backend, row *types.Row) error {
-	if err := row.Decrypt(backend.Block()); err != nil {
+	if err := row.Decrypt(backend.Decrypt); err != nil {
 		return err
 	}
 	if err := row.SetPlainTags(backend.TagPairsFromRandomTags); err != nil {
