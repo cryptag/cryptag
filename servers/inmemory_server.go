@@ -70,6 +70,9 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 }
 
 func GetTags(w http.ResponseWriter, req *http.Request) {
+	// TODO(elimisteve): Add filtering.  See
+	// https://github.com/elimisteve/cryptag/issues/3
+	log.Printf("%d TagPairs retrieved:\n%s", len(allTagPairs), allTagPairs)
 	help.WriteJSON(w, allTagPairs)
 }
 
