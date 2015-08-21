@@ -9,9 +9,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/222Labs/help"
 	"github.com/elimisteve/cryptag/types"
 	"github.com/elimisteve/fun"
+	"github.com/elimisteve/help"
 	"github.com/gorilla/mux"
 )
 
@@ -58,7 +58,7 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 func PostRow(w http.ResponseWriter, req *http.Request) {
 	row := &types.Row{}
 	if err := help.ReadInto(req.Body, row); err != nil {
-		http.Error(w, "Error reading rows: "+err.Error(),
+		help.WriteError(w, "Error reading rows: "+err.Error(),
 			http.StatusInternalServerError)
 		return
 	}
@@ -79,7 +79,7 @@ func GetTags(w http.ResponseWriter, req *http.Request) {
 func PostTag(w http.ResponseWriter, req *http.Request) {
 	pair := &types.TagPair{}
 	if err := help.ReadInto(req.Body, pair); err != nil {
-		http.Error(w, "Error reading tag pair: "+err.Error(),
+		help.WriteError(w, "Error reading tag pair: "+err.Error(),
 			http.StatusInternalServerError)
 		return
 	}
