@@ -70,6 +70,8 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 		return nil, nil, fmt.Errorf("Error from GetTags: %v", err)
 	}
 
+	log.Printf("Fetched all %d TagPairs from server\n", len(allPairs))
+
 	// Find out which members of plaintags don't have an existing,
 	// corresponding TagPair
 

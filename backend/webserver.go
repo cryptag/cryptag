@@ -71,7 +71,7 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 	// row.{decrypted,plainTags}
 	row, err := PopulateRowBeforeSave(wb, r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error populating row before save: %v", err)
 	}
 
 	rowBytes, err := json.Marshal(row)
@@ -87,13 +87,13 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 		bytes.NewReader(rowBytes))
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error POSTing row to URL %s: %v", wb.rowsUrl, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error reading server response body: %v", err)
 	}
 
 	if resp.StatusCode != 200 {
@@ -102,7 +102,7 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 
 	newRow, err := types.NewRowFromBytes(body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error creating new row from server response: %v", err)
 	}
 
 	// Populated newRow.{decrypted,plainTags} from
