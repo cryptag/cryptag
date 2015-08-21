@@ -23,8 +23,8 @@ func main() {
 	router := mux.NewRouter()
 
 	// Rows
-	router.HandleFunc(secretRoot, GetRows).Methods("GET")
-	router.HandleFunc(secretRoot, PostRow).Methods("POST")
+	router.HandleFunc(secretRoot+"rows", GetRows).Methods("GET")
+	router.HandleFunc(secretRoot+"rows", PostRow).Methods("POST")
 
 	// Tags
 	router.HandleFunc(secretRoot+"tags", GetTags).Methods("GET")

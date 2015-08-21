@@ -24,6 +24,8 @@ var (
 
 type WebserverBackend struct {
 	serverBaseUrl string
+	rowsUrl       string
+	tagsUrl       string
 
 	// cachedTags types.TagPairs
 
@@ -45,6 +47,8 @@ func NewWebserverBackend(key []byte, serverBaseUrl string) (*WebserverBackend, e
 	ws := &WebserverBackend{
 		key:           goodKey,
 		serverBaseUrl: serverBaseUrl,
+		rowsUrl:       serverBaseUrl + "/rows",
+		tagsUrl:       serverBaseUrl + "/tags",
 	}
 
 	return ws, nil
@@ -59,7 +63,7 @@ func (wb *WebserverBackend) Decrypt(cipher []byte, nonce *[24]byte) (plain []byt
 }
 
 func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
-	return getTagsFromUrl(wb, wb.serverBaseUrl+"/tags")
+	return getTagsFromUrl(wb, wb.tagsUrl)
 }
 
 func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
@@ -79,7 +83,7 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 		log.Printf("POSTing row data: `%s`\n", rowBytes)
 	}
 
-	resp, err := http.Post(wb.serverBaseUrl, "application/json",
+	resp, err := http.Post(wb.rowsUrl, "application/json",
 		bytes.NewReader(rowBytes))
 
 	if err != nil {
@@ -120,7 +124,7 @@ func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, er
 		log.Printf("POSTing tag pair data: `%s`\n", pairBytes)
 	}
 
-	resp, err := http.Post(wb.serverBaseUrl+"/tags", "application/json",
+	resp, err := http.Post(wb.tagsUrl, "application/json",
 		bytes.NewReader(pairBytes))
 	if err != nil {
 		return nil, err
@@ -150,7 +154,7 @@ func (wb *WebserverBackend) TagPairsFromRandomTags(randtags []string) (types.Tag
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
 
-	url := wb.serverBaseUrl + "/tags?tags=" + strings.Join(randtags, ",")
+	url := wb.tagsUrl + "?tags=" + strings.Join(randtags, ",")
 	return getTagsFromUrl(wb, url)
 }
 
@@ -163,7 +167,7 @@ func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, e
 		log.Printf("After randomTagsFromPlain: randtags == `%#v`\n", randtags)
 	}
 
-	fullURL := wb.serverBaseUrl + "/?tags=" + strings.Join(randtags, ",")
+	fullURL := wb.rowsUrl + "?tags=" + strings.Join(randtags, ",")
 	if types.Debug {
 		log.Printf("fullURL == `%s`\n", fullURL)
 	}
