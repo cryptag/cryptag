@@ -16,7 +16,7 @@ import (
 
 var (
 	SERVER_BASE_URL = ""
-	SHARED_SECRET   = ""
+	SHARED_SECRET   = nil
 
 	db backend.Backend
 )
