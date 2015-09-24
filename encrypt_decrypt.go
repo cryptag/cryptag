@@ -15,8 +15,9 @@ const (
 )
 
 var (
-	ErrDecrypt    = fmt.Errorf("Error decrypting ciphertext")
-	ErrInvalidKey = fmt.Errorf("Invalid key")
+	ErrDecrypt      = fmt.Errorf("Error decrypting ciphertext")
+	ErrInvalidKey   = fmt.Errorf("Invalid key")
+	ErrInvalidNonce = fmt.Errorf("Invalid nonce")
 )
 
 func Encrypt(plain []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
@@ -57,6 +58,15 @@ func ConvertKey(key []byte) (goodKey *[32]byte, err error) {
 	copy(good[:], key)
 
 	return &good, nil
+}
+
+func ConvertNonce(nonce []byte) (goodNonce *[24]byte, err error) {
+	if len(nonce) != 24 {
+		return nil, ErrInvalidNonce
+	}
+	var b [24]byte
+	copy(b[:], nonce[:])
+	return &b, nil
 }
 
 func RandomNonce() (*[24]byte, error) {
