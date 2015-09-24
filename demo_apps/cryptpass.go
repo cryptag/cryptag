@@ -44,7 +44,7 @@ func main() {
 		}
 
 		data := os.Args[2]
-		tags := os.Args[3:]
+		tags := append(os.Args[3:], "app:cryptpass")
 
 		newRow, err := types.NewRow([]byte(data), tags)
 		if err != nil {

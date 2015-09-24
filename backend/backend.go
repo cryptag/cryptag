@@ -67,7 +67,7 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 	// Fetch all tags
 	allPairs, err = backend.AllTagPairs()
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error from GetTags: %v", err)
+		return nil, nil, fmt.Errorf("Error from AllTagPairs: %v", err)
 	}
 
 	log.Printf("Fetched all %d TagPairs from server\n", len(allPairs))
