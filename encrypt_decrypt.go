@@ -77,3 +77,12 @@ func RandomNonce() (*[24]byte, error) {
 	}
 	return &b, nil
 }
+
+func RandomKey() (*[32]byte, error) {
+	var b [32]byte
+	_, err := rand.Reader.Read(b[:])
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
+}

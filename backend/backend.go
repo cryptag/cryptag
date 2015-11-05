@@ -49,7 +49,7 @@ func randomFromPlain(backend Backend, plaintags []string) ([]string, error) {
 	var randoms []string
 	for _, plain := range plaintags {
 		for _, pair := range pairs {
-			if pair.Plain() == plain {
+			if plain == pair.Plain() {
 				randoms = append(randoms, pair.Random)
 				break
 			}
