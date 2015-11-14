@@ -5,12 +5,14 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 type Row struct {
@@ -24,7 +26,21 @@ type Row struct {
 	Nonce     *[24]byte `json:"nonce"`
 }
 
+var (
+	ErrRowsNotFound = errors.New("No rows found")
+)
+
 func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, fmt.Errorf("Error generating new UUID for Row: %v", err)
+	}
+	// TODO(elimisteve): Document `id:`-prefix and related conventions
+	uuidTag := "id:" + id.String()
+
+	// For future queryability-related reasons, UUID must come first!
+	plainTags = append([]string{uuidTag}, append(plainTags, "all")...)
+
 	nonce, err := cryptag.RandomNonce()
 	if err != nil {
 		return nil, err
