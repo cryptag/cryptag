@@ -6,6 +6,7 @@ package backend
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -177,6 +178,10 @@ func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, e
 		return nil, fmt.Errorf("Error from getRowsFromUrl: %v", err)
 	}
 	return rows, nil
+}
+
+func (wb *WebserverBackend) DeleteRows(randTags []string) error {
+	return errors.New("WebserverBackend.DeleteRows NOT IMPLEMENTED")
 }
 
 //

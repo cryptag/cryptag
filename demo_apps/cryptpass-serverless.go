@@ -38,7 +38,7 @@ func main() {
 	case "create":
 		if len(os.Args) < 4 {
 			log.Printf("At least 3 command line arguments must be included\n")
-			log.Fatalf(usage)
+			log.Fatalf(createUsage)
 		}
 
 		data := os.Args[2]
@@ -54,6 +54,40 @@ func main() {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
 		fmt.Print(row.Format())
+
+	case "delete":
+		if len(os.Args) < 3 {
+			log.Printf("At least 2 command line arguments must be included\n")
+			log.Fatalf(deleteUsage)
+		}
+		plainTags := os.Args[2:]
+
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatalf("Error from AllTagPairs: %v\n", err)
+		}
+
+		// Get all the random tags associated with the tag pairs that
+		// contain every tag in plainTags.
+		//
+		// Got that?
+		//
+		// The flow: user specifies plainTags + we fetch all TagPairs
+		// => we filter the TagPairs based on those with the
+		// user-specified plainTags => we grab each TagPair's random
+		// string so we can delete the rows tagged with those tags
+
+		pairs, err = pairs.HaveAllPlainTags(plainTags)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Delete rows tagged with the random strings in pairs
+		err = db.DeleteRows(pairs.AllRandom())
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Row(s) successfully deleted\n")
 
 	default: // Search
 		// Empty clipboard
@@ -80,4 +114,8 @@ func main() {
 	}
 }
 
-var usage = "Usage: " + filepath.Base(os.Args[0]) + " data tag1 [tag2 ...]"
+var (
+	usage       = "Usage: " + filepath.Base(os.Args[0]) + " [create <yourpassword> | delete] tag1 [tag2 ...]"
+	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " create <yourpassword> tag1 [tag2 ...]"
+	deleteUsage = "Usage: " + filepath.Base(os.Args[0]) + " delete tag1 [tag2 ...]"
+)

@@ -3,7 +3,14 @@
 
 package types
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrTagPairNotFound = errors.New("TagPair(s) not found")
+)
 
 type TagPair struct {
 	PlainEncrypted []byte    `json:"plain_encrypted"`

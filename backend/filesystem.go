@@ -188,6 +188,40 @@ func (fs *FileSystem) SaveRow(r *types.Row) (*types.Row, error) {
 	return row, nil
 }
 
+func (fs *FileSystem) DeleteRows(randTags []string) error {
+	if len(randTags) == 0 {
+		return fmt.Errorf("Must query by 1 or more tags")
+	}
+
+	if types.Debug {
+		log.Printf("DeleteRows(%#v)\n", randTags)
+	}
+
+	// Find
+	rows, err := fs.rowsFromRandomTags(randTags, false)
+	if err != nil {
+		return err
+	}
+
+	if types.Debug {
+		log.Printf("DeleteRows: deleting rows: %s\n", rows)
+	}
+
+	// Delete
+	for _, row := range rows {
+		filename := path.Join(fs.rowsPath, strings.Join(row.RandomTags, "-"))
+		if types.Debug {
+			log.Printf("Removing row file `%v`...\n", filename)
+		}
+		err = os.Remove(filename)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 //
 // Helpers
 //

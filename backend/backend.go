@@ -27,6 +27,7 @@ type Backend interface {
 
 	RowsFromPlainTags(plaintags []string) (types.Rows, error)
 	SaveRow(*types.Row) (*types.Row, error)
+	DeleteRows(randTags []string) error
 }
 
 func randomFromPlain(backend Backend, plaintags []string) ([]string, error) {
@@ -58,6 +59,10 @@ func randomFromPlain(backend Backend, plaintags []string) ([]string, error) {
 
 	if types.Debug && len(plaintags) != len(randoms) {
 		log.Printf("Mapped plain `%#v` to random `%#v`\n", plaintags, randoms)
+	}
+
+	if len(randoms) == 0 {
+		return nil, types.ErrTagPairNotFound
 	}
 
 	return randoms, nil
