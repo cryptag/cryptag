@@ -84,6 +84,10 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 		pairs = append(pairs, pair)
 	}
 
+	if types.Debug {
+		log.Printf("AllTagPairs: returning %d pairs\n", len(pairs))
+	}
+
 	return pairs, nil
 }
 

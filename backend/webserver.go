@@ -81,7 +81,7 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 	}
 
 	if types.Debug {
-		log.Printf("POSTing row data: `%s`\n", rowBytes)
+		log.Printf("POSTing row data: `%s`\n\n", rowBytes)
 	}
 
 	resp, err := http.Post(wb.rowsUrl, "application/json",
@@ -122,7 +122,7 @@ func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, er
 	}
 
 	if types.Debug {
-		log.Printf("POSTing tag pair data: `%s`\n", pairBytes)
+		log.Printf("POSTing tag pair data: `%s`\n\n", pairBytes)
 	}
 
 	resp, err := http.Post(wb.tagsUrl, "application/json",

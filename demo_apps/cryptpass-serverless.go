@@ -44,6 +44,10 @@ func main() {
 		data := os.Args[2]
 		tags := append(os.Args[3:], "app:cryptpass")
 
+		if types.Debug {
+			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
+		}
+
 		newRow, err := types.NewRow([]byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
@@ -96,11 +100,11 @@ func main() {
 		plaintags := os.Args[1:]
 		rows, err := db.RowsFromPlainTags(plaintags)
 		if err != nil {
-			log.Fatalf("Error from RowsFromPlainTags: %v\n", err)
+			log.Fatal(err)
 		}
 
 		if len(rows) == 0 {
-			log.Fatalf("No rows found\n")
+			log.Fatal(types.ErrRowsNotFound)
 		}
 
 		// Add first row's contents to clipboard

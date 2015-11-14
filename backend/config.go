@@ -22,6 +22,8 @@ type Config struct {
 func (conf *Config) Canonicalize() error {
 	// Create new key
 	if conf.Key == nil {
+		log.Printf("Generating new encryption key for backend `%s`...",
+			conf.Name)
 		key, err := cryptag.RandomKey()
 		if err != nil {
 			return err

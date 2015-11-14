@@ -41,10 +41,8 @@ func randomFromPlain(backend Backend, plaintags []string) ([]string, error) {
 	}
 
 	if types.Debug {
-		log.Printf("%d pairs fetched from AllTagPairs: ", len(pairs))
-		for _, pair := range pairs {
-			log.Printf("  * %#v\n", pair)
-		}
+		log.Printf("randomFromPlain: %d pairs fetched from AllTagPairs",
+			len(pairs))
 	}
 
 	var randoms []string
@@ -57,7 +55,7 @@ func randomFromPlain(backend Backend, plaintags []string) ([]string, error) {
 		}
 	}
 
-	if types.Debug && len(plaintags) != len(randoms) {
+	if types.Debug {
 		log.Printf("Mapped plain `%#v` to random `%#v`\n", plaintags, randoms)
 	}
 
@@ -75,7 +73,9 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 		return nil, nil, fmt.Errorf("Error from AllTagPairs: %v", err)
 	}
 
-	log.Printf("Fetched all %d TagPairs from server\n", len(allPairs))
+	if types.Debug {
+		log.Printf("Fetched all %d TagPairs from server\n", len(allPairs))
+	}
 
 	// Find out which members of plaintags don't have an existing,
 	// corresponding TagPair

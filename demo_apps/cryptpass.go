@@ -68,7 +68,7 @@ func main() {
 		}
 
 		if len(rows) == 0 {
-			log.Fatalf("No rows found\n")
+			log.Fatal(types.ErrRowsNotFound)
 		}
 
 		// Add first row's contents to clipboard
