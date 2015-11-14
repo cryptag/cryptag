@@ -19,10 +19,6 @@ import (
 	"github.com/elimisteve/fun"
 )
 
-var (
-	ErrRowsNotFound = errors.New("No rows found")
-)
-
 type FileSystem struct {
 	cryptagPath string
 	tagsPath    string
@@ -92,8 +88,11 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 }
 
 func (fs *FileSystem) TagPairsFromRandomTags(randTags []string) (types.TagPairs, error) {
-	// FIXME(elimisteve): fs.TagPairsFromRandomTags NOT IMPLEMENTED
-	return fs.AllTagPairs()
+	pairs, err := fs.AllTagPairs()
+	if err != nil {
+		return nil, err
+	}
+	return pairs.HaveAllRandomTags(randTags)
 }
 
 func (fs *FileSystem) SaveTagPair(pair *types.TagPair) (*types.TagPair, error) {
@@ -140,36 +139,11 @@ func (fs *FileSystem) RowsFromPlainTags(plainTags []string) (types.Rows, error) 
 		return nil, err
 	}
 
-	if len(queryTags) == 0 {
-		return nil, ErrRowsNotFound
-	}
-
 	// len(queryTags) > 0
 
-	rowFiles, err := filepath.Glob(path.Join(fs.rowsPath, "*"))
+	rows, err := fs.rowsFromRandomTags(queryTags, true)
 	if err != nil {
 		return nil, err
-	}
-
-	var rows types.Rows
-
-	// For each row dir, if it has all tags, append to `rows`
-	for _, f := range rowFiles {
-		// Row filenames are of the form randtag1-randtag2-randtag3
-		rowTags := strings.Split(filepath.Base(f), "-")
-
-		if !fun.SliceContainsAll(rowTags, queryTags) {
-			continue
-		}
-
-		// Row is tagged with all queryTags; return to user
-
-		row, err := readRowFile(fs, f, rowTags)
-		if err != nil {
-			return nil, err
-		}
-
-		rows = append(rows, row)
 	}
 
 	return rows, nil
@@ -217,6 +191,48 @@ func (fs *FileSystem) SaveRow(r *types.Row) (*types.Row, error) {
 //
 // Helpers
 //
+
+func (fs *FileSystem) rowsFromRandomTags(randTags []string, includeFileBody bool) (types.Rows, error) {
+	if types.Debug {
+		log.Printf("rowsFromRandomTags(%#v, %v)\n", randTags, includeFileBody)
+	}
+
+	rowFiles, err := filepath.Glob(path.Join(fs.rowsPath, "*"))
+	if err != nil {
+		return nil, err
+	}
+
+	var rows types.Rows
+
+	// For each row dir, if it has all tags, append to `rows`
+	for _, f := range rowFiles {
+		// Row filenames are of the form randtag1-randtag2-randtag3
+		rowTags := strings.Split(filepath.Base(f), "-")
+
+		if !fun.SliceContainsAll(rowTags, randTags) {
+			continue
+		}
+
+		// Row is tagged with all queryTags; return to user
+		row := &types.Row{RandomTags: rowTags}
+
+		// Load contents of row file, too
+		if includeFileBody {
+			row, err = readRowFile(fs, f, rowTags)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		rows = append(rows, row)
+	}
+
+	if len(rows) == 0 {
+		return nil, types.ErrRowsNotFound
+	}
+
+	return rows, nil
+}
 
 func readTagFile(fs *FileSystem, tagFile string) (*types.TagPair, error) {
 	// TODO(elimisteve): Do streaming reads

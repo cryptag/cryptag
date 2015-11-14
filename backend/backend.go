@@ -78,15 +78,17 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 	existingPlain := allPairs.AllPlain()
 
 	// Concurrent Tag creation ftw
-	ch := make(chan *types.TagPair)
-	numNewPairs := 0
+	var chs []chan *types.TagPair
 
 	// TODO: Put the following in a `CreateTags` function
 
 	for _, plain := range plaintags {
 		if !fun.SliceContains(existingPlain, plain) {
-			numNewPairs++
-			go func(plain string) {
+			// Preserve tag ordering despite concurrent creation
+			ch := make(chan *types.TagPair)
+			chs = append(chs, ch)
+
+			go func(plain string, ch chan *types.TagPair) {
 				pair, err := CreateTag(backend, plain)
 				if err != nil {
 					log.Printf("Error calling CreateTag(%q): %v\n", plain, err)
@@ -98,18 +100,20 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 				}
 				ch <- pair
 				return
-			}(plain)
+			}(plain, ch)
 		}
 	}
 
-	// Append successfully-created *TagPair values to `newPairs`
+	// Append successfully-created *TagPair values to `chs`
 	//
 	// TODO: Consider timing out in case CreateTag() never returns
-	for i := 0; i < numNewPairs; i++ {
-		if p := <-ch; p != nil {
+	for i := 0; i < len(chs); i++ {
+		if p := <-chs[i]; p != nil {
 			newPairs = append(newPairs, p)
 		}
 	}
+
+	// TODO(elimisteve): WTF?
 
 	allPairs = append(allPairs, newPairs...)
 

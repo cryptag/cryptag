@@ -23,15 +23,42 @@ func (pairs TagPairs) AllPlain() []string {
 	return plain
 }
 
-func (pairs TagPairs) HaveAllPlainTags(plaintags []string) TagPairs {
+func (pairs TagPairs) AllRandom() []string {
+	random := make([]string, 0, len(pairs))
+	for _, p := range pairs {
+		random = append(random, p.Random)
+	}
+	return random
+}
+
+func (pairs TagPairs) HaveAllPlainTags(plaintags []string) (TagPairs, error) {
 	var matches TagPairs
-	for _, pair := range pairs {
-		for _, plain := range plaintags {
+	for _, plain := range plaintags {
+		for _, pair := range pairs {
 			if pair.plain == plain {
 				matches = append(matches, pair)
 				break
 			}
 		}
 	}
-	return matches
+	if len(matches) == 0 {
+		return nil, ErrTagPairNotFound
+	}
+	return matches, nil
+}
+
+func (pairs TagPairs) HaveAllRandomTags(randomtags []string) (TagPairs, error) {
+	var matches TagPairs
+	for _, random := range randomtags {
+		for _, pair := range pairs {
+			if pair.Random == random {
+				matches = append(matches, pair)
+				break
+			}
+		}
+	}
+	if len(matches) == 0 {
+		return nil, ErrTagPairNotFound
+	}
+	return matches, nil
 }
