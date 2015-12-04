@@ -20,10 +20,11 @@ import (
 )
 
 type FileSystem struct {
-	cryptagPath string
-	tagsPath    string
-	rowsPath    string
-	key         *[32]byte
+	cryptagPath  string
+	tagsPath     string
+	rowsPath     string
+	backendsPath string
+	key          *[32]byte
 }
 
 func NewFileSystem(conf *Config) (*FileSystem, error) {
@@ -32,22 +33,58 @@ func NewFileSystem(conf *Config) (*FileSystem, error) {
 	}
 
 	fs := &FileSystem{
-		cryptagPath: conf.CryptagBasePath,
-		tagsPath:    path.Join(conf.CryptagBasePath, "tags"),
-		rowsPath:    path.Join(conf.CryptagBasePath, "rows"),
-		key:         conf.Key,
+		cryptagPath:  conf.BackendBasePath,
+		tagsPath:     path.Join(conf.BackendBasePath, "tags"),
+		rowsPath:     path.Join(conf.BackendBasePath, "rows"),
+		backendsPath: path.Join(cryptag.Path, "backends"),
+		key:          conf.Key,
 	}
 	if err := fs.init(); err != nil {
 		return nil, err
 	}
 
+	// Save config to disk
+	if conf.New {
+		if err := saveConfig(conf); err != nil {
+			return nil, err
+		}
+	}
+
 	return fs, nil
+}
+
+func saveConfig(conf *Config) error {
+	cFile := path.Join(cryptag.Path, "backends", conf.Name+".json")
+
+	// Does the config file already exist?
+	files, err := filepath.Glob(cFile)
+	if err != nil {
+		return err
+	}
+	if len(files) > 0 {
+		return fmt.Errorf("Error: config file `%v` already exists", cFile)
+	}
+
+	// Create new config file
+	f, err := os.Create(cFile)
+	if err != nil {
+		return err
+	}
+	confBytes, err := json.MarshalIndent(conf, "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(confBytes)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // init creates the base CrypTag directories
 func (fs *FileSystem) init() error {
 	var err error
-	for _, path := range []string{fs.cryptagPath, fs.tagsPath, fs.rowsPath} {
+	for _, path := range []string{fs.cryptagPath, fs.tagsPath, fs.rowsPath, fs.backendsPath} {
 		err = os.MkdirAll(path, 0755)
 		if err == nil || os.IsExist(err) {
 			// Created successfully or already exists
@@ -56,6 +93,39 @@ func (fs *FileSystem) init() error {
 		return fmt.Errorf("Error making dir `%s`: %v", path, err)
 	}
 	return nil
+}
+
+func LoadOrCreateFileSystem(backendBasePath, backendName string) (*FileSystem, error) {
+	if backendBasePath == "" {
+		backendBasePath = path.Join(os.Getenv("HOME"), ".cryptag")
+	}
+	if backendName == "" {
+		backendName, _ = os.Hostname()
+	}
+
+	configFile := path.Join(backendBasePath, "backends", backendName+".json")
+
+	b, err := openAndRead(configFile)
+	if err != nil {
+		// If config doesn't exist, create new one
+
+		if os.IsNotExist(err) {
+			conf := Config{
+				Name:            backendName,
+				New:             true,
+				Local:           true,
+				BackendBasePath: backendBasePath,
+			}
+			return NewFileSystem(&conf)
+		}
+		return nil, err
+	}
+
+	var conf Config
+	if err := json.Unmarshal(b, &conf); err != nil {
+		return nil, err
+	}
+	return NewFileSystem(&conf)
 }
 
 func (fs *FileSystem) Encrypt(plain []byte, nonce *[24]byte) ([]byte, error) {

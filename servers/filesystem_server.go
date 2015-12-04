@@ -27,12 +27,7 @@ import (
 var filesystem *FileSystem
 
 func init() {
-	cryptagPath := os.Getenv("CRYPTAG_PATH")
-	if cryptagPath == "" {
-		cryptagPath = path.Join(os.Getenv("HOME"), ".cryptag")
-	}
-
-	fs, err := NewFileSystem(cryptagPath)
+	fs, err := NewFileSystem(cryptag.Path)
 	if err != nil {
 		panic("Error from NewFileSystem: " + err.Error())
 	}

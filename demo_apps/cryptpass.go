@@ -22,7 +22,7 @@ var (
 )
 
 func init() {
-	types.Debug = true
+	types.Debug = false
 
 	backend, err := backend.NewWebserverBackend(SHARED_SECRET, SERVER_BASE_URL)
 	if err != nil {

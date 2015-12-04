@@ -4,23 +4,34 @@
 package backend
 
 import (
-	"os"
-	"path"
+	"errors"
+	"fmt"
+	"log"
 	"strings"
 
 	"github.com/elimisteve/cryptag"
+	"github.com/elimisteve/fun"
 )
 
 type Config struct {
+	Name            string
+	New             bool `json:"-"`
 	Key             *[32]byte
 	Local           bool
-	CryptagBasePath string // Used by backend.FileSystem, other local backends
+	BackendBasePath string // Used by backend.FileSystem, other local backends
 
 	// BaseURL  string // Used by backend.Webserver, other remote backends
 }
 
 func (conf *Config) Canonicalize() error {
-	// Create new key
+	if conf.Name == "" {
+		return errors.New("Storage backend name cannot be empty")
+	}
+	if fun.ContainsAnyStrings(conf.Name, " ", "\t", "\r", "\n") {
+		return fmt.Errorf("Storage backend name `%s` contains one or"+
+			" more whitespace characters, shouldn't", conf.Name)
+	}
+
 	if conf.Key == nil {
 		log.Printf("Generating new encryption key for backend `%s`...",
 			conf.Name)
@@ -31,10 +42,10 @@ func (conf *Config) Canonicalize() error {
 		conf.Key = key
 	}
 
-	if conf.Local && conf.CryptagBasePath == "" {
-		conf.CryptagBasePath = path.Join(os.Getenv("HOME"), ".cryptag")
+	if conf.Local && conf.BackendBasePath == "" {
+		conf.BackendBasePath = cryptag.Path
 	}
-	conf.CryptagBasePath = strings.TrimRight(conf.CryptagBasePath, "/\\")
+	conf.BackendBasePath = strings.TrimRight(conf.BackendBasePath, "/\\")
 
 	return nil
 }

@@ -21,7 +21,7 @@ func (rows Rows) String() string {
 func (rows Rows) Format() string {
 	var s string
 	for _, row := range rows {
-		s += row.Format()
+		s += "\n" + row.Format()
 	}
 	return s
 }

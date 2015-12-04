@@ -19,14 +19,15 @@ var (
 )
 
 func init() {
-	conf := backend.Config{Local: true}
-
-	backend, err := backend.NewFileSystem(&conf)
+	fs, err := backend.LoadOrCreateFileSystem(
+		os.Getenv("CRYPTAGBACKENDPATH"),
+		os.Getenv("CRYPTAGBACKENDNAME"),
+	)
 	if err != nil {
-		log.Fatalf("NewWebserverBackend error: %v\n", err)
+		log.Fatalf("LoadFileSystem error: %v\n", err)
 	}
 
-	db = backend
+	db = fs
 }
 
 func main() {
