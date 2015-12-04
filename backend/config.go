@@ -27,6 +27,8 @@ func (conf *Config) Canonicalize() error {
 	if conf.Name == "" {
 		return errors.New("Storage backend name cannot be empty")
 	}
+	conf.Name = strings.TrimSuffix(conf.Name, ".json")
+
 	if fun.ContainsAnyStrings(conf.Name, " ", "\t", "\r", "\n") {
 		return fmt.Errorf("Storage backend name `%s` contains one or"+
 			" more whitespace characters, shouldn't", conf.Name)
