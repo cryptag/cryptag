@@ -25,6 +25,8 @@ type FileSystem struct {
 	rowsPath     string
 	backendsPath string
 	key          *[32]byte
+
+	cachedTagPairs types.TagPairs
 }
 
 func NewFileSystem(conf *Config) (*FileSystem, error) {
@@ -137,6 +139,14 @@ func (fs *FileSystem) Decrypt(cipher []byte, nonce *[24]byte) (plain []byte, err
 }
 
 func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
+	if fs.cachedTagPairs != nil {
+		if types.Debug {
+			log.Printf("AllTagPairs: Returning %v cached tag pairs",
+				len(fs.cachedTagPairs))
+		}
+		return fs.cachedTagPairs, nil
+	}
+
 	tagFiles, err := filepath.Glob(path.Join(fs.tagsPath, "*"))
 	if err != nil {
 		return nil, fmt.Errorf("Error listing tags: %v", err)
@@ -157,6 +167,8 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 	if types.Debug {
 		log.Printf("AllTagPairs: returning %d pairs\n", len(pairs))
 	}
+
+	fs.cachedTagPairs = pairs
 
 	return pairs, nil
 }
