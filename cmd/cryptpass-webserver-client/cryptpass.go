@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	SERVER_BASE_URL = ""
-	SHARED_SECRET   = nil
+	SERVER_BASE_URL = "http://localhost:7777"
+	SHARED_SECRET   = []byte(nil)
 
 	db backend.Backend
 )
