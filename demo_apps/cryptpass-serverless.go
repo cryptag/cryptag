@@ -20,8 +20,8 @@ var (
 
 func init() {
 	fs, err := backend.LoadOrCreateFileSystem(
-		os.Getenv("CRYPTAGBACKENDPATH"),
-		os.Getenv("CRYPTAGBACKENDNAME"),
+		os.Getenv("CRYPTAG_BACKEND_PATH"),
+		os.Getenv("CRYPTAG_BACKEND_NAME"),
 	)
 	if err != nil {
 		log.Fatalf("LoadFileSystem error: %v\n", err)
@@ -32,7 +32,7 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatalf(usage)
+		log.Fatalln(usage)
 	}
 
 	switch os.Args[1] {

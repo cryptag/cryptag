@@ -20,11 +20,10 @@ import (
 )
 
 type FileSystem struct {
-	cryptagPath  string
-	tagsPath     string
-	rowsPath     string
-	backendsPath string
-	key          *[32]byte
+	dataPath string
+	tagsPath string // subdirectory of dataPath
+	rowsPath string // subdirectory of dataPath
+	key      *[32]byte
 
 	cachedTagPairs types.TagPairs
 }
@@ -35,11 +34,10 @@ func NewFileSystem(conf *Config) (*FileSystem, error) {
 	}
 
 	fs := &FileSystem{
-		cryptagPath:  conf.BackendBasePath,
-		tagsPath:     path.Join(conf.BackendBasePath, "tags"),
-		rowsPath:     path.Join(conf.BackendBasePath, "rows"),
-		backendsPath: path.Join(cryptag.Path, "backends"),
-		key:          conf.Key,
+		dataPath: conf.DataPath,
+		tagsPath: path.Join(conf.DataPath, "tags"),
+		rowsPath: path.Join(conf.DataPath, "rows"),
+		key:      conf.Key,
 	}
 	if err := fs.init(); err != nil {
 		return nil, err
@@ -56,7 +54,7 @@ func NewFileSystem(conf *Config) (*FileSystem, error) {
 }
 
 func saveConfig(conf *Config) error {
-	cFile := path.Join(cryptag.Path, "backends", conf.Name+".json")
+	cFile := path.Join(cryptag.BackendPath, conf.Name+".json")
 
 	// Does the config file already exist?
 	files, err := filepath.Glob(cFile)
@@ -86,7 +84,9 @@ func saveConfig(conf *Config) error {
 // init creates the base CrypTag directories
 func (fs *FileSystem) init() error {
 	var err error
-	for _, path := range []string{fs.cryptagPath, fs.tagsPath, fs.rowsPath, fs.backendsPath} {
+	// TODO(elimisteve): Should this assume that cryptag.BackendPath
+	// already exists?
+	for _, path := range []string{fs.dataPath, fs.tagsPath, fs.rowsPath, cryptag.BackendPath} {
 		err = os.MkdirAll(path, 0755)
 		if err == nil || os.IsExist(err) {
 			// Created successfully or already exists
@@ -97,15 +97,16 @@ func (fs *FileSystem) init() error {
 	return nil
 }
 
-func LoadOrCreateFileSystem(backendBasePath, backendName string) (*FileSystem, error) {
-	if backendBasePath == "" {
-		backendBasePath = path.Join(os.Getenv("HOME"), ".cryptag")
+func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error) {
+	if backendPath == "" {
+		backendPath = cryptag.BackendPath
 	}
 	if backendName == "" {
 		backendName, _ = os.Hostname()
 	}
+	backendName = strings.TrimSuffix(backendName, ".json")
 
-	configFile := path.Join(backendBasePath, "backends", backendName+".json")
+	configFile := path.Join(backendPath, backendName+".json")
 
 	b, err := openAndRead(configFile)
 	if err != nil {
@@ -113,10 +114,9 @@ func LoadOrCreateFileSystem(backendBasePath, backendName string) (*FileSystem, e
 
 		if os.IsNotExist(err) {
 			conf := Config{
-				Name:            backendName,
-				New:             true,
-				Local:           true,
-				BackendBasePath: backendBasePath,
+				Name:  backendName,
+				New:   true,
+				Local: true,
 			}
 			return NewFileSystem(&conf)
 		}

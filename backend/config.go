@@ -14,11 +14,11 @@ import (
 )
 
 type Config struct {
-	Name            string
-	New             bool `json:"-"`
-	Key             *[32]byte
-	Local           bool
-	BackendBasePath string // Used by backend.FileSystem, other local backends
+	Name     string
+	New      bool `json:"-"`
+	Key      *[32]byte
+	Local    bool
+	DataPath string // Used by backend.FileSystem, other local backends
 
 	// BaseURL  string // Used by backend.Webserver, other remote backends
 }
@@ -44,10 +44,10 @@ func (conf *Config) Canonicalize() error {
 		conf.Key = key
 	}
 
-	if conf.Local && conf.BackendBasePath == "" {
-		conf.BackendBasePath = cryptag.Path
+	if conf.Local && conf.DataPath == "" {
+		conf.DataPath = cryptag.DefaultLocalDataPath
 	}
-	conf.BackendBasePath = strings.TrimRight(conf.BackendBasePath, "/\\")
+	conf.DataPath = strings.TrimRight(conf.DataPath, "/\\")
 
 	return nil
 }
