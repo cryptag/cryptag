@@ -4,5 +4,5 @@
 package types
 
 var (
-	Debug bool
+	Debug = false
 )
