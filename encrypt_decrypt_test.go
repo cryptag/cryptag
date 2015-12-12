@@ -4,18 +4,18 @@
 package cryptag
 
 import (
-	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
-	data := []byte("This is test data")
+	plain := []byte("Original plaintext to be encrypted then decrypted")
 	nonce, _ := RandomNonce()
-	k := []byte("012345678901234567890123456789-!")
-	key, _ := ConvertKey(k)
+	key, _ := ConvertKey([]byte("012345678901234567890123456789-!"))
 
 	// Encrypt
-	enc, err := Encrypt(data, nonce, key)
+	enc, err := Encrypt(plain, nonce, key)
 	if err != nil {
 		t.Fatalf("Error encrypting: %v", err)
 	}
@@ -25,7 +25,6 @@ func TestEncryptDecrypt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error decrypting: %v", err)
 	}
-	if !bytes.Equal(dec, data) {
-		t.Errorf("After decrypting, got\n%v\nwanted\n%v", dec, data)
-	}
+
+	assert.Equal(t, dec, plain, "Decrypted data doesn't match original plaintext")
 }
