@@ -43,7 +43,7 @@ func main() {
 		}
 
 		data := os.Args[2]
-		tags := append(os.Args[3:], "app:cryptpass")
+		tags := append(os.Args[3:], "app:cryptpass", "type:text")
 
 		if types.Debug {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
