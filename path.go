@@ -10,6 +10,10 @@ import (
 )
 
 var (
+	// TrustedBasePath is where private, non-shared data (e.g., crypto
+	// keys) can be safely stored.
+	TrustedBasePath = path.Join(os.Getenv("HOME"), ".cryptag")
+
 	// BackendPath is the path to the directory where backend config
 	// files are stored (e.g., "/home/myusername/.cryptag/backends").
 	// This can be overridden with the CRYPTAG_BACKEND_PATH
