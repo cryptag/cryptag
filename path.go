@@ -20,6 +20,8 @@ var (
 	// backends will be told to store their data.  This directory will
 	// contain 'rows' and 'tags' subdirectories.
 	DefaultLocalDataPath = path.Join(os.Getenv("HOME"), ".cryptag")
+
+	LocalDataPath = DefaultLocalDataPath
 )
 
 func init() {

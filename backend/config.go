@@ -45,7 +45,7 @@ func (conf *Config) Canonicalize() error {
 	}
 
 	if conf.Local && conf.DataPath == "" {
-		conf.DataPath = cryptag.DefaultLocalDataPath
+		conf.DataPath = cryptag.LocalDataPath
 	}
 	conf.DataPath = strings.TrimRight(conf.DataPath, "/\\")
 
