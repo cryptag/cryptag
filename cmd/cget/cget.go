@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/types"
 )
