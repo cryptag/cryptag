@@ -25,6 +25,7 @@ type Backend interface {
 	TagPairsFromRandomTags(randtags []string) (types.TagPairs, error)
 	SaveTagPair(*types.TagPair) (*types.TagPair, error)
 
+	ListRows(plaintags []string) (types.Rows, error)
 	RowsFromPlainTags(plaintags []string) (types.Rows, error)
 	SaveRow(*types.Row) (*types.Row, error)
 	DeleteRows(randTags []string) error

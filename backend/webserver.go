@@ -159,6 +159,10 @@ func (wb *WebserverBackend) TagPairsFromRandomTags(randtags []string) (types.Tag
 	return getTagsFromUrl(wb, url)
 }
 
+func (wb *WebserverBackend) ListRows(plaintags []string) (types.Rows, error) {
+	return nil, fmt.Errorf("WebserverBackend.ListRows: NOT IMPLEMENTED")
+}
+
 func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, error) {
 	randtags, err := randomFromPlain(wb, plaintags)
 	if err != nil {

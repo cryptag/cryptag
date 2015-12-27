@@ -213,6 +213,38 @@ func (fs *FileSystem) SaveTagPair(pair *types.TagPair) (*types.TagPair, error) {
 	return pair, nil
 }
 
+func (fs *FileSystem) ListRows(plainTags []string) (types.Rows, error) {
+	// TODO: Reduce code duplication between ListRows and
+	// RowsFromPlainTags
+
+	if len(plainTags) == 0 {
+		return nil, errors.New("Must query by 1 or more tags")
+	}
+
+	// Find the rows that have all the tags in plainTags
+
+	queryTags, err := randomFromPlain(fs, plainTags)
+	if err != nil {
+		return nil, err
+	}
+
+	// len(queryTags) > 0
+
+	rows, err := fs.rowsFromRandomTags(queryTags, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decrypt, set tags
+	for _, row := range rows {
+		if err = PopulateRowAfterGet(fs, row); err != nil {
+			return nil, err
+		}
+	}
+
+	return rows, nil
+}
+
 func (fs *FileSystem) RowsFromPlainTags(plainTags []string) (types.Rows, error) {
 	if len(plainTags) == 0 {
 		return nil, errors.New("Must query by 1 or more tags")
