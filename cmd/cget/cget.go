@@ -43,6 +43,19 @@ func main() {
 	// TODO: Add "decrypt" case
 	// TODO: Add "file" case
 
+	case "list":
+		plaintags := append(os.Args[2:], "type:file")
+
+		rows, err := db.ListRows(plaintags)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, r := range rows {
+			fmt.Printf("%v\t\t%v\n\n", rowTagWithPrefix(r, "filename:"),
+				strings.Join(r.PlainTags(), "  "))
+		}
+
 	default: // Decrypt, save to ~/.cryptag/decrypted/(filename from filename:...)
 		plaintags := os.Args[1:]
 
@@ -70,13 +83,7 @@ func main() {
 }
 
 func saveRowAsFile(r *types.Row) (filepath string, err error) {
-	var filename string
-	for _, t := range r.PlainTags() {
-		if strings.HasPrefix(t, "filename:") {
-			filename = strings.TrimPrefix(t, "filename:")
-			break
-		}
-	}
+	filename := rowTagWithPrefix(r, "filename:")
 	if filename == "" {
 		filename = fmt.Sprintf("%v", time.Now().Unix())
 	}
@@ -88,6 +95,15 @@ func saveRowAsFile(r *types.Row) (filepath string, err error) {
 
 	filepath = path.Join(dir, filename)
 	return filepath, ioutil.WriteFile(filepath, r.Decrypted(), 0644)
+}
+
+func rowTagWithPrefix(r *types.Row, prefix string) string {
+	for _, t := range r.PlainTags() {
+		if strings.HasPrefix(t, prefix) {
+			return strings.TrimPrefix(t, prefix)
+		}
+	}
+	return ""
 }
 
 var (

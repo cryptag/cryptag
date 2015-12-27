@@ -86,7 +86,10 @@ func (row *Row) Format() string {
 // DecryptData sets row.decrypted, row.nonce based upon row.Encrypted, nonce
 func (row *Row) Decrypt(decrypt func(data []byte, nonce *[24]byte) ([]byte, error)) error {
 	if len(row.Encrypted) == 0 {
-		return fmt.Errorf("no data to decrypt")
+		if Debug {
+			log.Printf("row.Decrypt: no data to decrypt, returning nil (no error)\n")
+		}
+		return nil
 	}
 
 	dec, err := decrypt(row.Encrypted, row.Nonce)
