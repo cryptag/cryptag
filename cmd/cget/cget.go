@@ -56,6 +56,15 @@ func main() {
 				strings.Join(r.PlainTags(), "  "))
 		}
 
+	case "tags":
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, pair := range pairs {
+			fmt.Printf("%s  %s\n", pair.Random, pair.Plain())
+		}
+
 	default: // Decrypt, save to ~/.cryptag/decrypted/(filename from filename:...)
 		plaintags := os.Args[1:]
 
