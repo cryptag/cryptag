@@ -43,42 +43,9 @@ func main() {
 			log.Fatalf(createUsage)
 		}
 
-		//
-		// Parse date
-		//
-		var when string
-
-		date := strings.Split(os.Args[2], "/")
-		switch length := len(date); length {
-		case 0, 1:
-			log.Fatalf("Date must be one of these forms: %s", validDateFormats)
-		case 2:
-			if len(date[0]) == 4 && len(date[1]) == 2 { // yyyy/mm
-				when = date[0] + date[1] + "01"
-			} else if (len(date[0]) == 1 || len(date[0]) == 2) &&
-				(len(date[1]) == 1 || len(date[1]) == 2) { // m(m)/d(d)
-
-				month, day := date[0], date[1]
-				if len(month) == 1 {
-					month = "0" + month
-				}
-				if len(day) == 1 {
-					day = "0" + day
-				}
-
-				thisYear := fmt.Sprintf("%v", time.Now().Year())
-				when = thisYear + month + day
-			} else {
-				log.Fatalf("Invalid 2-part date `%v`\n", os.Args[2])
-			}
-		case 3:
-			if len(date[0]) == 4 && len(date[1]) == 2 && len(date[2]) == 2 { // yyyy/mm/dd
-				when = date[0] + date[1] + date[2]
-			} else {
-				log.Fatalf("Invalid 3-part date `%v`\n", os.Args[2])
-			}
-		default:
-			log.Fatalf("Invalid date `%v`\n", os.Args[2])
+		when, err := parseDate(os.Args[2])
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		todo := os.Args[3]
@@ -156,10 +123,80 @@ func fmtReminder(r *types.Row) string {
 		r.Decrypted(), strings.Join(r.PlainTags(), "  "))
 }
 
+func parseDate(dateOrig string) (string, error) {
+	date := strings.Split(dateOrig, "/")
+
+	switch length := len(date); length {
+	case 0, 1:
+		return "", fmt.Errorf("Date must be in one of these formats: %s",
+			validDateFormats)
+	case 2:
+		if year := date[0]; len(year) == 4 { // yyyy/m(m)
+			month, err := validMonth(date[1])
+			if err != nil {
+				return "", err
+			}
+			day := "01"
+
+			return year + month + day, nil
+		}
+
+		// m(m)/d(d)
+		month, err := validMonth(date[0])
+		if err != nil {
+			return "", err
+		}
+		day, err := validDay(date[1])
+		if err != nil {
+			return "", err
+		}
+		year := fmt.Sprintf("%v", time.Now().Year())
+
+		return year + month + day, nil
+	case 3: // yyyy/m(m)/d(d)
+		year := date[0]
+		if len(year) != 4 {
+			return "", fmt.Errorf("Invalid year `%v`", year)
+		}
+		month, err := validMonth(date[1])
+		if err != nil {
+			return "", err
+		}
+		day, err := validDay(date[2])
+		if err != nil {
+			return "", err
+		}
+
+		return year + month + day, nil
+	}
+
+	return "", fmt.Errorf("Invalid date `%v`\n", os.Args[2])
+}
+
+func validMonth(month string) (string, error) {
+	if len(month) == 2 {
+		return month, nil
+	}
+	if len(month) == 1 {
+		return "0" + month, nil
+	}
+	return "", fmt.Errorf("Invalid month `%v`", month)
+}
+
+func validDay(day string) (string, error) {
+	if len(day) == 2 {
+		return day, nil
+	}
+	if len(day) == 1 {
+		return "0" + day, nil
+	}
+	return "", fmt.Errorf("Invalid day `%v`", day)
+}
+
 var (
 	usage       = "Usage: " + filepath.Base(os.Args[0]) + " [create <date> <reminder> | delete] tag1 [tag2 ...]"
 	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " create <date> <reminder> tag1 [tag2 ...]"
 	deleteUsage = "Usage: " + filepath.Base(os.Args[0]) + " delete tag1 [tag2 ...]"
 
-	validDateFormats = "m(m)/d(d), yyyy/mm, yyyy/mm/dd"
+	validDateFormats = "m(m)/d(d), yyyy/m(m), yyyy/m(m)/d(d)"
 )
