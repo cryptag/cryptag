@@ -55,9 +55,19 @@ func main() {
 		case 2:
 			if len(date[0]) == 4 && len(date[1]) == 2 { // yyyy/mm
 				when = date[0] + date[1] + "01"
-			} else if len(date[0]) == 2 && len(date[1]) == 2 { // mm/dd
+			} else if (len(date[0]) == 1 || len(date[0]) == 2) &&
+				(len(date[1]) == 1 || len(date[1]) == 2) { // m(m)/d(d)
+
+				month, day := date[0], date[1]
+				if len(month) == 1 {
+					month = "0" + month
+				}
+				if len(day) == 1 {
+					day = "0" + day
+				}
+
 				thisYear := fmt.Sprintf("%v", time.Now().Year())
-				when = thisYear + date[0] + date[1]
+				when = thisYear + month + day
 			} else {
 				log.Fatalf("Invalid 2-part date `%v`\n", os.Args[2])
 			}
@@ -88,7 +98,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Println(formatReminder(row))
+		fmt.Println(fmtReminder(row))
 
 	case "delete":
 		if len(os.Args) < 3 {
@@ -136,12 +146,12 @@ func main() {
 		}
 
 		for _, r := range rows {
-			fmt.Println(formatReminder(r))
+			fmt.Println(fmtReminder(r))
 		}
 	}
 }
 
-func formatReminder(r *types.Row) string {
+func fmtReminder(r *types.Row) string {
 	return fmt.Sprintf(`%v  "%s"    %v`, types.RowTagWithPrefix(r, "when:"),
 		r.Decrypted(), strings.Join(r.PlainTags(), "  "))
 }
@@ -151,5 +161,5 @@ var (
 	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " create <date> <reminder> tag1 [tag2 ...]"
 	deleteUsage = "Usage: " + filepath.Base(os.Args[0]) + " delete tag1 [tag2 ...]"
 
-	validDateFormats = "mm/dd, yyyy/mm, yyyy/mm/dd"
+	validDateFormats = "m(m)/d(d), yyyy/mm, yyyy/mm/dd"
 )
