@@ -52,7 +52,7 @@ func main() {
 		}
 
 		for _, r := range rows {
-			fmt.Printf("%v\t\t%v\n\n", rowTagWithPrefix(r, "filename:"),
+			fmt.Printf("%v\t\t%v\n\n", types.RowTagWithPrefix(r, "filename:"),
 				strings.Join(r.PlainTags(), "  "))
 		}
 
@@ -92,7 +92,7 @@ func main() {
 }
 
 func saveRowAsFile(r *types.Row) (filepath string, err error) {
-	filename := rowTagWithPrefix(r, "filename:")
+	filename := types.RowTagWithPrefix(r, "filename:")
 	if filename == "" {
 		filename = fmt.Sprintf("%v", time.Now().Unix())
 	}
@@ -104,15 +104,6 @@ func saveRowAsFile(r *types.Row) (filepath string, err error) {
 
 	filepath = path.Join(dir, filename)
 	return filepath, ioutil.WriteFile(filepath, r.Decrypted(), 0644)
-}
-
-func rowTagWithPrefix(r *types.Row, prefix string) string {
-	for _, t := range r.PlainTags() {
-		if strings.HasPrefix(t, prefix) {
-			return strings.TrimPrefix(t, prefix)
-		}
-	}
-	return ""
 }
 
 var (
