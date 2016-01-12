@@ -49,8 +49,8 @@ func main() {
 		}
 
 		todo := os.Args[3]
-		tags := append(os.Args[4:], "when:"+when, "app:ccal", "type:todo",
-			"type:text")
+		tags := append(os.Args[4:], "when:"+when, "app:cremind",
+			"type:calendarevent", "type:text")
 
 		if types.Debug {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", todo, tags)
