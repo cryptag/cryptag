@@ -1,6 +1,6 @@
 ## CrypTag
 
-**_Encrypted, taggable, searchable web storage._**
+**_Encrypted, taggable, searchable cloud storage._**
 
 CrypTag was announced at DEF CON 23 in August of 2015.  Presentation
 slides:
@@ -15,15 +15,18 @@ holding user data doesn't know what it is (since it's encrypted).
 
 It is meant as a primitive to be used to build more sophisticated
 systems that would rather not re-implement the pieces necessary to
-build a zero-knowledge system.
+build a zero-knowledge system, but several useful command line
+applications have been built with it so far, namely _cput_ (for
+encrypting/saving files), _cget_ (for fetching/decrypting files), and
+_cpass_ (CryptPass, a password manager).
 
 To use a command line password manager, CryptPass, see "Getting
-Started with CryptPass" below.
+Started with CryptPass", below.
 
 
 ### How is it searchable _and_ encrypted?
 
-It's not _fully_ searchable; you can query by tag.  See the
+It's not _fully_ searchable; you can query by tag.  See slide 7 of the
 presentation from DEF CON 23:
 <https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/#/7>
 
@@ -38,26 +41,29 @@ strings.
 server, too.)
 
 
-### Use Cases (what CrypTag is good at)
+### Use Cases (what CrypTag is good at) + Syncing via Dropbox
 
-Anything in the "write once, read many times" category is ideal, such
-as:
+I personally have virtually all data I want shared between my laptops
+in one Dropbox folder that CrypTag-based programs add (encrypted) data
+to and grab it from.
 
-* Bookmarks
-* Notes/personal writings
-* Emails, text messages, instant messages
+I've been using cpass to store and fetch...
 
+1. Passwords (**cpass @elimisteve**)
+2. Credit card numbers (**cpass visa digits**)
+3. Quotes (**cpass nietzsche quote**)
+4. Bookmarks, tagged like on Pinboard or Delicious (**cpass url snowden**)
+5. Command line commands -- cross-machine shell history! (**cpass install docker**)
+6. GitHub recovery codes (**cpass github recoverycode**)
 
-### Non-use Cases (what CrypTag is not good at)
+For more on getting started, including how to safely and securely
+share passwords with others via a shared Dropbox folder, check out
+this section of the README:
+https://github.com/elimisteve/cryptag#getting-started-with-cryptpass
 
-Anything that requires rapid changes being made to data by multiple
-users, such as:
-
-* Real-time collaborative document editing
-
-  * Real-time spreadsheet editing should work OK (as long as you're OK
-    with "last write wins" to a cell), since each cell can be its own
-    Row that can be changed concurrently with other Rows
+It's still early days for CrypTag and CryptPass, so don't trust your
+life with cpass.  Eventually I will have the code professionally
+audited for security flaws.
 
 
 ## Getting Started with CryptPass
@@ -196,3 +202,63 @@ to create work passwords, or
     work aws
 
 to fetch them.
+
+
+### Non-use Cases (what CrypTag is not good at)
+
+Anything that requires rapid changes being made to data by multiple
+users, such as:
+
+* Real-time collaborative document editing
+
+  * Real-time spreadsheet editing should work OK (as long as you're OK
+    with "last write wins" to a cell), since each cell can be its own
+    Row that can be changed concurrently with other Rows
+
+Any data that is "write once, read many times" is ideal for CrypTag.
+
+
+## Future Plans
+
+I have big plans for CryptPass and other CrypTag-based software to
+help make the world's data -- passwords, everything stored "in the
+cloud", file backups, bookmarks and so on -- more secure.
+
+I believe that you should be able access your data from any of your
+devices, and just grab what you need, exactly like you can from the
+Dropbox mobile app.  Or if you don't mind storing all your data on
+your computer, being able to use Dropbox (or anything similar) to sync
+all your data between all your devices _without having to trust the
+company storing your data for you_ is also deeply important; we should
+all benefit from the convenience of cloud storage without giving up
+any privacy whatsoever.
+
+So whatever feedback you may have, please please send it my way!  Yes,
+there will be a **graphical version of CryptPass** usable on Windows,
+Mac OS X, and Linux desktops.  Eventually I'd like to have mobile
+apps, too, of course.
+
+I am open to **all** questions, comments, suggestions, insults, and
+whatever else you've got.
+
+
+## Geeky Feedback Requested
+
+The graphical version of CryptPass (that uses Electron + React, that
+then talks to a local CrypTag daemon) once the command line version,
+cpass, is better, and once more complex [storage
+questions](https://github.com/elimisteve/cryptag/issues/18) are
+answered, which I'd appreciate feedback on from those of you who may
+want to store different kinds of data in different places (e.g., all
+passwords in a local directory, all work passwords in a shared Dropbox
+folder, and all backups in S3).
+
+I'd love to create mobile versions of CryptPass, probably starting
+with Ubuntu Phone, because I can write it all in Go :-), and now that
+both Android and iOS apps can call into Go code using some [new
+awesome mobile
+shit](https://godoc.org/golang.org/x/mobile/cmd/gomobile), it
+shouldn't be necessary to port the core CrypTag logic to another
+language.
+
+Thank you!  Here's to a more privacy-friendly future for all!

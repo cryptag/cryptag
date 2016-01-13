@@ -102,7 +102,7 @@ func main() {
 		log.Printf("Row(s) successfully deleted\n")
 
 	default: // Search
-		plaintags := append(os.Args[1:], "type:todo")
+		plaintags := append(os.Args[1:], "type:calendarevent")
 		rows, err := db.RowsFromPlainTags(plaintags)
 		if err != nil {
 			log.Fatal(err)
