@@ -155,8 +155,7 @@ and guaranteed to be unique:
 Maybe you want to store your personal data in `~/.cryptag` but have
 passwords you share with colleagues at `~/Dropbox/cryptag_work`, for
 example.  (With `cpass` this is secure because plaintext, unencrypted
-passwords _never_ touch disk; only encrypted data will ever be stored
-in `~/Dropbox/cryptag_work`.)
+passwords will never touch `~/Dropbox/cryptag_work`.)
 
 Create a new backend with the desired name (e.g., "work") by running
 
@@ -170,7 +169,7 @@ being sure to use the absolute path.
 (Dropbox note: CrypTag-based programs generally, and `cpass`
 specifically, store each piece of data (e.g., each password and each
 tag) in a separate file, so it _is_ safe for multiple people to create
-passwords simultaneously and sove them to a shared Dropbox folder,
+passwords simultaneously and save them to a shared Dropbox folder,
 unlike with KeePass, KeePassX, 1Password, and some other password
 managers.)
 
@@ -188,7 +187,10 @@ decrypt passwords saved by each other.
 ### More Convenient Multiple Storage Backends
 
 See [this issue](https://github.com/elimisteve/cryptag/issues/18) for
-discussion on how to make this much better!  I currently do this:
+discussion on how to make storing data in multiple places much better!
+I would love your input.
+
+I currently do this:
 
     echo 'CRYPTAG_BACKEND_NAME=work cpass "$@"' > ~/bin/work
     chmod +x ~/bin/work
