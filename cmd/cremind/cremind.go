@@ -14,6 +14,7 @@ import (
 
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/types"
+	"github.com/fatih/color"
 )
 
 var (
@@ -124,9 +125,23 @@ func main() {
 	}
 }
 
+var (
+	blackOnWhite = color.New(color.FgBlack, color.BgHiWhite).SprintFunc()
+	timeLayout   = "20060102"
+)
+
 func fmtReminder(r *types.Row) string {
-	return fmt.Sprintf(`%v  "%s"    %v`, types.RowTagWithPrefix(r, "when:"),
-		r.Decrypted(), strings.Join(r.PlainTags(), "  "))
+	whenStr := types.RowTagWithPrefix(r, "when:")
+	when, err := time.Parse(timeLayout, whenStr)
+	if err != nil {
+		log.Printf("Error parsing timestamp `%v` as format `%v`: %v\n", whenStr,
+			timeLayout, err)
+	}
+
+	dayOfWeek := when.Weekday().String()[:3] // E.g., "Fri"
+	return fmt.Sprintf(`%s %s "%s"    %v`, blackOnWhite(whenStr),
+		blackOnWhite(dayOfWeek), r.Decrypted(),
+		strings.Join(r.PlainTags(), "  "))
 }
 
 func parseDate(dateOrig string) (string, error) {
