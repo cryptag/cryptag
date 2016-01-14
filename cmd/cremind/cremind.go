@@ -138,10 +138,22 @@ func fmtReminder(r *types.Row) string {
 			timeLayout, err)
 	}
 
+	// Indicate whether this event is planned for today
+	today := ""
+	if isToday(when) {
+		today = "*"
+	}
+
 	dayOfWeek := when.Weekday().String()[:3] // E.g., "Fri"
 	return fmt.Sprintf(`%s %s "%s"    %v`, blackOnWhite(whenStr),
-		blackOnWhite(dayOfWeek), r.Decrypted(),
+		blackOnWhite(dayOfWeek+today), r.Decrypted(),
 		strings.Join(r.PlainTags(), "  "))
+}
+
+func isToday(day time.Time) bool {
+	y, m, d := day.Date()
+	y2, m2, d2 := time.Now().Date()
+	return y == y2 && m == m2 && d == d2
 }
 
 func parseDate(dateOrig string) (string, error) {
