@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -112,9 +113,14 @@ func main() {
 			log.Fatal(types.ErrRowsNotFound)
 		}
 
+		// Sort and print
+
+		events := make([]string, 0, len(rows))
 		for _, r := range rows {
-			fmt.Println(fmtReminder(r))
+			events = append(events, fmtReminder(r))
 		}
+		sort.Strings(events)
+		fmt.Println(strings.Join(events, "\n\n"))
 	}
 }
 
