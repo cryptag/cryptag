@@ -98,7 +98,7 @@ func main() {
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
-		plaintags := os.Args[1:]
+		plaintags := append(os.Args[1:], "type:text")
 		rows, err := db.RowsFromPlainTags(plaintags)
 		if err != nil {
 			log.Fatal(err)
