@@ -104,7 +104,13 @@ func main() {
 		log.Printf("Row(s) successfully deleted\n")
 
 	default: // Search
-		plaintags := append(os.Args[1:], "type:calendarevent")
+		tags := os.Args[1:]
+
+		if tags[0] == "today" {
+			tags[0] = "when:" + fmtDate(time.Now())
+		}
+
+		plaintags := append(tags, "type:calendarevent")
 		rows, err := db.RowsFromPlainTags(plaintags)
 		if err != nil {
 			log.Fatal(err)
@@ -156,7 +162,17 @@ func isToday(day time.Time) bool {
 	return y == y2 && m == m2 && d == d2
 }
 
+func fmtDate(t time.Time) string {
+	y, m, d := t.Date()
+	return fmt.Sprintf("%d%02d%02d", y, m, d)
+}
+
 func parseDate(dateOrig string) (string, error) {
+	if dateOrig == "today" {
+		_, month, day := time.Now().Date()
+		dateOrig = fmt.Sprintf("%d/%d", month, day)
+	}
+
 	date := strings.Split(dateOrig, "/")
 
 	switch length := len(date); length {
@@ -231,5 +247,5 @@ var (
 	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " create <date> <reminder> tag1 [tag2 ...]"
 	deleteUsage = "Usage: " + filepath.Base(os.Args[0]) + " delete tag1 [tag2 ...]"
 
-	validDateFormats = "m(m)/d(d), yyyy/m(m), yyyy/m(m)/d(d)"
+	validDateFormats = "'today', m(m)/d(d), yyyy/m(m), yyyy/m(m)/d(d)"
 )
