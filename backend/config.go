@@ -20,6 +20,8 @@ type Config struct {
 	Local    bool
 	DataPath string // Used by backend.FileSystem, other local backends
 
+	Custom map[string]interface{} `json:",omitempty"` // Used by Dropbox, other backends
+
 	// BaseURL  string // Used by backend.Webserver, other remote backends
 }
 
