@@ -108,7 +108,7 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 
 	configFile := path.Join(backendPath, backendName+".json")
 
-	b, err := openAndRead(configFile)
+	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		// If config doesn't exist, create new one
 
@@ -393,7 +393,7 @@ func readTagFile(fs *FileSystem, tagFile string) (*types.TagPair, error) {
 	// from filename
 
 	// File contains: {"plain_encrypted": ..., "nonce": ...}
-	b, err := openAndRead(tagFile)
+	b, err := ioutil.ReadFile(tagFile)
 	if err != nil {
 		return nil, err
 	}
@@ -415,7 +415,7 @@ func readTagFile(fs *FileSystem, tagFile string) (*types.TagPair, error) {
 }
 
 func readRowFile(fs *FileSystem, rowFilePath string, rowTags []string) (*types.Row, error) {
-	b, err := openAndRead(rowFilePath)
+	b, err := ioutil.ReadFile(rowFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -435,13 +435,4 @@ func readRowFile(fs *FileSystem, rowFilePath string, rowTags []string) (*types.R
 	}
 
 	return &row, nil
-}
-
-func openAndRead(filename string) (contents []byte, err error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.ReadAll(f)
 }

@@ -448,14 +448,14 @@ func (fs *FileSystem) RowsByTags(randomTags []string) (types.Rows, error) {
 
 func readRowFiles(rowDir string) (*types.Row, error) {
 	// Open, read ./data
-	data, err := openAndRead(path.Join(rowDir, "data"))
+	data, err := ioutil.ReadFile(path.Join(rowDir, "data"))
 	if err != nil {
 		return nil, err
 	}
 	row := types.Row{Encrypted: data}
 
 	// Open, read ./nonce
-	nonceB, err := openAndRead(path.Join(rowDir, "nonce"))
+	nonceB, err := ioutil.ReadFile(path.Join(rowDir, "nonce"))
 	if err != nil {
 		return nil, err
 	}
@@ -521,15 +521,6 @@ func (fs *FileSystem) setRandomTagToTagNonceSHA() error {
 	fs.randomTagToTagNonceSHA = m
 
 	return nil
-}
-
-func openAndRead(filename string) (contents []byte, err error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.ReadAll(f)
 }
 
 func nonceSHA256(nonce *[24]byte) string {
