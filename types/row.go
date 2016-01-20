@@ -83,7 +83,9 @@ func (row *Row) Format() string {
 	return fmt.Sprintf("%s\t%s\n", row.decrypted, strings.Join(row.plainTags, "  "))
 }
 
-// DecryptData sets row.decrypted, row.nonce based upon row.Encrypted, nonce
+// Decrypt sets row.decrypted, row.nonce based upon row.Encrypted,
+// nonce.  The passed-in `decrypt` function will typically be
+// bkend.Decrypt, where `bkend` is the backend storing this Row.
 func (row *Row) Decrypt(decrypt func(data []byte, nonce *[24]byte) ([]byte, error)) error {
 	if len(row.Encrypted) == 0 {
 		if Debug {
