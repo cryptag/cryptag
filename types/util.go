@@ -15,10 +15,12 @@ import (
 	"github.com/elimisteve/cryptag"
 )
 
-func RowTagWithPrefix(r *Row, prefix string) string {
-	for _, t := range r.PlainTags() {
-		if strings.HasPrefix(t, prefix) {
-			return strings.TrimPrefix(t, prefix)
+func RowTagWithPrefix(r *Row, prefixes ...string) string {
+	for _, prefix := range prefixes {
+		for _, tag := range r.PlainTags() {
+			if strings.HasPrefix(tag, prefix) {
+				return strings.TrimPrefix(tag, prefix)
+			}
 		}
 	}
 	return ""
