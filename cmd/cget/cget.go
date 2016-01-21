@@ -5,13 +5,11 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
@@ -82,28 +80,14 @@ func main() {
 
 		var rowFilename string
 		for _, r := range rows {
-			if rowFilename, err = saveRowAsFile(r); err != nil {
+			dir := path.Join(cryptag.TrustedBasePath, "decrypted")
+			if rowFilename, err = types.SaveRowAsFile(r, dir); err != nil {
 				log.Printf("Error locally saving file: %v\n", err)
 				continue
 			}
 			log.Printf("Saved new file: %v\n", rowFilename)
 		}
 	}
-}
-
-func saveRowAsFile(r *types.Row) (filepath string, err error) {
-	filename := types.RowTagWithPrefix(r, "filename:")
-	if filename == "" {
-		filename = fmt.Sprintf("%v", time.Now().Unix())
-	}
-
-	dir := path.Join(cryptag.TrustedBasePath, "decrypted")
-	if err = os.MkdirAll(dir, 0755); err != nil {
-		return "", fmt.Errorf("Error creating directory `%v`: %v", dir, err)
-	}
-
-	filepath = path.Join(dir, filename)
-	return filepath, ioutil.WriteFile(filepath, r.Decrypted(), 0644)
 }
 
 var (
