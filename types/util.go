@@ -27,13 +27,9 @@ func RowTagWithPrefix(r *Row, prefixes ...string) string {
 }
 
 func SaveRowAsFile(r *Row, dir string) (filepath string, err error) {
-	f := RowTagWithPrefix(r, "filename:")
+	f := RowTagWithPrefix(r, "filename:", "id:")
 	if f == "" {
-		f = RowTagWithPrefix(r, "id:")
-		if f == "" {
-			f = fmt.Sprintf("%v", time.Now().Unix())
-		}
-		f += "." + RowTagWithPrefix(r, "type:")
+		f = fmt.Sprintf("%d", time.Now().Unix())
 	}
 
 	if dir == "" {
