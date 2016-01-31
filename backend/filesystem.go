@@ -156,7 +156,7 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 	for _, f := range tagFiles {
 		// filepath.Base(f) is of the form randtag1-randtag2-randtag3
 		// and its contents is {"plain_encrypted": ..., "nonce": ...}
-		pair, err := readTagFile(fs, f)
+		pair, err := readTagFile(fs.Decrypt, f)
 		if err != nil {
 			return nil, err
 		}
@@ -386,7 +386,7 @@ func (fs *FileSystem) rowsFromRandomTags(randTags []string, includeFileBody bool
 	return rows, nil
 }
 
-func readTagFile(fs *FileSystem, tagFile string) (*types.TagPair, error) {
+func readTagFile(decrypt func(data []byte, nonce *[24]byte) ([]byte, error), tagFile string) (*types.TagPair, error) {
 	// TODO(elimisteve): Do streaming reads
 
 	// Set pair.{PlainEncrypted,Nonce} from file contents, pair.Random
@@ -407,14 +407,14 @@ func readTagFile(fs *FileSystem, tagFile string) (*types.TagPair, error) {
 	pair.Random = filepath.Base(tagFile)
 
 	// Populate pair.plain
-	if err = pair.Decrypt(fs.Decrypt); err != nil {
+	if err = pair.Decrypt(decrypt); err != nil {
 		return nil, fmt.Errorf("Error from pair.Decrypt: %v", err)
 	}
 
 	return pair, nil
 }
 
-func readRowFile(fs *FileSystem, rowFilePath string, rowTags []string) (*types.Row, error) {
+func readRowFile(bk Backend, rowFilePath string, rowTags []string) (*types.Row, error) {
 	b, err := ioutil.ReadFile(rowFilePath)
 	if err != nil {
 		return nil, err
@@ -430,7 +430,7 @@ func readRowFile(fs *FileSystem, rowFilePath string, rowTags []string) (*types.R
 	row.RandomTags = rowTags
 
 	// Populate row.decrypted and row.plain
-	if err = PopulateRowAfterGet(fs, &row); err != nil {
+	if err = PopulateRowAfterGet(bk, &row); err != nil {
 		return nil, err
 	}
 
