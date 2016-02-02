@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elimisteve/cryptag"
@@ -29,10 +30,32 @@ type DropboxRemote struct {
 
 	dbox *dropbox.Dropbox
 
+	cursorLock sync.RWMutex
+	tagCursor  string // Used to fetch latest tags only
+
 	cachedTagPairs types.TagPairs
 
 	// Used for encryption/decryption
 	key *[32]byte
+}
+
+// SetTagCursor sets the cursor for the remote tags directory
+// incremental TagPair fetching so it can be used for incremental
+// TagPair fetching.
+func (db *DropboxRemote) SetTagCursor(cursor string) {
+	db.cursorLock.Lock()
+	defer db.cursorLock.Unlock()
+
+	db.tagCursor = cursor
+}
+
+// GetTagCursor gets the cursor for the remote tags directory used for
+// incremental TagPair fetching.
+func (db *DropboxRemote) GetTagCursor() {
+	db.cursorLock.RLock()
+	defer db.cursorLock.RUnlock()
+
+	return db.tagCursor
 }
 
 func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) {
@@ -281,10 +304,16 @@ func getRowsFromDbox(db *DropboxRemote, url string) (types.Rows, error) {
 }
 
 func getAllTagsFromDbox(db *DropboxRemote) (types.TagPairs, error) {
-	entry, err := db.dbox.Metadata(db.tagsURL, true, false, "", "", 0)
+	hash, _ := db.GetTagCursor()
+	if types.Debug {
+		log.Printf("getAllTagsFromDbox: tag hash == `%v`\n", hash)
+	}
+
+	entry, err := db.dbox.Metadata(db.tagsURL, true, false, hash, "", 0)
 	if err != nil {
 		return nil, err
 	}
+	db.SetTagCursor(entry.Hash)
 
 	randtags := make([]string, 0, len(entry.Contents))
 	for i := range entry.Contents {
