@@ -51,7 +51,7 @@ func (db *DropboxRemote) SetTagCursor(cursor string) {
 
 // GetTagCursor gets the cursor for the remote tags directory used for
 // incremental TagPair fetching.
-func (db *DropboxRemote) GetTagCursor() {
+func (db *DropboxRemote) GetTagCursor() string {
 	db.cursorLock.RLock()
 	defer db.cursorLock.RUnlock()
 
@@ -304,7 +304,7 @@ func getRowsFromDbox(db *DropboxRemote, url string) (types.Rows, error) {
 }
 
 func getAllTagsFromDbox(db *DropboxRemote) (types.TagPairs, error) {
-	hash, _ := db.GetTagCursor()
+	hash := db.GetTagCursor()
 	if types.Debug {
 		log.Printf("getAllTagsFromDbox: tag hash == `%v`\n", hash)
 	}
