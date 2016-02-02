@@ -461,6 +461,9 @@ func downloadAndPopulateRow(db *DropboxRemote, entry dropbox.Entry, randomTags [
 }
 
 func download(db *DropboxRemote, fullURL string) (body []byte, err error) {
+	if types.Debug {
+		log.Printf("Downloading `%v`...\n", fullURL)
+	}
 	f, _, err := db.dbox.Download(fullURL, "", 0)
 	if err != nil {
 		return nil, fmt.Errorf("Error downloading `%v`: %v\n", fullURL, err)
