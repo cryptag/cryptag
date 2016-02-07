@@ -30,6 +30,9 @@ var (
 	ErrRowsNotFound = errors.New("No rows found")
 )
 
+// NewRow returns a *Row containing the passed-in values in addition
+// to a unique ID tag ("id:new-uuid-goes-here"), the "all" tag, and a
+// new cryptographic nonce.
 func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -51,34 +54,42 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	return row, nil
 }
 
-func NewRowFromBytes(body []byte) (*Row, error) {
+// NewRowFromBytes unmarshals b into a new *Row.
+func NewRowFromBytes(b []byte) (*Row, error) {
 	row := &Row{}
-	if err := json.Unmarshal(body, row); err != nil {
+	if err := json.Unmarshal(b, row); err != nil {
 		return nil, fmt.Errorf("Error creating new row: `%v`. Input: `%s`", err,
-			body)
+			b)
 	}
 	if Debug {
-		log.Printf("Created new Row `%#v` from bytes: `%s`\n", row, body)
+		log.Printf("Created new Row `%#v` from bytes: `%s`\n", row, b)
 	}
 	return row, nil
 }
 
+// Decrypted returns row.decrypted, row's (unexported) decrypted data (if any).
 func (row *Row) Decrypted() []byte {
 	return row.decrypted
 }
 
+// PlainTags returns row.plaintags, row's (unexported) plain
+// (human-entered, human-readable) tags.
 func (row *Row) PlainTags() []string {
 	return row.plainTags
 }
 
+// HasRandomTag answers the question, "does row have the random tag randtag?"
 func (row *Row) HasRandomTag(randtag string) bool {
 	return fun.SliceContains(row.RandomTags, randtag)
 }
 
+// HasPlainTag answers the question, "does row have the plain tag plain?"
 func (row *Row) HasPlainTag(plain string) bool {
 	return fun.SliceContains(row.plainTags, plain)
 }
 
+// Format formats row for printing to the terminal.  Only suitable for
+// plain text Rows.
 func (row *Row) Format() string {
 	return fmt.Sprintf("%s\t%s\n", row.decrypted, strings.Join(row.plainTags, "  "))
 }
