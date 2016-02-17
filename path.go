@@ -41,4 +41,9 @@ func init() {
 			LocalDataPath = androidStorage + "/.cryptag"
 		}
 	}
+
+	// Change LocalDataPath if on Sandstorm (useful for servers)
+	if os.Getenv("SANDSTORM") == "1" {
+		LocalDataPath = "/var"
+	}
 }
