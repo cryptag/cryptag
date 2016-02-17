@@ -76,7 +76,10 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 	// Tag format: /?tags=tag1,tag2,tag3
 	tags = strings.Split(tags[0], ",")
 
-	log.Printf("Rows queried by these tags: %+v\n", tags)
+	if types.Debug {
+		log.Printf("Rows queried by these tags: %+v\n", tags)
+	}
+
 	rows, err := filesystem.RowsByTags(tags)
 	if err != nil {
 		help.WriteError(w, "Error fetching rows: "+err.Error(),
@@ -101,16 +104,19 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 			http.StatusInternalServerError)
 		return
 	}
-	log.Printf("New row added: `%#v`\n", row)
+
+	if types.Debug {
+		log.Printf("New row added: `%#v`\n", row)
+	}
 
 	help.WriteJSON(w, row)
 }
 
 func GetTags(w http.ResponseWriter, req *http.Request) {
-	// TODO(elimisteve): Should parse `?tags=t1,t2,t3` then use
-	// filesytem.TagPairsFromRandomTags to find all TagPairs with
-	// those random tags.  Currently we're ignoring these params and
-	// just returning all TagPairs.
+	_ = req.ParseForm()
+
+	// TODO(elimisteve): Should use filesytem.TagPairsFromRandomTags
+	// to find all TagPairs with those random tags.
 	allTagPairs, err := filesystem.AllTagPairs()
 	if err != nil {
 		help.WriteError(w, "Error getting TagPairs: "+err.Error(),
@@ -118,7 +124,18 @@ func GetTags(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	help.WriteJSON(w, allTagPairs)
+	randtags := req.Form["tags"]
+	if len(randtags) == 0 {
+		if types.Debug {
+			log.Printf("All %d TagPairs retrieved", len(allTagPairs))
+		}
+		help.WriteJSON(w, allTagPairs)
+		return
+	}
+	randtags = strings.Split(randtags[0], ",")
+
+	pairs, _ := allTagPairs.HaveAllRandomTags(randtags)
+	help.WriteJSON(w, pairs)
 }
 
 func PostTag(w http.ResponseWriter, req *http.Request) {
@@ -138,7 +155,9 @@ func PostTag(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("New TagPair added: `%#v`\n", pair)
+	if types.Debug {
+		log.Printf("New TagPair added: `%#v`\n", pair)
+	}
 
 	help.WriteJSON(w, pair)
 }
@@ -421,7 +440,10 @@ func (fs *FileSystem) RowsByTags(randomTags []string) (types.Rows, error) {
 		rowTags = filenames(rowTags)
 
 		if !fun.SliceContainsAll(rowTags, randomTags) {
-			log.Printf("`%v`  doesn't contain all tags in  `%v`\n", rowTags, randomTags)
+			if types.Debug {
+				log.Printf("`%v`  doesn't contain all tags in  `%v`\n",
+					rowTags, randomTags)
+			}
 			continue
 		}
 
