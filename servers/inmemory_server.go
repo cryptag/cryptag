@@ -6,7 +6,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"runtime"
 	"strings"
 
 	"github.com/elimisteve/cryptag/types"
@@ -15,20 +14,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var secretRoot = "/"
-
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	router := mux.NewRouter()
 
 	// Rows
-	router.HandleFunc(secretRoot+"rows", GetRows).Methods("GET")
-	router.HandleFunc(secretRoot+"rows", PostRow).Methods("POST")
+	router.HandleFunc("/rows", GetRows).Methods("GET")
+	router.HandleFunc("/rows", PostRow).Methods("POST")
 
 	// Tags
-	router.HandleFunc(secretRoot+"tags", GetTags).Methods("GET")
-	router.HandleFunc(secretRoot+"tags", PostTag).Methods("POST")
+	router.HandleFunc("/tags", GetTags).Methods("GET")
+	router.HandleFunc("/tags", PostTag).Methods("POST")
 
 	http.Handle("/", router)
 
@@ -48,10 +43,16 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 	}
 	tags = strings.Split(tags[0], ",")
 
-	log.Printf("tags == `%#v`\n", tags)
+	if types.Debug {
+		log.Printf("tags: `%+v`\n", tags)
+	}
+
 	rows := allRows.HaveAllRandomTags(tags)
 
-	log.Printf("%d/%d Rows retrieved:\n%s", len(rows), len(allRows), rows)
+	if types.Debug {
+		log.Printf("%d/%d Rows retrieved:\n%s", len(rows), len(allRows), rows)
+	}
+
 	help.WriteJSON(w, rows)
 }
 
@@ -64,16 +65,30 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 	}
 
 	allRows = append(allRows, row)
-	log.Printf("New row added: `%#v`\n", row)
+	if types.Debug {
+		log.Printf("New row added: `%#v`\n", row)
+	}
 
 	help.WriteJSON(w, row)
 }
 
 func GetTags(w http.ResponseWriter, req *http.Request) {
-	// TODO(elimisteve): Add filtering.  See
-	// https://github.com/elimisteve/cryptag/issues/3
-	log.Printf("%d TagPairs retrieved:\n%s", len(allTagPairs), allTagPairs)
-	help.WriteJSON(w, allTagPairs)
+	tags := req.Form["tags"]
+	if len(tags) == 0 {
+		if types.Debug {
+			log.Printf("All %d TagPairs retrieved", len(allTagPairs))
+		}
+		help.WriteJSON(w, allTagPairs)
+		return
+	}
+	tags = strings.Split(tags[0], ",")
+
+	pairs, _ := allTagPairs.HaveAllRandomTags(tags)
+
+	if types.Debug {
+		log.Printf("%d TagPairs retrieved", len(pairs))
+	}
+	help.WriteJSON(w, pairs)
 }
 
 func PostTag(w http.ResponseWriter, req *http.Request) {
@@ -85,7 +100,9 @@ func PostTag(w http.ResponseWriter, req *http.Request) {
 	}
 
 	allTagPairs = append(allTagPairs, pair)
-	log.Printf("New TagPair added: `%#v`\n", pair)
+	if types.Debug {
+		log.Printf("New TagPair added: `%#v`\n", pair)
+	}
 
 	help.WriteJSON(w, pair)
 }
