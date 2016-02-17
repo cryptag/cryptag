@@ -13,7 +13,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -27,9 +26,9 @@ import (
 var filesystem *FileSystem
 
 func init() {
-	fs, err := NewFileSystem(cryptag.Path)
+	fs, err := NewFileSystem(cryptag.TrustedBasePath)
 	if err != nil {
-		panic("Error from NewFileSystem: " + err.Error())
+		log.Fatalf("Error from NewFileSystem: %v", err)
 	}
 
 	// Set global `filesystem` var
@@ -37,8 +36,6 @@ func init() {
 }
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	router := mux.NewRouter()
 
 	// Rows
@@ -87,7 +84,6 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("%d Rows retrieved:\n%s", len(rows), rows)
 	help.WriteJSON(w, rows)
 }
 
