@@ -16,6 +16,7 @@ const (
 
 var (
 	ErrDecrypt      = fmt.Errorf("Error decrypting ciphertext")
+	ErrDecryptEmpty = fmt.Errorf("Error decrypting empty ciphertext")
 	ErrInvalidKey   = fmt.Errorf("Invalid key")
 	ErrInvalidNonce = fmt.Errorf("Invalid nonce")
 )
@@ -42,6 +43,9 @@ func Decrypt(cipher []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 
 	plain, ok := secretbox.Open(nil, cipher, nonce, key)
 	if !ok {
+		if len(cipher) == 0 {
+			return nil, ErrDecryptEmpty
+		}
 		return nil, ErrDecrypt
 	}
 	return plain, nil
