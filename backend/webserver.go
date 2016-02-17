@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
-	"github.com/elimisteve/fun"
 )
 
 var (
@@ -30,11 +30,13 @@ type WebserverBackend struct {
 
 	// cachedTags types.TagPairs
 
+	authToken string
+
 	// Used for encryption/decryption
 	key *[32]byte
 }
 
-func NewWebserverBackend(key []byte, serverBaseUrl string) (*WebserverBackend, error) {
+func NewWebserverBackend(key []byte, serverBaseUrl, authToken string) (*WebserverBackend, error) {
 	if serverBaseUrl == "" {
 		return nil, fmt.Errorf("Invalid serverBaseUrl `%s`", serverBaseUrl)
 	}
@@ -50,6 +52,7 @@ func NewWebserverBackend(key []byte, serverBaseUrl string) (*WebserverBackend, e
 		serverBaseUrl: serverBaseUrl,
 		rowsUrl:       serverBaseUrl + "/rows",
 		tagsUrl:       serverBaseUrl + "/tags",
+		authToken:     authToken,
 	}
 
 	return ws, nil
@@ -64,7 +67,7 @@ func (wb *WebserverBackend) Decrypt(cipher []byte, nonce *[24]byte) (plain []byt
 }
 
 func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
-	return getTagsFromUrl(wb, wb.tagsUrl)
+	return getTagsFromUrl(wb, wb.tagsUrl, wb.authToken)
 }
 
 func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
@@ -84,9 +87,7 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 		log.Printf("POSTing row data: `%s`\n\n", rowBytes)
 	}
 
-	resp, err := http.Post(wb.rowsUrl, "application/json",
-		bytes.NewReader(rowBytes))
-
+	resp, err := post(wb.rowsUrl, rowBytes, wb.authToken)
 	if err != nil {
 		return nil, fmt.Errorf("Error POSTing row to URL %s: %v", wb.rowsUrl, err)
 	}
@@ -125,8 +126,7 @@ func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, er
 		log.Printf("POSTing tag pair data: `%s`\n\n", pairBytes)
 	}
 
-	resp, err := http.Post(wb.tagsUrl, "application/json",
-		bytes.NewReader(pairBytes))
+	resp, err := post(wb.tagsUrl, pairBytes, wb.authToken)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (wb *WebserverBackend) TagPairsFromRandomTags(randtags []string) (types.Tag
 	}
 
 	url := wb.tagsUrl + "?tags=" + strings.Join(randtags, ",")
-	return getTagsFromUrl(wb, url)
+	return getTagsFromUrl(wb, url, wb.authToken)
 }
 
 func (wb *WebserverBackend) ListRows(plaintags []string) (types.Rows, error) {
@@ -177,7 +177,7 @@ func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, e
 		log.Printf("fullURL == `%s`\n", fullURL)
 	}
 
-	rows, err := getRowsFromUrl(wb, fullURL)
+	rows, err := getRowsFromUrl(wb, fullURL, wb.authToken)
 	if err != nil {
 		return nil, fmt.Errorf("Error from getRowsFromUrl: %v", err)
 	}
@@ -193,12 +193,12 @@ func (wb *WebserverBackend) DeleteRows(randTags []string) error {
 //
 
 // getRowsFromUrl fetches the encrypted rows from url, decrypts them, then
-func getRowsFromUrl(backend Backend, url string) (types.Rows, error) {
+func getRowsFromUrl(backend Backend, url, authToken string) (types.Rows, error) {
 	var rows types.Rows
-	var err error
 
-	if err = fun.FetchInto(url, HttpGetTimeout, &rows); err != nil {
-		return nil, fmt.Errorf("Error from FetchInto: %v", err)
+	err := getInto(url, authToken, &rows)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, row := range rows {
@@ -212,11 +212,11 @@ func getRowsFromUrl(backend Backend, url string) (types.Rows, error) {
 
 // getTagsFromUrl fetches the encrypted tag pairs at url, decrypts them,
 // and unmarshals them into a TagPairs value
-func getTagsFromUrl(backend Backend, url string) (types.TagPairs, error) {
+func getTagsFromUrl(backend Backend, url, authToken string) (types.TagPairs, error) {
 	var pairs types.TagPairs
 	var err error
 
-	if err = fun.FetchInto(url, HttpGetTimeout, &pairs); err != nil {
+	if err = getInto(url, authToken, &pairs); err != nil {
 		return nil, fmt.Errorf("Error fetching pairs: %v", err)
 	}
 
@@ -227,4 +227,58 @@ func getTagsFromUrl(backend Backend, url string) (types.TagPairs, error) {
 	}
 
 	return pairs, nil
+}
+
+func get(url, authToken string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", "Bearer "+authToken)
+
+	client := &http.Client{Timeout: HttpGetTimeout}
+
+	return client.Do(req)
+}
+
+func getInto(url, authToken string, strct interface{}) error {
+	resp, err := get(url, authToken)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return readInto(resp.Body, strct)
+}
+
+func readInto(r io.Reader, strct interface{}) error {
+	body, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(body, strct)
+}
+
+func post(url string, data []byte, authToken string) (*http.Response, error) {
+	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("Error creating POST request: %v", err)
+	}
+
+	req.Header.Add("Authorization", "Bearer "+authToken)
+
+	client := &http.Client{Timeout: HttpGetTimeout}
+
+	return client.Do(req)
+}
+
+func postInto(url string, data []byte, authToken string, strct interface{}) error {
+	resp, err := post(url, data, authToken)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return readInto(resp.Body, strct)
 }
