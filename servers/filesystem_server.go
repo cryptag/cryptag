@@ -69,7 +69,7 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 	if len(tags) == 0 {
 		log.Printf("No tags included; returning no rows")
 		help.WriteError(w, "No tags included; returning no rows",
-			http.StatusInternalServerError)
+			http.StatusBadRequest)
 		return
 	}
 
