@@ -26,7 +26,7 @@ import (
 var filesystem *FileSystem
 
 func init() {
-	fs, err := NewFileSystem(cryptag.TrustedBasePath)
+	fs, err := NewFileSystem(cryptag.LocalDataPath)
 	if err != nil {
 		log.Fatalf("Error from NewFileSystem: %v", err)
 	}
