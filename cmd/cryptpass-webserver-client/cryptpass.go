@@ -17,6 +17,7 @@ import (
 var (
 	SERVER_BASE_URL = "http://localhost:7777"
 	SHARED_SECRET   = []byte(nil)
+	AUTH_TOKEN      = ""
 
 	db backend.Backend
 )
@@ -24,7 +25,8 @@ var (
 func init() {
 	types.Debug = false
 
-	backend, err := backend.NewWebserverBackend(SHARED_SECRET, SERVER_BASE_URL)
+	backend, err := backend.NewWebserverBackend(SHARED_SECRET, SERVER_BASE_URL,
+		AUTH_TOKEN)
 	if err != nil {
 		log.Fatalf("NewWebserverBackend error: %v\n", err)
 	}
