@@ -4,7 +4,7 @@
 package main
 
 import (
-	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -14,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
@@ -80,7 +79,8 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Rows queried by these tags: %+v\n", tags)
 	}
 
-	rows, err := filesystem.RowsByTags(tags)
+	includeFileBody := true
+	rows, err := filesystem.RowsByTags(tags, includeFileBody)
 	if err != nil {
 		help.WriteError(w, "Error fetching rows: "+err.Error(),
 			http.StatusInternalServerError)
@@ -170,9 +170,6 @@ type FileSystem struct {
 	cryptagPath string
 	tagsPath    string
 	rowsPath    string
-	dirLocks    map[string]sync.RWMutex
-
-	randomTagToTagNonceSHA map[string]string
 }
 
 func NewFileSystem(cryptagPath string) (*FileSystem, error) {
@@ -182,12 +179,8 @@ func NewFileSystem(cryptagPath string) (*FileSystem, error) {
 		cryptagPath: cryptagPath,
 		tagsPath:    path.Join(cryptagPath, "tags"),
 		rowsPath:    path.Join(cryptagPath, "rows"),
-		dirLocks:    map[string]sync.RWMutex{},
 	}
 	if err := fs.Init(); err != nil {
-		return nil, err
-	}
-	if err := fs.setRandomTagToTagNonceSHA(); err != nil {
 		return nil, err
 	}
 
@@ -214,60 +207,32 @@ func (fs *FileSystem) SaveTagPair(pair *types.TagPair) error {
 		return errors.New("Invalid tag pair; requires plain_encrypted, random, and nonce fields")
 	}
 
-	// Save tag pair to fs.tagsPath/$nonce_sha/{plain_encrypted,random,nonce}
-	tagNonceSHA := nonceSHA256(pair.Nonce)
-	dirPath := path.Join(fs.tagsPath, tagNonceSHA)
-	if err := os.Mkdir(dirPath, 0755); err != nil && !os.IsExist(err) {
-		// TODO(elimisteve): Sanitize?
-		return fmt.Errorf("Error making dir `%s`: %v", dirPath, err)
+	// Just save "plain_encrypted" and "nonce" to file ("random"
+	// contained in filename)
+	t := map[string]interface{}{
+		"plain_encrypted": pair.PlainEncrypted,
+		"nonce":           pair.Nonce,
 	}
-
-	// Make files in dirPath
-
-	// nonce
-	nonceF, err := os.Create(path.Join(dirPath, "nonce"))
+	b, err := json.Marshal(t)
 	if err != nil {
-		return fmt.Errorf("Error creating file `nonce`: %v", err)
-	}
-	defer nonceF.Close()
-	if _, err = nonceF.Write((*pair.Nonce)[:]); err != nil {
-		return fmt.Errorf("Error saving nonce: %v", err)
+		return err
 	}
 
-	// random
-	randomF, err := os.Create(path.Join(dirPath, "random"))
-	if err != nil {
-		return fmt.Errorf("Error creating file `random`: %v", err)
-	}
-	defer randomF.Close()
-	if _, err = randomF.Write([]byte(pair.Random)); err != nil {
-		return fmt.Errorf("Error saving random string: %v", err)
-	}
+	filename := path.Join(fs.tagsPath, pair.Random)
 
-	// plain_encrypted
-	plainEncF, err := os.Create(path.Join(dirPath, "plain_encrypted"))
-	if err != nil {
-		return fmt.Errorf("Error creating file `plain_encrypted`: %v", err)
-	}
-	defer plainEncF.Close()
-	if _, err = plainEncF.Write(pair.PlainEncrypted); err != nil {
-		return fmt.Errorf("Error saving plain_encrypted: %v", err)
-	}
-
-	// Saved!
-	return nil
+	return ioutil.WriteFile(filename, b, 0644)
 }
 
 func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
-	nonceDirs, err := filepath.Glob(path.Join(fs.tagsPath, "*"))
+	tagFiles, err := filepath.Glob(path.Join(fs.tagsPath, "*"))
 	if err != nil {
 		return nil, fmt.Errorf("Error listing tags: %v", err)
 	}
 
 	var pairs types.TagPairs
-	for _, dir := range nonceDirs {
+	for _, f := range tagFiles {
 		// Read plain_encrypted, random, and nonce
-		pair, err := readTagFiles(dir)
+		pair, err := readTagFile(f)
 		if err != nil {
 			return nil, err
 		}
@@ -278,52 +243,25 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 	return pairs, nil
 }
 
-func readTagFiles(tagDir string) (*types.TagPair, error) {
-	// TODO(elimisteve): Do streaming reads
-	plainEncF, err := os.Open(path.Join(tagDir, "plain_encrypted"))
-	if err != nil {
-		return nil, err
-	}
-	defer plainEncF.Close()
+func readTagFile(tagFile string) (*types.TagPair, error) {
+	// Set pair.{PlainEncrypted,Nonce} from file contents, pair.Random
+	// from filename
 
-	randomF, err := os.Open(path.Join(tagDir, "random"))
-	if err != nil {
-		return nil, err
-	}
-	defer randomF.Close()
-
-	nonceF, err := os.Open(path.Join(tagDir, "nonce"))
-	if err != nil {
-		return nil, err
-	}
-	defer nonceF.Close()
-
-	// Read files and create new TagPair out of them
-
-	// plain_encrypted
-	plainEnc, err := ioutil.ReadAll(plainEncF)
+	// File contains: {"plain_encrypted": ..., "nonce": ...}
+	b, err := ioutil.ReadFile(tagFile)
 	if err != nil {
 		return nil, err
 	}
 
-	// random
-	randomBody, err := ioutil.ReadAll(randomF)
-	if err != nil {
-		return nil, err
-	}
-	random := string(randomBody)
-
-	// nonce
-	nonceBody, err := ioutil.ReadAll(nonceF)
-	if err != nil {
-		return nil, err
-	}
-	nonce, err := cryptag.ConvertNonce(nonceBody)
+	pair := &types.TagPair{}
+	err = json.Unmarshal(b, pair)
 	if err != nil {
 		return nil, err
 	}
 
-	return types.NewTagPair(plainEnc, random, nonce, ""), nil
+	pair.Random = filepath.Base(tagFile)
+
+	return pair, nil
 }
 
 func (fs *FileSystem) SaveRow(row *types.Row) error {
@@ -332,129 +270,65 @@ func (fs *FileSystem) SaveRow(row *types.Row) error {
 		return errors.New("Invalid row; requires data, tags, and nonce fields")
 	}
 
-	// Save tag row to fs.tagsPath/$nonce_sha/{plain_encrypted,random,nonce}
-	rowNonceSHA := nonceSHA256(row.Nonce)
-	dirPath := path.Join(fs.rowsPath, rowNonceSHA)
-	if err := os.Mkdir(dirPath, 0755); err != nil && !os.IsExist(err) {
-		// TODO(elimisteve): Sanitize?
-		return fmt.Errorf("Error making dir `%s`: %v", dirPath, err)
+	// Save row.{Encrypted,Nonce} to fs.rowsPath/randomtag1-randomtag2-randomtag3
+
+	rowData := map[string]interface{}{
+		"data":  row.Encrypted,
+		"nonce": row.Nonce,
 	}
-
-	// Make files in dirPath
-
-	// nonce
-	nonceF, err := os.Create(path.Join(dirPath, "nonce"))
+	b, err := json.Marshal(rowData)
 	if err != nil {
-		return fmt.Errorf("Error creating file `nonce`: %v", err)
-	}
-	defer nonceF.Close()
-	if _, err = nonceF.Write((*row.Nonce)[:]); err != nil {
-		return fmt.Errorf("Error saving nonce: %v", err)
+		return err
 	}
 
-	// data
-	encF, err := os.Create(path.Join(dirPath, "data"))
-	if err != nil {
-		return fmt.Errorf("Error creating file `data`: %v", err)
-	}
-	defer encF.Close()
-	if _, err = encF.Write(row.Encrypted); err != nil {
-		return fmt.Errorf("Error saving data: %v", err)
-	}
+	// Create row file fs.rowsPath/randomtag1-randomtag2-randomtag3
 
-	// Create tags/ dir and symlink from
-	// fs.tagsPath/$tag_nonce_sha to
-	// fs.rowsPath/$row_nonce_sha/tags/$random_tag
-	rowTagsPath := path.Join(fs.rowsPath, rowNonceSHA, "tags")
-	if err := os.Mkdir(rowTagsPath, 0755); err != nil && !os.IsExist(err) {
-		// TODO(elimisteve): Sanitize?
-		return fmt.Errorf("Error making dir `%s`: %v", dirPath, err)
-	}
+	filename := path.Join(fs.rowsPath, strings.Join(row.RandomTags, "-"))
 
-	err = fs.setRandomTagToTagNonceSHA()
-	if err != nil {
-		return fmt.Errorf("Error looking up latest tags: %v", err)
-	}
-
-	// Create symlinks to tag rows
-	for _, randomTag := range row.RandomTags {
-		tagNonceSHA, ok := fs.randomTagToTagNonceSHA[randomTag]
-		if !ok {
-			return fmt.Errorf("randomTag `%s` not found in `%v` of length %d",
-				randomTag, fs.randomTagToTagNonceSHA, len(fs.randomTagToTagNonceSHA))
-		}
-
-		// From {~/.cryptag/tags}/$tag_nonce_sha
-		from := path.Join(fs.tagsPath, tagNonceSHA)
-
-		// To {~/.cryptag/rows/$row_nonce_sha/tags}/$random_tag
-		to := path.Join(rowTagsPath, randomTag)
-
-		if err = os.Symlink(from, to); err != nil {
-			return err
-		}
-	}
-
-	// Saved!
-	return nil
+	return ioutil.WriteFile(filename, b, 0644)
 }
 
 func (fs *FileSystem) TagPairsFromRandomTags(randtags []string) (types.TagPairs, error) {
 	return nil, fmt.Errorf("Error TagPairsFromRandomTags NOT IMPLEMENTED")
 }
 
-func (fs *FileSystem) RowsByTags(randomTags []string) (types.Rows, error) {
-	// Find the rows that have all the tags listed in randomTags
+func (fs *FileSystem) RowsByTags(randTags []string, includeFileBody bool) (types.Rows, error) {
+	if types.Debug {
+		log.Printf("RowsByTags(%#v, %v)\n", randTags, includeFileBody)
+	}
 
-	rowDirs, err := filepath.Glob(path.Join(fs.rowsPath, "*"))
+	rowFiles, err := filepath.Glob(path.Join(fs.rowsPath, "*"))
 	if err != nil {
 		return nil, err
 	}
 
-	if len(randomTags) == 0 {
-		var rows types.Rows
-		for _, dir := range rowDirs {
-			row, err := readRowFiles(dir)
-			if err != nil {
-				return nil, err
-			}
-
-			rows = append(rows, row)
-		}
-
-		return rows, nil
-	}
-
-	// len(randomTag) > 0
-
 	var rows types.Rows
 
-	// For each row dir, if it has all tags, save it
-	for _, dir := range rowDirs {
-		rowTags, err := filepath.Glob(path.Join(dir, "tags", "*"))
-		if err != nil {
-			return nil, err
-		}
+	// For each row dir, if it has all tags, append to `rows`
+	for _, rowFile := range rowFiles {
+		// Row filenames are of the form randtag1-randtag2-randtag3
+		rowTags := strings.Split(filepath.Base(rowFile), "-")
 
-		// We just need the filenames, not the full paths
-		rowTags = filenames(rowTags)
-
-		if !fun.SliceContainsAll(rowTags, randomTags) {
-			if types.Debug {
-				log.Printf("`%v`  doesn't contain all tags in  `%v`\n",
-					rowTags, randomTags)
-			}
+		if !fun.SliceContainsAll(rowTags, randTags) {
 			continue
 		}
 
-		// Row is tagged with all randomTags; return to user
+		// Row is tagged with all queryTags; return to user
+		row := &types.Row{RandomTags: rowTags}
 
-		row, err := readRowFiles(dir)
-		if err != nil {
-			return nil, err
+		// Load contents of row file, too
+		if includeFileBody {
+			row, err = readRowFile(rowFile, rowTags)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		rows = append(rows, row)
+	}
+
+	if len(rows) == 0 {
+		return nil, types.ErrRowsNotFound
 	}
 
 	return rows, nil
@@ -464,83 +338,20 @@ func (fs *FileSystem) RowsByTags(randomTags []string) (types.Rows, error) {
 // Helpers
 //
 
-func readRowFiles(rowDir string) (*types.Row, error) {
-	// Open, read ./data
-	data, err := ioutil.ReadFile(path.Join(rowDir, "data"))
-	if err != nil {
-		return nil, err
-	}
-	row := types.Row{Encrypted: data}
-
-	// Open, read ./nonce
-	nonceB, err := ioutil.ReadFile(path.Join(rowDir, "nonce"))
-	if err != nil {
-		return nil, err
-	}
-	nonce, err := cryptag.ConvertNonce(nonceB)
+func readRowFile(rowFilePath string, rowTags []string) (*types.Row, error) {
+	b, err := ioutil.ReadFile(rowFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	row.Nonce = nonce
-
-	// List files in ./tags to get random tags
-	randomTags, err := filepath.Glob(path.Join(rowDir, "tags", "*"))
+	var row types.Row
+	// This populates row.Encrypted and row.Nonce
+	err = json.Unmarshal(b, &row)
 	if err != nil {
 		return nil, err
 	}
 
-	// Attach random tags to row
-	row.RandomTags = filenames(randomTags)
+	row.RandomTags = rowTags
 
 	return &row, nil
-}
-
-func filenames(paths []string) (filenames []string) {
-	filenames = make([]string, 0, len(paths))
-	for _, path := range paths {
-		filenames = append(filenames, filepath.Base(path))
-	}
-	return filenames
-}
-
-func (fs *FileSystem) setRandomTagToTagNonceSHA() error {
-	// Search all tagsPath/$tag_nonce_sha/random files for body == randomTag
-	randoms, err := filepath.Glob(path.Join(fs.tagsPath, "*", "random"))
-	if err != nil {
-		return err
-	}
-
-	// map[randomTag]TagNonceSHA
-	m := make(map[string]string, len(randoms))
-
-	for _, rfilename := range randoms {
-		f, err := os.Open(rfilename)
-		if err != nil {
-			return err
-		}
-
-		randomTag, err := ioutil.ReadAll(f)
-		if err != nil {
-			return err
-		}
-
-		// rfilename == fs.tagsPath/$tag_nonce_sha/random
-
-		// Trim `$fs.tagsPath/` off the front
-		rfilename = rfilename[len(fs.tagsPath)+1:]
-
-		// Trim `/random` off the end
-		tagNonceSHA := rfilename[:len(rfilename)-len("random")-1]
-
-		m[string(randomTag)] = tagNonceSHA
-	}
-
-	fs.randomTagToTagNonceSHA = m
-
-	return nil
-}
-
-func nonceSHA256(nonce *[24]byte) string {
-	return fmt.Sprintf("%x", sha256.Sum256((*nonce)[:]))
 }
