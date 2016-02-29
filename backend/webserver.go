@@ -45,11 +45,12 @@ func NewWebserverBackend(key []byte, serverName, serverBaseUrl, authToken string
 	serverBaseUrl = strings.TrimRight(serverBaseUrl, "/")
 
 	if len(key) == 0 {
-		var err error
-		key, err = cryptag.RandomKey()
+		good, err := cryptag.RandomKey()
 		if err != nil {
 			return nil, err
 		}
+		// TODO: Shouldn't have to do this...
+		key = (*good)[:]
 	}
 
 	goodKey, err := cryptag.ConvertKey(key)
@@ -106,7 +107,7 @@ func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, e
 }
 
 func (wb *WebserverBackend) Config() (*Config, error) {
-	if wb.Key == nil {
+	if wb.key == nil {
 		return nil, cryptag.ErrNilKey
 	}
 	c := Config{
