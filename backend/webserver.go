@@ -121,6 +121,10 @@ func (wb *WebserverBackend) Config() (*Config, error) {
 	return &c, nil
 }
 
+func (wb *WebserverBackend) Key() *[32]byte {
+	return wb.key
+}
+
 func (wb *WebserverBackend) Encrypt(plain []byte, nonce *[24]byte) (cipher []byte, err error) {
 	return cryptag.Encrypt(plain, nonce, wb.key)
 }
