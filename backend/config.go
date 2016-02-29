@@ -4,13 +4,21 @@
 package backend
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
+)
+
+var (
+	ErrConfigExists = errors.New("Backend config already exists")
 )
 
 type Config struct {
@@ -20,9 +28,26 @@ type Config struct {
 	Local    bool
 	DataPath string // Used by backend.FileSystem, other local backends
 
-	Custom map[string]interface{} `json:",omitempty"` // Used by Dropbox, other backends
+	Custom map[string]interface{} `json:",omitempty"` // Used by Dropbox, Webserver, other backends
+}
 
-	// BaseURL  string // Used by backend.Webserver, other remote backends
+func (conf *Config) Save(backendsDir string) error {
+	filename := path.Join(backendsDir, conf.Name)
+	if _, err := os.Stat(filename); err == nil {
+		log.Printf("Backend config already exists at %v; NOT overwriting",
+			filename)
+		return ErrConfigExists
+	}
+
+	if err := conf.Canonicalize(); err != nil {
+		return err
+	}
+	b, err := json.Marshal(conf)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filename, b, 0600)
 }
 
 func (conf *Config) Canonicalize() error {
