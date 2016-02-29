@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ var (
 )
 
 type WebserverBackend struct {
+	serverName    string
 	serverBaseUrl string
 	rowsUrl       string
 	tagsUrl       string
@@ -36,11 +38,19 @@ type WebserverBackend struct {
 	key *[32]byte
 }
 
-func NewWebserverBackend(key []byte, serverBaseUrl, authToken string) (*WebserverBackend, error) {
+func NewWebserverBackend(key []byte, serverName, serverBaseUrl, authToken string) (*WebserverBackend, error) {
 	if serverBaseUrl == "" {
 		return nil, fmt.Errorf("Invalid serverBaseUrl `%s`", serverBaseUrl)
 	}
 	serverBaseUrl = strings.TrimRight(serverBaseUrl, "/")
+
+	if len(key) == 0 {
+		var err error
+		key, err = cryptag.RandomKey()
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	goodKey, err := cryptag.ConvertKey(key)
 	if err != nil {
@@ -49,6 +59,7 @@ func NewWebserverBackend(key []byte, serverBaseUrl, authToken string) (*Webserve
 
 	ws := &WebserverBackend{
 		key:           goodKey,
+		serverName:    serverName,
 		serverBaseUrl: serverBaseUrl,
 		rowsUrl:       serverBaseUrl + "/rows",
 		tagsUrl:       serverBaseUrl + "/tags",
@@ -56,6 +67,57 @@ func NewWebserverBackend(key []byte, serverBaseUrl, authToken string) (*Webserve
 	}
 
 	return ws, nil
+}
+
+func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, error) {
+	if backendPath == "" {
+		backendPath = cryptag.BackendPath
+	}
+	if backendName == "" {
+		backendName = "webserver"
+	}
+	backendName = strings.TrimSuffix(backendName, ".json")
+
+	configFile := path.Join(backendPath, backendName+".json")
+
+	b, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// Config exists
+
+	var conf Config
+	if err := json.Unmarshal(b, &conf); err != nil {
+		return nil, err
+	}
+
+	if conf.Key == nil {
+		return nil, fmt.Errorf("Key cannot be empty!")
+	}
+
+	webConf, err := WebserverConfigFromMap(conf.Custom)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWebserverBackend((*conf.Key)[:], backendName, webConf.BaseURL,
+		webConf.AuthToken)
+}
+
+func (wb *WebserverBackend) Config() (*Config, error) {
+	if wb.Key == nil {
+		return nil, cryptag.ErrNilKey
+	}
+	c := Config{
+		Name: wb.serverName,
+		Key:  wb.key,
+		Custom: map[string]interface{}{
+			"AuthToken": wb.authToken,
+			"BaseURL":   wb.serverBaseUrl,
+		},
+	}
+	return &c, nil
 }
 
 func (wb *WebserverBackend) Encrypt(plain []byte, nonce *[24]byte) (cipher []byte, err error) {

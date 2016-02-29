@@ -25,7 +25,7 @@ var (
 func init() {
 	types.Debug = false
 
-	backend, err := backend.NewWebserverBackend(SHARED_SECRET, SERVER_BASE_URL,
+	backend, err := backend.NewWebserverBackend(SHARED_SECRET, "webserver", SERVER_BASE_URL,
 		AUTH_TOKEN)
 	if err != nil {
 		log.Fatalf("NewWebserverBackend error: %v\n", err)
