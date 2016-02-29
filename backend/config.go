@@ -32,7 +32,7 @@ type Config struct {
 }
 
 func (conf *Config) Save(backendsDir string) error {
-	filename := path.Join(backendsDir, conf.Name)
+	filename := path.Join(backendsDir, conf.Name) + ".json"
 	if _, err := os.Stat(filename); err == nil {
 		log.Printf("Backend config already exists at %v; NOT overwriting",
 			filename)
