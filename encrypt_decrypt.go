@@ -18,6 +18,7 @@ var (
 	ErrDecrypt      = fmt.Errorf("Error decrypting ciphertext")
 	ErrDecryptEmpty = fmt.Errorf("Error decrypting empty ciphertext")
 	ErrInvalidKey   = fmt.Errorf("Invalid key")
+	ErrNilKey       = fmt.Errorf("Nil key")
 	ErrInvalidNonce = fmt.Errorf("Invalid nonce")
 )
 
@@ -62,6 +63,13 @@ func ConvertKey(key []byte) (goodKey *[32]byte, err error) {
 	copy(good[:], key)
 
 	return &good, nil
+}
+
+func UnconvertKey(goodKey *[32]byte) ([]byte, error) {
+	if goodKey == nil {
+		return nil, ErrNilKey
+	}
+	return (*goodKey)[:], nil
 }
 
 func ConvertNonce(nonce []byte) (goodNonce *[24]byte, err error) {
