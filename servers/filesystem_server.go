@@ -59,7 +59,32 @@ func main() {
 }
 
 func GetRoot(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte(`Download and run the Linux command line client with
+	w.Write([]byte(`Welcome to cpass.
+
+You can use this Sandstorm grain for storing passwords or other secrets. The three best things
+about CrypTag:
+
+- You access it from a secure client on your own computer. (Right now, this is Linux-only.
+  I'm looking forward to changing that. Want to help?)
+
+- Data never goes out of sync. (All data is stored on the server.)
+
+- Searches are efficient. This is CrypTag's key idea: store secret information on a server,
+  with labels that the server can't understand, that can still be used for search!
+
+Overview of daily use
+---------------------
+
+$ cpass-sandstorm create twitter.com/myusername
+Enter password: *******
+
+$ cpass-sandstorm get twitter.com/myusername
+hunter2
+
+Get started
+-----------
+	
+Download and run the Linux command line client with
 
     mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
 
@@ -71,7 +96,17 @@ To see the remaining valid commands, run
 
     ./cpass-sandstorm
 
-Enjoy!`))
+Enjoy!
+
+Learn more
+----------
+
+You'll find more details at:
+
+- Conceptual overview in these slides from DEFCON: https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/
+
+- Details: https://github.com/elimisteve/cryptag
+`))
 }
 
 func GetRows(w http.ResponseWriter, req *http.Request) {
