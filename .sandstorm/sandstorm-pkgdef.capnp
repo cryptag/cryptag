@@ -27,7 +27,7 @@ const pkgdef :Spk.PackageDefinition = (
 
     actions = [
       # Define your "new document" handlers here.
-      ( title = (defaultText = "New Base Folder"),
+      ( title = (defaultText = "New Folder"),
         command = .myCommand
         # The command to run when starting for the first time. (".myCommand"
         # is just a constant defined at the bottom of the file.)
