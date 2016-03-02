@@ -38,6 +38,7 @@ func main() {
 	router := mux.NewRouter()
 
 	// Rows
+	router.HandleFunc("/", GetRoot).Methods("GET")
 	router.HandleFunc("/rows", GetRows).Methods("GET")
 	router.HandleFunc("/rows", PostRow).Methods("POST")
 
@@ -55,6 +56,22 @@ func main() {
 
 	log.Printf("HTTP server trying to listen on %v...\n", server.Addr)
 	log.Fatal(server.ListenAndServe())
+}
+
+func GetRoot(w http.ResponseWriter, req *http.Request) {
+	w.Write([]byte(`Download and run the Linux command line client with
+
+    mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
+
+Then click the Key icon above this message (on Sandstorm) and generate a Sandstorm API key to give to cpass-sandstorm like so:
+
+    ./cpass-sandstorm init <sandstorm_key>
+
+To see the remaining valid commands, run
+
+    ./cpass-sandstorm
+
+Enjoy!`))
 }
 
 func GetRows(w http.ResponseWriter, req *http.Request) {
