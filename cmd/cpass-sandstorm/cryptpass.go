@@ -8,29 +8,20 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/elimisteve/clipboard"
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/types"
 )
 
-var (
-	SERVER_BASE_URL = "http://localhost:7777"
-	SHARED_SECRET   = []byte(nil)
-	AUTH_TOKEN      = ""
-
-	db backend.Backend
-)
+var backendName = "sandstorm-webserver"
 
 func init() {
-	types.Debug = false
-
-	backend, err := backend.NewWebserverBackend(SHARED_SECRET, "webserver", SERVER_BASE_URL,
-		AUTH_TOKEN)
-	if err != nil {
-		log.Fatalf("NewWebserverBackend error: %v\n", err)
+	if bn := os.Getenv("CRYPTAG_BACKEND_NAME"); bn != "" {
+		backendName = bn
 	}
-	db = backend
 }
 
 func main() {
@@ -38,7 +29,24 @@ func main() {
 		log.Fatalln(usage)
 	}
 
+	var db backend.Backend
+
+	if os.Args[1] != "init" {
+		var err error
+		db, err = backend.LoadWebserverBackend("", backendName)
+		if err != nil {
+			log.Fatal(usage)
+		}
+	}
+
 	switch os.Args[1] {
+	case "init":
+		if len(os.Args) < 3 {
+			log.Fatal(initUsage)
+		}
+		if err := createBackendConfig(os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
 	case "create":
 		if len(os.Args) < 4 {
 			log.Println("At least 3 command line arguments must be included")
@@ -89,3 +97,31 @@ func main() {
 }
 
 var usage = "Usage: " + filepath.Base(os.Args[0]) + " [create <yourpassword>] tag1 [tag2 ...]"
+var initUsage = "Usage: " + filepath.Base(os.Args[0]) + " init <sandstorm_key>"
+
+func createBackendConfig(key string) error {
+	info := strings.SplitN(key, "#", 2)
+	if len(info) < 2 {
+		return fmt.Errorf("Error parsing `%v` as Sandstorm key generated from Sandstorm's UI",
+			key)
+	}
+
+	serverBaseURL, authToken := info[0], info[1]
+
+	db, err := backend.NewWebserverBackend(nil, "webserver-sandstorm", serverBaseURL, authToken)
+	if err != nil {
+		return fmt.Errorf("NewWebserverBackend error: %v\n", err)
+	}
+
+	cfg, err := db.Config()
+	if err != nil {
+		return fmt.Errorf("Error getting backend config: %v\n", err)
+	}
+
+	err = cfg.Save(cryptag.BackendPath)
+	if err != nil && err != backend.ErrConfigExists {
+		return fmt.Errorf("Error saving backend config to disk: %v\n", err)
+	}
+
+	return nil
+}
