@@ -109,15 +109,15 @@ Get started
 	
 Download and run the cpass-sandstorm Linux command line client:
 
-    mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
+$ mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
 
 Then click the Key icon above this message (on Sandstorm) and generate a Sandstorm API key to give to cpass-sandstorm like so:
 
-    ./cpass-sandstorm init <sandstorm_key>
+$ ./cpass-sandstorm init <sandstorm_key>
 
 To see the remaining valid commands (such as "create", seen above), run
 
-    ./cpass-sandstorm
+$ ./cpass-sandstorm
 
 Enjoy!
 
