@@ -73,7 +73,8 @@ Download and run the cpass-sandstorm Linux command line client:
 
 $ mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
 
-Then click the Key icon above this message (on Sandstorm) and generate a Sandstorm API key to give to cpass-sandstorm like so:
+Then click the Key icon on a CrypTag Sandstorm grain and generate a
+Sandstorm API key to give to cpass-sandstorm like so:
 
 $ ./cpass-sandstorm init <sandstorm_key>
 
