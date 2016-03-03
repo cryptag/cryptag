@@ -19,9 +19,9 @@ const pkgdef :Spk.PackageDefinition = (
 
     appTitle = (defaultText = "CrypTag"),
 
-    appVersion = 5,  # Increment this for every release.
+    appVersion = 6,  # Increment this for every release.
 
-    appMarketingVersion = (defaultText = "0.2.3"),
+    appMarketingVersion = (defaultText = "0.2.4"),
     # Human-readable representation of appVersion. Should match the way you
     # identify versions of your app in documentation and marketing.
 
@@ -61,7 +61,7 @@ const pkgdef :Spk.PackageDefinition = (
       # URL of the app's source code repository, e.g. a GitHub URL.
       # Required if you specify a license requiring redistributing code, but optional otherwise.
 
-      license = (none = void),
+      license = (openSource = agpl3),
       # The license this package is distributed under.  See
       # https://docs.sandstorm.io/en/latest/developing/publishing-apps/#license
 
@@ -114,7 +114,7 @@ const pkgdef :Spk.PackageDefinition = (
       # in an app store. Note that the Markdown is not permitted to contain HTML nor image tags (but
       # you can include a list of screenshots separately).
 
-      shortDescription = (defaultText = "Encrypted Storage"),
+      shortDescription = (defaultText = "Encrypted storage"),
       # A very short (one-to-three words) description of what the app does. For example,
       # "Document editor", or "Notetaking", or "Email client". This will be displayed under the app
       # title in the grid view in the app market.
