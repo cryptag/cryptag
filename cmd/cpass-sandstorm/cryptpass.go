@@ -108,7 +108,7 @@ func createBackendConfig(key string) error {
 
 	serverBaseURL, authToken := info[0], info[1]
 
-	db, err := backend.NewWebserverBackend(nil, "webserver-sandstorm", serverBaseURL, authToken)
+	db, err := backend.NewWebserverBackend(nil, backendName, serverBaseURL, authToken)
 	if err != nil {
 		return fmt.Errorf("NewWebserverBackend error: %v\n", err)
 	}
