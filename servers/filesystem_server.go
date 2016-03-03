@@ -59,7 +59,7 @@ func main() {
 }
 
 func GetRoot(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte(`Welcome to cpass.
+	w.Write([]byte(`Welcome to cpass!
 
 You can use this Sandstorm grain for storing passwords or other secrets. The three best things
 about CrypTag:
@@ -72,14 +72,38 @@ about CrypTag:
 - Searches are efficient. This is CrypTag's key idea: store secret information on a server,
   with labels that the server can't understand, that can still be used for search!
 
+
 Overview of daily use
 ---------------------
 
-$ cpass-sandstorm create twitter.com/myusername
-Enter password: *******
+$ cpass-sandstorm create mytw1tt3rp4ssword twitter @myusername login:myusername
 
-$ cpass-sandstorm get twitter.com/myusername
-hunter2
+This stores your Twitter password (in encrypted form, of course) to Sandstorm.
+
+
+$ cpass-sandstorm @myusername
+
+This adds the Twitter password for @myusername to your clipboard automatically!
+
+
+$ cpass-sandstorm all
+
+This will list all passwords (and, actually, all other textual data)
+you've stored.
+
+
+More tips/use cases
+-------------------
+
+cpass is for more than just passwords, though.  You can store much more:
+
+1. Passwords (cpass @elimisteve)
+2. Credit card numbers (cpass visa digits)
+3. Quotes (cpass nietzsche quote)
+4. Bookmarks, tagged like on Pinboard or Delicious (cpass url snowden)
+5. Command line commands -- cross-machine shell history! (cpass install docker)
+6. GitHub recovery codes (cpass github recoverycode)
+
 
 Get started
 -----------
@@ -98,12 +122,13 @@ To see the remaining valid commands, run
 
 Enjoy!
 
+
 Learn more
 ----------
 
 You'll find more details at:
 
-- Conceptual overview in these slides from DEFCON: https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/
+- Conceptual overview in these slides from my DEFCON talk introducing CrypTag: https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/
 
 - Details: https://github.com/elimisteve/cryptag
 `))
