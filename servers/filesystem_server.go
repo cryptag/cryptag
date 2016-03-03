@@ -59,18 +59,17 @@ func main() {
 }
 
 func GetRoot(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte(`Welcome to cpass!
+	w.Write([]byte(`Welcome to CrypTag!
 
-You can use this Sandstorm grain for storing passwords or other secrets. The three best things
-about CrypTag:
+You can use CrypTag Sandstorm grains for storing passwords or other
+secrets. The three best things about CrypTag:
 
-- You access it from a secure client on your own computer. (Right now, this is Linux-only.
-  I'm looking forward to changing that. Want to help?)
+- You access all your data from a secure client on your own computer.
 
 - Data never goes out of sync. (All data is stored on the server.)
 
 - Searches are efficient. This is CrypTag's key idea: store secret information on a server,
-  with labels that the server can't understand, that can still be used for search!
+  with labels ("tags") that the server can't understand, that can still be used for search!
 
 
 Overview of daily use
@@ -88,27 +87,27 @@ This adds the Twitter password for @myusername to your clipboard automatically!
 
 $ cpass-sandstorm all
 
-This will list all passwords (and, actually, all other textual data)
-you've stored.
+This will list all passwords (and, actually, all other textual data;
+see below) you've stored.
 
 
 More tips/use cases
 -------------------
 
-cpass is for more than just passwords, though.  You can store much more:
+cpass-sandstorm is for more than just passwords, though.  You may also
+want to store and access:
 
-1. Passwords (cpass @elimisteve)
-2. Credit card numbers (cpass visa digits)
-3. Quotes (cpass nietzsche quote)
-4. Bookmarks, tagged like on Pinboard or Delicious (cpass url snowden)
-5. Command line commands -- cross-machine shell history! (cpass install docker)
-6. GitHub recovery codes (cpass github recoverycode)
+1. Credit card numbers (cpass-sandstorm visa digits)
+2. Quotes (cpass-sandstorm nietzsche quote)
+3. Bookmarks, tagged like on Pinboard or Delicious (cpass-sandstorm url snowden)
+4. Command line commands -- cross-machine shell history! (cpass-sandstorm install docker)
+5. GitHub recovery codes (cpass-sandstorm github recoverycode)
 
 
 Get started
 -----------
 	
-Download and run the Linux command line client with
+Download and run the cpass-sandstorm Linux command line client:
 
     mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
 
@@ -116,7 +115,7 @@ Then click the Key icon above this message (on Sandstorm) and generate a Sandsto
 
     ./cpass-sandstorm init <sandstorm_key>
 
-To see the remaining valid commands, run
+To see the remaining valid commands (such as "create", seen above), run
 
     ./cpass-sandstorm
 
