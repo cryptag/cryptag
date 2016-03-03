@@ -1,5 +1,3 @@
-# CrypTag: Encrypted, taggable, searchable cloud storage
-
 ## Vision
 
 My goal is both to enable all internet users to access all their data
