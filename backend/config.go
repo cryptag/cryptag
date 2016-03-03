@@ -32,6 +32,10 @@ type Config struct {
 }
 
 func (conf *Config) Save(backendsDir string) error {
+	if err := os.MkdirAll(backendsDir, 0700); err != nil && os.IsExist(err) {
+		return err
+	}
+
 	filename := path.Join(backendsDir, conf.Name) + ".json"
 	if _, err := os.Stat(filename); err == nil {
 		log.Printf("Backend config already exists at %v; NOT overwriting",
