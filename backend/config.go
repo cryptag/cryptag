@@ -51,7 +51,12 @@ func (conf *Config) Save(backendsDir string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, b, 0600)
+	if err = ioutil.WriteFile(filename, b, 0600); err != nil {
+		return err
+	}
+	log.Printf("Saved backend config to %v\n", filename)
+
+	return nil
 }
 
 func (conf *Config) Canonicalize() error {
