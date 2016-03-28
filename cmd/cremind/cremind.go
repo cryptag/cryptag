@@ -133,6 +133,7 @@ func main() {
 
 var (
 	blackOnWhite = color.New(color.FgBlack, color.BgHiWhite).SprintFunc()
+	blackOnCyan  = color.New(color.FgBlack, color.BgHiCyan).SprintFunc()
 	timeLayout   = "20060102"
 )
 
@@ -151,9 +152,17 @@ func fmtReminder(r *types.Row) string {
 	}
 
 	dayOfWeek := when.Weekday().String()[:3] // E.g., "Fri"
-	return fmt.Sprintf(`%s %s "%s"    %v`, blackOnWhite(whenStr),
-		blackOnWhite(dayOfWeek+today), r.Decrypted(),
-		strings.Join(r.PlainTags(), "  "))
+	return fmt.Sprintf(`%s %s "%s"    %s`, blackOnCyan(whenStr),
+		blackOnCyan(dayOfWeek+today), r.Decrypted(),
+		strings.Join(colorStrs(blackOnWhite, r.PlainTags()), "   "))
+}
+
+func colorStrs(colorize func(...interface{}) string, strs []string) []string {
+	outStrs := make([]string, len(strs))
+	for i := range strs {
+		outStrs[i] = colorize(strs[i])
+	}
+	return outStrs
 }
 
 func isToday(day time.Time) bool {
