@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/elimisteve/cryptag/backend"
-	"github.com/elimisteve/cryptag/cli/colors"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -150,9 +150,9 @@ func fmtReminder(r *types.Row) string {
 	}
 
 	dayOfWeek := when.Weekday().String()[:3] // E.g., "Fri"
-	return fmt.Sprintf(`%s %s "%s"    %s`, colors.BlackOnCyan(whenStr),
-		colors.BlackOnCyan(dayOfWeek+today), r.Decrypted(),
-		colors.Tags(r.PlainTags()))
+	return fmt.Sprintf(`%s %s "%s"    %s`, color.BlackOnCyan(whenStr),
+		color.BlackOnCyan(dayOfWeek+today), r.Decrypted(),
+		color.Tags(r.PlainTags()))
 }
 
 func isToday(day time.Time) bool {
