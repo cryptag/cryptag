@@ -35,6 +35,7 @@ func main() {
 		var err error
 		db, err = backend.LoadWebserverBackend("", backendName)
 		if err != nil {
+			log.Printf("%v\n", err)
 			log.Fatal(usage)
 		}
 	}
