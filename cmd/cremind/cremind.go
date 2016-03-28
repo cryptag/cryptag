@@ -152,7 +152,7 @@ func fmtReminder(r *types.Row) string {
 	dayOfWeek := when.Weekday().String()[:3] // E.g., "Fri"
 	return fmt.Sprintf(`%s %s "%s"    %s`, colors.BlackOnCyan(whenStr),
 		colors.BlackOnCyan(dayOfWeek+today), r.Decrypted(),
-		strings.Join(colors.Map(colors.BlackOnWhite, r.PlainTags()), "   "))
+		colors.Tags(r.PlainTags()))
 }
 
 func isToday(day time.Time) bool {
