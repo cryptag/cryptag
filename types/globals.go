@@ -3,6 +3,14 @@
 
 package types
 
+import "os"
+
 var (
 	Debug = false
 )
+
+func init() {
+	if os.Getenv("DEBUG") == "1" {
+		Debug = true
+	}
+}
