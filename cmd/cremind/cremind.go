@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/colors"
 	"github.com/elimisteve/cryptag/types"
-	"github.com/fatih/color"
 )
 
 var (
@@ -132,9 +132,7 @@ func main() {
 }
 
 var (
-	blackOnWhite = color.New(color.FgBlack, color.BgHiWhite).SprintFunc()
-	blackOnCyan  = color.New(color.FgBlack, color.BgHiCyan).SprintFunc()
-	timeLayout   = "20060102"
+	timeLayout = "20060102"
 )
 
 func fmtReminder(r *types.Row) string {
@@ -152,17 +150,9 @@ func fmtReminder(r *types.Row) string {
 	}
 
 	dayOfWeek := when.Weekday().String()[:3] // E.g., "Fri"
-	return fmt.Sprintf(`%s %s "%s"    %s`, blackOnCyan(whenStr),
-		blackOnCyan(dayOfWeek+today), r.Decrypted(),
-		strings.Join(colorStrs(blackOnWhite, r.PlainTags()), "   "))
-}
-
-func colorStrs(colorize func(...interface{}) string, strs []string) []string {
-	outStrs := make([]string, len(strs))
-	for i := range strs {
-		outStrs[i] = colorize(strs[i])
-	}
-	return outStrs
+	return fmt.Sprintf(`%s %s "%s"    %s`, colors.BlackOnCyan(whenStr),
+		colors.BlackOnCyan(dayOfWeek+today), r.Decrypted(),
+		strings.Join(colors.Map(colors.BlackOnWhite, r.PlainTags()), "   "))
 }
 
 func isToday(day time.Time) bool {
