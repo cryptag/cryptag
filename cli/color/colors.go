@@ -1,11 +1,13 @@
 // Steven Phillips / elimisteve
 // 2016.03.28
 
-package colors
+package color
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/elimisteve/cryptag/types"
 	"github.com/fatih/color"
 )
 
@@ -29,4 +31,18 @@ func Map(colorize func(...interface{}) string, strs []string) []string {
 // Tags returns a colorized list of the given tags
 func Tags(tags []string) string {
 	return strings.Join(Map(BlackOnWhite, tags), "   ")
+}
+
+func TextRow(r *types.Row) string {
+	text := BlackOnCyan(string(r.Decrypted()))
+	tags := Map(BlackOnWhite, r.PlainTags())
+	return fmt.Sprintf("%s    %s", text, strings.Join(tags, "   "))
+}
+
+func TextRows(rows types.Rows) string {
+	cRows := make([]string, 0, len(rows))
+	for i := range rows {
+		cRows = append(cRows, TextRow(rows[i]))
+	}
+	return strings.Join(cRows, "\n\n")
 }
