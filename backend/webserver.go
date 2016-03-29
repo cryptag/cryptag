@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elimisteve/cryptag"
@@ -268,11 +269,19 @@ func getRowsFromUrl(backend Backend, url, authToken string) (types.Rows, error) 
 		return nil, err
 	}
 
+	wg := &sync.WaitGroup{}
+	wg.Add(len(rows))
+
 	for _, row := range rows {
-		if err = PopulateRowAfterGet(backend, row); err != nil {
-			return nil, fmt.Errorf("Error from PopulateRowAfterGet: %v", err)
-		}
+		go func(row *types.Row) {
+			if err := PopulateRowAfterGet(backend, row); err != nil {
+				log.Printf("Error populating row `%#v` after get: %v\n", row, err)
+			}
+			wg.Done()
+		}(row)
 	}
+
+	wg.Wait()
 
 	return rows, nil
 }
