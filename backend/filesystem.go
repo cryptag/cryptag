@@ -78,6 +78,11 @@ func saveConfig(conf *Config) error {
 	if err != nil {
 		return err
 	}
+
+	if types.Debug {
+		log.Printf("saveConfig: Saved config %s\n", cFile)
+	}
+
 	return nil
 }
 

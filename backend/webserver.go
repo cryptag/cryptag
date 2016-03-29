@@ -292,6 +292,10 @@ func getTagsFromUrl(backend Backend, url, authToken string) (types.TagPairs, err
 	var pairs types.TagPairs
 	var err error
 
+	if types.Debug {
+		log.Printf("getTagsFromUrl: Getting tags from URL `%v`\n", url)
+	}
+
 	if err = getInto(url, authToken, &pairs); err != nil {
 		return nil, fmt.Errorf("Error fetching pairs: %v", err)
 	}
