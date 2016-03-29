@@ -91,7 +91,7 @@ func (row *Row) HasPlainTag(plain string) bool {
 // Format formats row for printing to the terminal.  Only suitable for
 // plain text Rows.
 func (row *Row) Format() string {
-	return fmt.Sprintf("%s\t%s\n", row.decrypted, strings.Join(row.plainTags, "  "))
+	return fmt.Sprintf("%s    %s\n", row.decrypted, strings.Join(row.plainTags, "   "))
 }
 
 // Decrypt sets row.decrypted, row.nonce based upon row.Encrypted,
