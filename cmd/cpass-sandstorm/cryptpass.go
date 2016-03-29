@@ -13,6 +13,7 @@ import (
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -93,7 +94,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Print(rows.Format())
+		fmt.Print(color.TextRows(rows))
 	}
 }
 
@@ -103,7 +104,8 @@ var initUsage = "Usage: " + filepath.Base(os.Args[0]) + " init <sandstorm_key>"
 func createBackendConfig(key string) error {
 	info := strings.SplitN(key, "#", 2)
 	if len(info) < 2 {
-		return fmt.Errorf("Error parsing `%v` as Sandstorm key generated from Sandstorm's UI",
+		return fmt.Errorf(
+			"Error parsing `%v` as Sandstorm key generated from Sandstorm's UI",
 			key)
 	}
 
