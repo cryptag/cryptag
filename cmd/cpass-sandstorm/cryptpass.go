@@ -90,10 +90,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
-		}
-
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
 		if err = clipboard.WriteAll(dec); err != nil {

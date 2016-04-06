@@ -66,30 +66,14 @@ func main() {
 			log.Fatalf(deleteUsage)
 		}
 
-		plainTags := append(os.Args[2:], "type:text")
-
-		// Get all the random tags associated with the tag pairs that
-		// contain every tag in plainTags.
-		//
-		// Got that?
-		//
-		// The flow: user specifies plainTags + we fetch all TagPairs
-		// => we filter the TagPairs based on those with the
-		// user-specified plainTags => we grab each TagPair's random
-		// string so we can delete the rows tagged with those tags
+		plaintags := append(os.Args[2:], "type:text")
 
 		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		pairs, err = pairs.HaveAllPlainTags(plainTags)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Delete rows tagged with the random strings in pairs
-		err = db.DeleteRows(pairs.AllRandom())
+		err = backend.DeleteRows(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -106,13 +90,10 @@ func main() {
 
 		plaintags := append(os.Args[1:], "type:text")
 
+		// Ensures len(rows) > 0
 		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
 		}
 
 		// Add first row's contents to clipboard
