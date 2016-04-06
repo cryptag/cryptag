@@ -130,7 +130,7 @@ func main() {
 			events = append(events, fmtReminder(r))
 		}
 		sort.Strings(events)
-		fmt.Println(strings.Join(events, "\n\n"))
+		color.Println(strings.Join(events, "\n\n"))
 	}
 }
 

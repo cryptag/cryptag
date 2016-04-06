@@ -71,7 +71,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Println(color.TextRow(row))
+		color.Println(color.TextRow(row))
 
 	default: // Search
 		// Empty clipboard
@@ -97,7 +97,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Println(color.TextRows(rows))
+		color.Println(color.TextRows(rows))
 	}
 }
 
