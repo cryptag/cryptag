@@ -66,7 +66,7 @@ func main() {
 			log.Printf("At least 2 command line arguments must be included\n")
 			log.Fatalf(deleteUsage)
 		}
-		plainTags := os.Args[2:]
+		plaintags := append(os.Args[2:], "type:text")
 
 		pairs, err := db.AllTagPairs()
 		if err != nil {
