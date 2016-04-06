@@ -29,3 +29,13 @@ func RowsFromPlainTags(bk Backend, plaintags cryptag.PlainTags, pairs types.TagP
 
 	return rows, nil
 }
+
+func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) error {
+	matches, err := pairs.HaveAllPlainTags(plaintags)
+	if err != nil {
+		return err
+	}
+
+	// Delete rows tagged with the random strings in pairs
+	return bk.DeleteRows(matches.AllRandom())
+}
