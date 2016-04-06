@@ -95,7 +95,9 @@ func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) 
 // NewDropboxRemote will save this backend to disk if len(key) == 0 or
 // name == "".
 func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemote, error) {
-	cfg.BasePath = strings.TrimRight(cfg.BasePath, "/")
+	if cfg.BasePath != "/" {
+		cfg.BasePath = strings.TrimRight(cfg.BasePath, "/")
+	}
 
 	if err := cfg.Valid(); err != nil {
 		return nil, fmt.Errorf("Invalid token(s): %v", err)
@@ -148,11 +150,16 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 		}
 	}
 
+	maybeSlash := ""
+	if !strings.HasSuffix(dboxPath, "/") {
+		maybeSlash = "/"
+	}
+
 	db := DropboxRemote{
 		key:      goodKey,
 		dboxPath: dboxPath,
-		rowsURL:  dboxPath + "/rows",
-		tagsURL:  dboxPath + "/tags",
+		rowsURL:  dboxPath + maybeSlash + "rows",
+		tagsURL:  dboxPath + maybeSlash + "tags",
 		dbox:     dbox,
 	}
 
