@@ -58,12 +58,12 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", todo, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(todo), tags)
+		row, err := types.NewRow([]byte(todo), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
@@ -111,13 +111,16 @@ func main() {
 		}
 
 		plaintags := append(tags, "type:calendarevent")
-		rows, err := db.RowsFromPlainTags(plaintags)
+
+		// TODO: Cache tags locally
+		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		// Sort and print

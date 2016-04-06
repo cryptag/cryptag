@@ -69,7 +69,12 @@ func main() {
 		// TODO: Temporary?
 		plaintags = append(plaintags, "type:file")
 
-		rows, err := db.RowsFromPlainTags(plaintags)
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}

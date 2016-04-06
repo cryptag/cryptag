@@ -62,23 +62,30 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(data), tags)
+		row, err := types.NewRow([]byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Print(row.Format())
+		fmt.Println(color.TextRow(row))
 
 	default: // Search
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
 		plaintags := append(os.Args[1:], "type:text")
-		rows, err := db.RowsFromPlainTags(plaintags)
+
+		// TODO: Consider caching locally
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -94,7 +101,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Print(color.TextRows(rows))
+		fmt.Println(color.TextRows(rows))
 	}
 }
 

@@ -46,3 +46,14 @@ func (rows Rows) HaveAllRandomTags(random []string) Rows {
 	}
 	return matches
 }
+
+func (rows Rows) Populate(key *[32]byte, pairs TagPairs) error {
+	// TODO: Benchmark whether parallelizing would increase
+	// performance
+	for i := range rows {
+		if err := rows[i].Populate(key, pairs); err != nil {
+			return err
+		}
+	}
+	return nil
+}

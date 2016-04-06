@@ -135,15 +135,12 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 	return NewFileSystem(&conf)
 }
 
-func (fs *FileSystem) Encrypt(plain []byte, nonce *[24]byte) ([]byte, error) {
-	return cryptag.Encrypt(plain, nonce, fs.key)
-}
-
-func (fs *FileSystem) Decrypt(cipher []byte, nonce *[24]byte) (plain []byte, err error) {
-	return cryptag.Decrypt(cipher, nonce, fs.key)
+func (fs *FileSystem) Key() *[32]byte {
+	return fs.key
 }
 
 func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
+	// TODO: Make this obsolete
 	if fs.cachedTagPairs != nil {
 		if types.Debug {
 			log.Printf("AllTagPairs: Returning %v cached tag pairs",
@@ -161,7 +158,7 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 	for _, f := range tagFiles {
 		// filepath.Base(f) is of the form randtag1-randtag2-randtag3
 		// and its contents is {"plain_encrypted": ..., "nonce": ...}
-		pair, err := readTagFile(fs.Decrypt, f)
+		pair, err := readTagFile(fs.Key(), f)
 		if err != nil {
 			return nil, err
 		}
@@ -178,18 +175,15 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 	return pairs, nil
 }
 
-func (fs *FileSystem) TagPairsFromRandomTags(randTags []string) (types.TagPairs, error) {
-	pairs, err := fs.AllTagPairs()
-	if err != nil {
-		return nil, err
-	}
-	return pairs.HaveAllRandomTags(randTags)
+func (fs *FileSystem) TagPairsFromRandomTags(randtags cryptag.RandomTags) (types.TagPairs, error) {
+	// TODO: This should grab files from disk with the names $BASE/tags/$randtag
+	return nil, errors.New("TagPairsFromRandomTags: NOT IMPLEMENTED")
 }
 
-func (fs *FileSystem) SaveTagPair(pair *types.TagPair) (*types.TagPair, error) {
+func (fs *FileSystem) SaveTagPair(pair *types.TagPair) error {
 	if len(pair.PlainEncrypted) == 0 || len(pair.Random) == 0 || pair.Nonce == nil || *pair.Nonce == [24]byte{} {
 		// TODO(elimisteve): Make error global?
-		return nil, errors.New("Invalid tag pair; requires plain_encrypted, random, and nonce fields")
+		return errors.New("Invalid tag pair; requires plain_encrypted, random, and nonce fields")
 	}
 
 	// Just save "plain_encrypted" and "nonce" to file ("random"
@@ -200,90 +194,73 @@ func (fs *FileSystem) SaveTagPair(pair *types.TagPair) (*types.TagPair, error) {
 	}
 	b, err := json.Marshal(t)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Save tag pair to fs.tagsPath/$random
 	tagpairF, err := os.Create(path.Join(fs.tagsPath, pair.Random))
 	if err != nil {
-		return nil, fmt.Errorf("Error creating tag file: %v", err)
+		return fmt.Errorf("Error creating tag file: %v", err)
 	}
 	defer tagpairF.Close()
 
 	if _, err = tagpairF.Write(b); err != nil {
-		return nil, fmt.Errorf("Error saving tag file: %v", err)
+		return fmt.Errorf("Error saving tag file: %v", err)
 	}
 
 	// Saved!
-	return pair, nil
+	return nil
 }
 
-func (fs *FileSystem) ListRows(plainTags []string) (types.Rows, error) {
+func (fs *FileSystem) ListRows(randtags cryptag.RandomTags) (types.Rows, error) {
 	// TODO: Reduce code duplication between ListRows and
 	// RowsFromPlainTags
 
-	if len(plainTags) == 0 {
+	if len(randtags) == 0 {
+		return nil, errors.New("Must query by 1 or more tags")
+	}
+
+	// len(queryTags) > 0
+
+	rows, err := fs.rowsFromRandomTags(randtags, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// // Decrypt, set tags
+	// for _, row := range rows {
+	// 	if err = PopulateRowAfterGet(fs, row); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	return rows, nil
+}
+
+func (fs *FileSystem) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
+	if len(randtags) == 0 {
 		return nil, errors.New("Must query by 1 or more tags")
 	}
 
 	// Find the rows that have all the tags in plainTags
 
-	queryTags, err := randomFromPlain(fs, plainTags)
-	if err != nil {
-		return nil, err
-	}
-
 	// len(queryTags) > 0
 
-	rows, err := fs.rowsFromRandomTags(queryTags, false)
-	if err != nil {
-		return nil, err
-	}
-
-	// Decrypt, set tags
-	for _, row := range rows {
-		if err = PopulateRowAfterGet(fs, row); err != nil {
-			return nil, err
-		}
-	}
-
-	return rows, nil
+	return fs.rowsFromRandomTags(randtags, true)
 }
 
-func (fs *FileSystem) RowsFromPlainTags(plainTags []string) (types.Rows, error) {
-	if len(plainTags) == 0 {
-		return nil, errors.New("Must query by 1 or more tags")
-	}
-
-	// Find the rows that have all the tags in plainTags
-
-	queryTags, err := randomFromPlain(fs, plainTags)
-	if err != nil {
-		return nil, err
-	}
-
-	// len(queryTags) > 0
-
-	rows, err := fs.rowsFromRandomTags(queryTags, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return rows, nil
-}
-
-func (fs *FileSystem) SaveRow(r *types.Row) (*types.Row, error) {
-	row, err := PopulateRowBeforeSave(fs, r)
-	if err != nil {
-		return nil, err
-	}
+func (fs *FileSystem) SaveRow(row *types.Row) error {
+	// row, err := PopulateRowBeforeSave(fs, r)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	if len(row.Encrypted) == 0 || len(row.RandomTags) == 0 || row.Nonce == nil || *row.Nonce == [24]byte{} {
 		if types.Debug {
 			log.Printf("Error saving row `%#v`\n", row)
 		}
 		// TODO(elimisteve): Make error global?
-		return nil, errors.New("Invalid row; requires data, tags, and nonce fields")
+		return errors.New("Invalid row; requires data, tags, and nonce fields")
 	}
 
 	// Save row.{Encrypted,Nonce} to fs.rowsPath/randomtag1-randomtag2-randomtag3
@@ -294,24 +271,24 @@ func (fs *FileSystem) SaveRow(r *types.Row) (*types.Row, error) {
 	}
 	b, err := json.Marshal(rowData)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Create row file fs.rowsPath/randomtag1-randomtag2-randomtag3
 	rowF, err := os.Create(path.Join(fs.rowsPath, strings.Join(row.RandomTags, "-")))
 	if err != nil {
-		return nil, fmt.Errorf("Error creating row file: %v", err)
+		return fmt.Errorf("Error creating row file: %v", err)
 	}
 	defer rowF.Close()
 	if _, err = rowF.Write(b); err != nil {
-		return nil, fmt.Errorf("Error saving row file: %v", err)
+		return fmt.Errorf("Error saving row file: %v", err)
 	}
 
 	// Saved!
-	return row, nil
+	return nil
 }
 
-func (fs *FileSystem) DeleteRows(randTags []string) error {
+func (fs *FileSystem) DeleteRows(randTags cryptag.RandomTags) error {
 	if len(randTags) == 0 {
 		return fmt.Errorf("Must query by 1 or more tags")
 	}
@@ -370,8 +347,7 @@ func (fs *FileSystem) rowsFromRandomTags(randTags []string, includeFileBody bool
 			continue
 		}
 
-		// Row is tagged with all queryTags; return to user
-		row := &types.Row{RandomTags: rowTags}
+		var row *types.Row
 
 		// Load contents of row file, too
 		if includeFileBody {
@@ -379,6 +355,9 @@ func (fs *FileSystem) rowsFromRandomTags(randTags []string, includeFileBody bool
 			if err != nil {
 				return nil, err
 			}
+		} else {
+			// Row is tagged with all queryTags; return to user
+			row = &types.Row{RandomTags: rowTags}
 		}
 
 		rows = append(rows, row)
@@ -391,7 +370,7 @@ func (fs *FileSystem) rowsFromRandomTags(randTags []string, includeFileBody bool
 	return rows, nil
 }
 
-func readTagFile(decrypt func(data []byte, nonce *[24]byte) ([]byte, error), tagFile string) (*types.TagPair, error) {
+func readTagFile(key *[32]byte, tagFile string) (*types.TagPair, error) {
 	// TODO(elimisteve): Do streaming reads
 
 	// Set pair.{PlainEncrypted,Nonce} from file contents, pair.Random
@@ -412,14 +391,14 @@ func readTagFile(decrypt func(data []byte, nonce *[24]byte) ([]byte, error), tag
 	pair.Random = filepath.Base(tagFile)
 
 	// Populate pair.plain
-	if err = pair.Decrypt(decrypt); err != nil {
+	if err = pair.Decrypt(key); err != nil {
 		return nil, fmt.Errorf("Error from pair.Decrypt: %v", err)
 	}
 
 	return pair, nil
 }
 
-func readRowFile(bk Backend, rowFilePath string, rowTags []string) (*types.Row, error) {
+func readRowFile(bk *FileSystem, rowFilePath string, rowTags []string) (*types.Row, error) {
 	b, err := ioutil.ReadFile(rowFilePath)
 	if err != nil {
 		return nil, err
@@ -434,10 +413,10 @@ func readRowFile(bk Backend, rowFilePath string, rowTags []string) (*types.Row, 
 
 	row.RandomTags = rowTags
 
-	// Populate row.decrypted and row.plain
-	if err = PopulateRowAfterGet(bk, &row); err != nil {
-		return nil, err
-	}
+	// // Populate row.decrypted and row.plain
+	// if err = PopulateRowAfterGet(bk, &row); err != nil {
+	// 	return nil, err
+	// }
 
 	return &row, nil
 }

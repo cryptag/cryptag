@@ -49,12 +49,12 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(data), tags)
+		row, err := types.NewRow([]byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
@@ -98,8 +98,13 @@ func main() {
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		plaintags := append(os.Args[1:], "type:text")
-		rows, err := db.RowsFromPlainTags(plaintags)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -48,28 +49,24 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(data), tags)
+		row, err := types.NewRow([]byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Print(row.Format())
+		fmt.Println(color.TextRow(row))
 
 	case "delete":
 		if len(os.Args) < 3 {
 			log.Printf("At least 2 command line arguments must be included\n")
 			log.Fatalf(deleteUsage)
 		}
-		plainTags := os.Args[2:]
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatalf("Error from AllTagPairs: %v\n", err)
-		}
+		plainTags := append(os.Args[2:], "type:text")
 
 		// Get all the random tags associated with the tag pairs that
 		// contain every tag in plainTags.
@@ -80,6 +77,11 @@ func main() {
 		// => we filter the TagPairs based on those with the
 		// user-specified plainTags => we grab each TagPair's random
 		// string so we can delete the rows tagged with those tags
+
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		pairs, err = pairs.HaveAllPlainTags(plainTags)
 		if err != nil {
@@ -97,8 +99,14 @@ func main() {
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		plaintags := append(os.Args[1:], "type:text")
-		rows, err := db.RowsFromPlainTags(plaintags)
+
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -114,7 +122,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Print(rows.Format())
+		fmt.Println(color.TextRows(rows))
 	}
 }
 

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -64,18 +66,23 @@ func main() {
 				len(data), tags)
 		}
 
-		newRow, err := types.NewRow(data, tags)
+		row, err := types.NewRow(data, tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = backend.PopulateRowBeforeSave(db, row)
+		if err != nil {
+			log.Fatalf("Error populating row: %v\n", err)
+		}
+
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
 
-		log.Printf("Successfully saved new row with tags:\n    %v\n",
-			strings.Join(row.PlainTags(), "  "))
+		fmt.Printf("Successfully saved new row with these tags:\n\n%v\n",
+			color.Tags(row.PlainTags()))
 	}
 }
 
