@@ -185,18 +185,9 @@ func (fs *FileSystem) SaveTagPair(pair *types.TagPair) error {
 	}
 
 	// Save tag pair to fs.tagsPath/$random
-	tagpairF, err := os.Create(path.Join(fs.tagsPath, pair.Random))
-	if err != nil {
-		return fmt.Errorf("Error creating tag file: %v", err)
-	}
-	defer tagpairF.Close()
+	filepath := path.Join(fs.tagsPath, pair.Random)
 
-	if _, err = tagpairF.Write(b); err != nil {
-		return fmt.Errorf("Error saving tag file: %v", err)
-	}
-
-	// Saved!
-	return nil
+	return ioutil.WriteFile(filepath, b, 0600)
 }
 
 func (fs *FileSystem) ListRows(randtags cryptag.RandomTags) (types.Rows, error) {
@@ -207,19 +198,12 @@ func (fs *FileSystem) ListRows(randtags cryptag.RandomTags) (types.Rows, error) 
 		return nil, errors.New("Must query by 1 or more tags")
 	}
 
-	// len(queryTags) > 0
+	// len(randtags) > 0
 
 	rows, err := fs.rowsFromRandomTags(randtags, false)
 	if err != nil {
 		return nil, err
 	}
-
-	// // Decrypt, set tags
-	// for _, row := range rows {
-	// 	if err = PopulateRowAfterGet(fs, row); err != nil {
-	// 		return nil, err
-	// 	}
-	// }
 
 	return rows, nil
 }
@@ -231,7 +215,7 @@ func (fs *FileSystem) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Row
 
 	// Find the rows that have all the tags in plainTags
 
-	// len(queryTags) > 0
+	// len(randtags) > 0
 
 	return fs.rowsFromRandomTags(randtags, true)
 }
@@ -261,18 +245,12 @@ func (fs *FileSystem) SaveRow(row *types.Row) error {
 		return err
 	}
 
-	// Create row file fs.rowsPath/randomtag1-randomtag2-randomtag3
-	rowF, err := os.Create(path.Join(fs.rowsPath, strings.Join(row.RandomTags, "-")))
-	if err != nil {
-		return fmt.Errorf("Error creating row file: %v", err)
-	}
-	defer rowF.Close()
-	if _, err = rowF.Write(b); err != nil {
-		return fmt.Errorf("Error saving row file: %v", err)
-	}
+	// Create row file fs.rowsPath/randomtag1-randomtag2-randomtag3-...
 
-	// Saved!
-	return nil
+	filename := strings.Join(row.RandomTags, "-")
+	filepath := path.Join(fs.rowsPath, filename)
+
+	return ioutil.WriteFile(filepath, b, 0600)
 }
 
 func (fs *FileSystem) DeleteRows(randTags cryptag.RandomTags) error {
