@@ -4,7 +4,6 @@
 package backend
 
 import (
-	"errors"
 	"fmt"
 	"log"
 

@@ -242,7 +242,7 @@ func (db *DropboxRemote) SaveTagPair(pair *types.TagPair) error {
 	return nil
 }
 
-func (db *DropboxRemote) TagPairsFromRandomTags(randtags []string) (types.TagPairs, error) {
+func (db *DropboxRemote) TagPairsFromRandomTags(randtags cryptag.RandomTags) (types.TagPairs, error) {
 	if len(randtags) == 0 {
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
