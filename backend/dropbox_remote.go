@@ -178,7 +178,8 @@ func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
 		return nil, err
 	}
 	if types.Debug {
-		log.Printf("getAllTagsFromDbox took %v\n", time.Since(start))
+		log.Printf("getAllTagsFromDbox took %v, returning %d TagPairs\n",
+			time.Since(start), len(pairs))
 	}
 
 	return pairs, nil
