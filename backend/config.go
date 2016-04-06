@@ -36,7 +36,7 @@ func (conf *Config) Save(backendsDir string) error {
 		return err
 	}
 
-	filename := path.Join(backendsDir, conf.Name) + ".json"
+	filename := path.Join(backendsDir, conf.Name+".json")
 	if _, err := os.Stat(filename); err == nil {
 		log.Printf("Backend config already exists at %v; NOT overwriting",
 			filename)
@@ -54,7 +54,7 @@ func (conf *Config) Save(backendsDir string) error {
 	if err = ioutil.WriteFile(filename, b, 0600); err != nil {
 		return err
 	}
-	log.Printf("Saved backend config to %v\n", filename)
+	log.Printf("Saved backend config: %v\n", filename)
 
 	return nil
 }

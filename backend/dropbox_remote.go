@@ -238,7 +238,7 @@ func (db *DropboxRemote) SaveTagPair(pair *types.TagPair) error {
 	}
 
 	if types.Debug {
-		log.Printf("New *TagPair created: `%#v`\n", pair)
+		log.Printf("New *TagPair saved: `%#v`\n", pair)
 	}
 
 	return nil
@@ -457,7 +457,7 @@ func downloadRow(db *DropboxRemote, entry dropbox.Entry, randomTags []string) (*
 
 func download(db *DropboxRemote, fullURL string) (body []byte, err error) {
 	if types.Debug {
-		log.Printf("Downloading `%v`...\n", fullURL)
+		log.Printf("Downloading `%v`\n", fullURL)
 	}
 	f, _, err := db.dbox.Download(fullURL, "", 0)
 	if err != nil {

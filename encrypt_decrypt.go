@@ -24,10 +24,10 @@ var (
 
 func Encrypt(plain []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 	if nonce == nil {
-		return nil, fmt.Errorf("nonce is nil!")
+		return nil, fmt.Errorf("nonce is nil")
 	}
 	if key == nil {
-		return nil, fmt.Errorf("key is nil!")
+		return nil, fmt.Errorf("key is nil")
 	}
 
 	cipher := secretbox.Seal(nil, plain, nonce, key)
@@ -36,10 +36,10 @@ func Encrypt(plain []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 
 func Decrypt(cipher []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 	if nonce == nil {
-		return nil, fmt.Errorf("nonce is nil!")
+		return nil, fmt.Errorf("nonce is nil")
 	}
 	if key == nil {
-		return nil, fmt.Errorf("key is nil!")
+		return nil, fmt.Errorf("key is nil")
 	}
 
 	plain, ok := secretbox.Open(nil, cipher, nonce, key)
