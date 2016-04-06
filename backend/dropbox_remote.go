@@ -33,8 +33,6 @@ type DropboxRemote struct {
 	cursorLock sync.RWMutex
 	tagCursor  string // Used to fetch latest tags only
 
-	cachedTagPairs types.TagPairs
-
 	// Used for encryption/decryption
 	key *[32]byte
 }
@@ -166,12 +164,6 @@ func (db *DropboxRemote) Key() *[32]byte {
 }
 
 func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
-	if db.cachedTagPairs != nil {
-		log.Printf("AllTagPairs: Returning %v cached tag pairs",
-			len(db.cachedTagPairs))
-		return db.cachedTagPairs, nil
-	}
-
 	start := time.Now()
 
 	pairs, err := getAllTagsFromDbox(db)
@@ -181,8 +173,6 @@ func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
 	if types.Debug {
 		log.Printf("getAllTagsFromDbox took %v\n", time.Since(start))
 	}
-
-	db.cachedTagPairs = pairs
 
 	return pairs, nil
 }
