@@ -11,6 +11,7 @@ import (
 
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -58,7 +59,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Print(row.Format())
+		fmt.Println(color.TextRow(row))
 
 	case "delete":
 		if len(os.Args) < 3 {
@@ -72,23 +73,7 @@ func main() {
 			log.Fatalf("Error from AllTagPairs: %v\n", err)
 		}
 
-		// Get all the random tags associated with the tag pairs that
-		// contain every tag in plainTags.
-		//
-		// Got that?
-		//
-		// The flow: user specifies plainTags + we fetch all TagPairs
-		// => we filter the TagPairs based on those with the
-		// user-specified plainTags => we grab each TagPair's random
-		// string so we can delete the rows tagged with those tags
-
-		pairs, err = pairs.HaveAllPlainTags(plainTags)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Delete rows tagged with the random strings in pairs
-		err = db.DeleteRows(pairs.AllRandom())
+		err = backend.DeleteRows(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -109,10 +94,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
-		}
-
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
 		if err = clipboard.WriteAll(dec); err != nil {
@@ -120,7 +101,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Print(rows.Format())
+		fmt.Println(color.TextRows(rows))
 	}
 }
 
