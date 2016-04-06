@@ -42,7 +42,7 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	// TODO(elimisteve): Document `id:`-prefix and related conventions
 	uuidTag := "id:" + id.String()
 
-	created := "created:" + fmtDatetime(time.Now())
+	created := "created:" + fmtDatetime(cryptag.Now())
 
 	// For future queryability-related reasons, UUID must come first!
 	plainTags = append([]string{uuidTag}, append(plainTags, created, "all")...)
