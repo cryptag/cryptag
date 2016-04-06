@@ -150,16 +150,11 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 		}
 	}
 
-	maybeSlash := ""
-	if !strings.HasSuffix(dboxPath, "/") {
-		maybeSlash = "/"
-	}
-
 	db := DropboxRemote{
 		key:      goodKey,
 		dboxPath: dboxPath,
-		rowsURL:  dboxPath + maybeSlash + "rows",
-		tagsURL:  dboxPath + maybeSlash + "tags",
+		rowsURL:  path.Clean(dboxPath + "/rows"),
+		tagsURL:  path.Clean(dboxPath + "/tags"),
 		dbox:     dbox,
 	}
 
