@@ -35,17 +35,17 @@ secrets. The three best things about CrypTag:
 Overview of daily use
 ---------------------
 
-$ cpass-sandstorm create mytw1tt3rp4ssword twitter @myusername login:myusername
+    $ cpass-sandstorm create mytw1tt3rp4ssword twitter @myusername login:myusername
 
 This stores your Twitter password (in encrypted form, of course) to Sandstorm.
 
 
-$ cpass-sandstorm @myusername
+    $ cpass-sandstorm @myusername
 
 This adds the Twitter password for @myusername to your clipboard automatically!
 
 
-$ cpass-sandstorm all
+    $ cpass-sandstorm all
 
 This will list all passwords (and, actually, all other textual data;
 see below) you've stored.
@@ -71,16 +71,16 @@ Getting started
 
 Run this to download the cpass-sandstorm command line program:
 
-$ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
+    $ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
 
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm like so:
 
-$ ./cpass-sandstorm init <sandstorm_key>
+    $ ./cpass-sandstorm init <sandstorm_key>
 
 To see the remaining valid commands (such as "create", seen above), run
 
-$ ./cpass-sandstorm
+    $ ./cpass-sandstorm
 
 Enjoy!
 
@@ -119,7 +119,8 @@ Learn more
 
 You'll find more details at:
 
-- Conceptual overview in these slides from my DEFCON talk introducing CrypTag: <https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/>
+- Conceptual overview in these slides from my DEFCON talk introducing CrypTag:
+<https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/>
 
 - GitHub repo: <https://github.com/elimisteve/cryptag>
 
