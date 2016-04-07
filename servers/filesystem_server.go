@@ -61,15 +61,16 @@ func main() {
 func GetRoot(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`Welcome to CrypTag!
 
-You can use CrypTag Sandstorm grains for storing passwords or other
-secrets. The three best things about CrypTag:
+You can use CrypTag Sandstorm grains for storing passwords, files, or
+other data. The three best things about CrypTag are:
 
-- You access all your data from a secure client on your own computer.
+1. You access all your data from a secure client on your own computer.
 
-- Data never goes out of sync. (All data is stored on the server.)
+2. Data never goes out of sync. (All data is stored on the server.)
 
-- Searches are efficient. This is CrypTag's key idea: store secret information on a server,
-  with labels ("tags") that the server can't understand, that can still be used for search!
+3. Searches are efficient. This is CrypTag's key idea: store secret
+information on a server, with tags that the server can't understand,
+that can still be used for search!
 
 
 Overview of daily use
@@ -104,14 +105,17 @@ want to store and access:
 5. GitHub recovery codes (cpass-sandstorm github recoverycode)
 
 
-Get started
------------
-	
-Download and run the cpass-sandstorm Linux command line client:
+Getting started
+---------------
 
-$ mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
+## Linux and Mac OS X
 
-Then click the Key icon above this message (on Sandstorm) and generate a Sandstorm API key to give to cpass-sandstorm like so:
+Run this to download the cpass-sandstorm command line program:
+
+$ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
+
+Then click the key icon above this web page (on Sandstorm) and
+generate a Sandstorm API key to give to cpass-sandstorm like so:
 
 $ ./cpass-sandstorm init <sandstorm_key>
 
@@ -122,14 +126,44 @@ $ ./cpass-sandstorm
 Enjoy!
 
 
+## Windows
+
+Run this in PowerShell:
+
+    (New-Object Net.WebClient).DownloadFile("https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(If ([IntPtr]::size -eq 4) { '-32' }).exe?raw=true", "cpass-sandstorm.exe")
+
+Then click the key icon above this web page (on Sandstorm) and
+generate a Sandstorm API key to give to cpass-sandstorm.exe like so:
+
+    .\cpass-sandstorm.exe init <sandstorm_key>
+
+To see the remaining valid subcommands (such as "create", seen above), run
+
+    .\cpass-sandstorm.exe
+
+Enjoy!
+
+
+Help and feedback
+-----------------
+
+If you have questions or feedback (which is always welcome!), feel
+free to send a message the CrypTag mailing list:
+https://groups.google.com/forum/#!forum/cryptag
+
+If you experience a bug, you can report it here:
+https://github.com/elimisteve/cryptag/issues
+
+
 Learn more
 ----------
 
 You'll find more details at:
 
-- Conceptual overview in these slides from my DEFCON talk introducing CrypTag: https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/
+- Conceptual overview in these slides from my DEFCON talk introducing CrypTag:
+https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/
 
-- Details: https://github.com/elimisteve/cryptag
+- GitHub repo: https://github.com/elimisteve/cryptag
 `))
 }
 
