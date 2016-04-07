@@ -130,7 +130,7 @@ Enjoy!
 
 Run this in PowerShell:
 
-    (New-Object Net.WebClient).DownloadFile("https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(If ([IntPtr]::size -eq 4) { '-32' }).exe?raw=true", "cpass-sandstorm.exe")
+    (New-Object Net.WebClient).DownloadFile("https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(If ([IntPtr]::size -eq 4) { '-32' }).exe?raw=true", "cpass-sandstorm.exe"); icacls.exe .\cpass-sandstorm.exe /grant everyone:rx
 
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm.exe like so:
