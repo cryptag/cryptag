@@ -24,7 +24,7 @@ func init() {
 		os.Getenv("CRYPTAG_BACKEND_NAME"),
 	)
 	if err != nil {
-		log.Fatalf("LoadFileSystem error: %v\n", err)
+		log.Fatalf("LoadOrCreateFileSystem error: %v\n", err)
 	}
 
 	db = fs

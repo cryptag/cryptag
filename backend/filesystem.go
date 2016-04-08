@@ -200,12 +200,7 @@ func (fs *FileSystem) ListRows(randtags cryptag.RandomTags) (types.Rows, error) 
 
 	// len(randtags) > 0
 
-	rows, err := fs.rowsFromRandomTags(randtags, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return rows, nil
+	return fs.rowsFromRandomTags(randtags, false)
 }
 
 func (fs *FileSystem) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
@@ -231,7 +226,7 @@ func (fs *FileSystem) SaveRow(row *types.Row) error {
 			log.Printf("Error saving row `%#v`\n", row)
 		}
 		// TODO(elimisteve): Make error global?
-		return errors.New("Invalid row; requires data, tags, and nonce fields")
+		return errors.New("Invalid row; requires Encrypted, RandomTags, Nonce fields")
 	}
 
 	// Save row.{Encrypted,Nonce} to fs.rowsPath/randomtag1-randomtag2-randomtag3
