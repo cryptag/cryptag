@@ -9,10 +9,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -44,14 +44,20 @@ func main() {
 	case "list":
 		plaintags := append(os.Args[2:], "type:file")
 
-		rows, err := db.ListRows(plaintags)
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rows, err := backend.ListRowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, r := range rows {
-			fmt.Printf("%v\t\t%v\n\n", types.RowTagWithPrefix(r, "filename:"),
-				strings.Join(r.PlainTags(), "  "))
+			fname := types.RowTagWithPrefix(r, "filename:")
+			color.Printf("%s    %s\n\n", color.BlackOnCyan(fname),
+				color.Tags(r.PlainTags()))
 		}
 
 	case "tags":
