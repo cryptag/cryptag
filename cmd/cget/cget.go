@@ -83,10 +83,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
-		}
-
 		var rowFilename string
 		for _, r := range rows {
 			dir := path.Join(cryptag.TrustedBasePath, "decrypted")
