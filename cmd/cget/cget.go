@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -65,7 +64,7 @@ func main() {
 			log.Fatal(err)
 		}
 		for _, pair := range pairs {
-			fmt.Printf("%s  %s\n", pair.Random, pair.Plain())
+			color.Printf("%s  %s\n", pair.Random, color.BlackOnWhite(pair.Plain()))
 		}
 
 	default: // Decrypt, save to ~/.cryptag/decrypted/(filename from filename:...)
