@@ -9,12 +9,20 @@ import (
 )
 
 func RowsFromPlainTags(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) (types.Rows, error) {
+	return getRows(bk, plaintags, pairs, bk.RowsFromRandomTags)
+}
+
+func ListRowsFromPlainTags(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) (types.Rows, error) {
+	return getRows(bk, plaintags, pairs, bk.ListRows)
+}
+
+func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetchByRandom func(cryptag.RandomTags) (types.Rows, error)) (types.Rows, error) {
 	matches, err := pairs.HaveAllPlainTags(plaintags)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := bk.RowsFromRandomTags(matches.AllRandom())
+	rows, err := fetchByRandom(matches.AllRandom())
 	if err != nil {
 		return nil, err
 	}
