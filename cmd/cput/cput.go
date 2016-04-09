@@ -81,7 +81,7 @@ func main() {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
 
-		fmt.Printf("Successfully saved new row with these tags:\n\n%v\n",
+		fmt.Printf("Successfully saved new row with these tags:\n%v\n",
 			color.Tags(row.PlainTags()))
 	}
 }
