@@ -107,7 +107,7 @@ func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, e
 		webConf.AuthToken)
 }
 
-func (wb *WebserverBackend) Config() (*Config, error) {
+func (wb *WebserverBackend) ToConfig() (*Config, error) {
 	if wb.key == nil {
 		return nil, cryptag.ErrNilKey
 	}

@@ -28,6 +28,8 @@ type Backend interface {
 	RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error)
 	SaveRow(row *types.Row) error
 	DeleteRows(randtags cryptag.RandomTags) error
+
+	ToConfig() (*Config, error)
 }
 
 func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.TagPairs, newPairs types.TagPairs, err error) {

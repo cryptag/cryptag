@@ -119,7 +119,7 @@ func createBackendConfig(key string) error {
 		return fmt.Errorf("NewWebserverBackend error: %v\n", err)
 	}
 
-	cfg, err := db.Config()
+	cfg, err := db.ToConfig()
 	if err != nil {
 		return fmt.Errorf("Error getting backend config: %v\n", err)
 	}

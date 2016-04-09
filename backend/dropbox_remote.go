@@ -35,6 +35,8 @@ type DropboxRemote struct {
 
 	// Used for encryption/decryption
 	key *[32]byte
+
+	dboxConf DropboxConfig
 }
 
 // SetTagCursor sets the cursor for the remote tags directory
@@ -156,9 +158,29 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 		rowsURL:  path.Clean(dboxPath + "/rows"),
 		tagsURL:  path.Clean(dboxPath + "/tags"),
 		dbox:     dbox,
+		dboxConf: cfg,
 	}
 
 	return &db, nil
+}
+
+func (db *DropboxRemote) ToConfig() (*Config, error) {
+	if db.key == nil {
+		return nil, cryptag.ErrNilKey
+	}
+
+	host, err := os.Hostname()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting hostname for config Name: %v", err)
+	}
+	name := "dropbox-" + host
+
+	config := Config{
+		Key:    db.key,
+		Name:   name,
+		Custom: DropboxConfigToMap(db.dboxConf),
+	}
+	return &config, nil
 }
 
 func (db *DropboxRemote) Key() *[32]byte {

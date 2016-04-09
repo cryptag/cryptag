@@ -20,6 +20,7 @@ import (
 )
 
 type FileSystem struct {
+	name     string
 	dataPath string
 	tagsPath string // subdirectory of dataPath
 	rowsPath string // subdirectory of dataPath
@@ -32,6 +33,7 @@ func NewFileSystem(conf *Config) (*FileSystem, error) {
 	}
 
 	fs := &FileSystem{
+		name:     conf.Name,
 		dataPath: conf.DataPath,
 		tagsPath: path.Join(conf.DataPath, "tags"),
 		rowsPath: path.Join(conf.DataPath, "rows"),
@@ -131,6 +133,26 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 		return nil, err
 	}
 	return NewFileSystem(&conf)
+}
+
+func (fs *FileSystem) ToConfig() (*Config, error) {
+	name := fs.name
+
+	if name == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return nil, fmt.Errorf("Error getting hostname: %v", err)
+		}
+		name = hostname
+	}
+
+	config := Config{
+		Name:     name,
+		Key:      fs.key,
+		DataPath: fs.dataPath,
+	}
+
+	return &config, nil
 }
 
 func (fs *FileSystem) Key() *[32]byte {
