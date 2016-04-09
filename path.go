@@ -16,7 +16,7 @@ var (
 
 	// BackendPath is the path to the directory where backend config
 	// files are stored (e.g., "/home/myusername/.cryptag/backends").
-	// This can be overridden with the CRYPTAG_BACKEND_PATH
+	// This can be overridden with the BACKEND_PATH
 	// environment variable (rarely useful; this exists so that all
 	// CrypTag backend configs could be on a USB drive).
 	BackendPath = path.Join(os.Getenv("HOME"), ".cryptag", "backends")
@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	if p := os.Getenv("CRYPTAG_BACKEND_PATH"); p != "" {
+	if p := os.Getenv("BACKEND_PATH"); p != "" {
 		BackendPath = p
 	}
 

@@ -22,7 +22,7 @@ import (
 var backendName = "sandstorm-webserver"
 
 func init() {
-	if bn := os.Getenv("CRYPTAG_BACKEND_NAME"); bn != "" {
+	if bn := os.Getenv("BACKEND"); bn != "" {
 		backendName = bn
 	}
 }

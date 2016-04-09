@@ -20,8 +20,8 @@ var (
 
 func init() {
 	fs, err := backend.LoadOrCreateFileSystem(
-		os.Getenv("CRYPTAG_BACKEND_PATH"),
-		os.Getenv("CRYPTAG_BACKEND_NAME"),
+		os.Getenv("BACKEND_PATH"),
+		os.Getenv("BACKEND"),
 	)
 	if err != nil {
 		log.Fatalf("LoadOrCreateFileSystem error: %v\n", err)

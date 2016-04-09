@@ -21,8 +21,8 @@ var (
 func init() {
 	var err error
 	db, err = backend.LoadDropboxRemote(
-		os.Getenv("CRYPTAG_BACKEND_PATH"),
-		os.Getenv("CRYPTAG_BACKEND_NAME"),
+		os.Getenv("BACKEND_PATH"),
+		os.Getenv("BACKEND"),
 	)
 	if err != nil {
 		log.Fatalf("LoadDropboxRemote error: %v\n", err)

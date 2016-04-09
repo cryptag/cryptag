@@ -159,7 +159,7 @@ passwords will never touch `~/Dropbox/cryptag_work`.)
 
 Create a new backend with the desired name (e.g., "work") by running
 
-    CRYPTAG_BACKEND_NAME=work cpass
+    BACKEND=work cpass
 
 You can then change the value of `DataPath` at the end of
 `~/.cryptag/backends/work.json` to wherever you want your work
@@ -174,10 +174,10 @@ unlike with KeePass, KeePassX, 1Password, and some other password
 managers.)
 
 Now you can save shared work passwords with the same commands as
-before, except with the `CRYPTAG_BACKEND_NAME` environment variable
+before, except with the `BACKEND` environment variable
 set:
 
-    CRYPTAG_BACKEND_NAME=work cpass create mycr4zyAWSp4ssw0rd4myj0b work aws
+    BACKEND=work cpass create mycr4zyAWSp4ssw0rd4myj0b work aws
 
 Now you should share `~/.cryptag/backends/work.json` with your
 colleagues -- or at least the encryption key -- so that you can
@@ -192,7 +192,7 @@ I would love your input.
 
 I currently do this:
 
-    echo 'CRYPTAG_BACKEND_NAME=work cpass "$@"' > ~/bin/work
+    echo 'BACKEND=work cpass "$@"' > ~/bin/work
     chmod +x ~/bin/work
 
 so I can simply do
