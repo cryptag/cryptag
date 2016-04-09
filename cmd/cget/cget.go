@@ -56,8 +56,7 @@ func main() {
 
 		for _, r := range rows {
 			fname := types.RowTagWithPrefix(r, "filename:")
-			color.Printf("%s    %s\n\n", color.BlackOnCyan(fname),
-				color.Tags(r.PlainTags()))
+			color.Printf("%s\n\n", color.TextAndTags(fname, r.PlainTags()))
 		}
 
 	case "tags":
