@@ -4,7 +4,6 @@
 package color
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/elimisteve/cryptag/types"
@@ -34,9 +33,8 @@ func Tags(tags []string) string {
 }
 
 func TextRow(r *types.Row) string {
-	text := BlackOnCyan(string(r.Decrypted()))
-	tags := Map(BlackOnWhite, r.PlainTags())
-	return fmt.Sprintf("%s    %s", text, strings.Join(tags, "   "))
+	text := string(r.Decrypted())
+	return TextAndTags(text, r.PlainTags())
 }
 
 func TextRows(rows types.Rows) string {
@@ -45,4 +43,8 @@ func TextRows(rows types.Rows) string {
 		cRows = append(cRows, TextRow(rows[i]))
 	}
 	return strings.Join(cRows, "\n\n")
+}
+
+func TextAndTags(text string, tags []string) string {
+	return BlackOnCyan(text) + "    " + Tags(tags)
 }
