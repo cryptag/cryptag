@@ -85,7 +85,9 @@ func main() {
 			log.Fatal(usage)
 		}
 
-		newKey, err := parseKey(os.Args[2:])
+		keyStr := strings.Join(os.Args[2:], ",")
+
+		newKey, err := parseKey(keyStr)
 		if err != nil {
 			log.Fatalf("Error from parseKey: %v\n", err)
 		}
@@ -162,9 +164,7 @@ func createBackendConfig(key string) error {
 
 var keyRegex = regexp.MustCompile(`(\d+)`)
 
-func parseKey(args []string) (*[32]byte, error) {
-	cliDigits := strings.Join(args, ",")
-
+func parseKey(cliDigits string) (*[32]byte, error) {
 	// Pluck out all digit sequences, convert to numbers
 	nums := keyRegex.FindAllString(cliDigits, -1)
 	if len(nums) != 32 {
