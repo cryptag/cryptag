@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/elimisteve/clipboard"
@@ -49,6 +51,7 @@ func main() {
 		if err := createBackendConfig(os.Args[2]); err != nil {
 			log.Fatal(err)
 		}
+
 	case "create":
 		if len(os.Args) < 4 {
 			log.Println("At least 3 command line arguments must be included")
@@ -72,6 +75,31 @@ func main() {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
 		color.Println(color.TextRow(row))
+
+	case "getkey":
+		fmt.Println(fmtKey(db.Key()))
+
+	case "setkey":
+		if len(os.Args) < 3 {
+			log.Println("At least 2 command line arguments must be included")
+			log.Fatal(usage)
+		}
+
+		newKey, err := parseKey(os.Args[2:])
+		if err != nil {
+			log.Fatalf("Error from parseKey: %v\n", err)
+		}
+
+		cfg, err := db.ToConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cfg.Key = newKey
+
+		if err := cfg.Update(cryptag.BackendPath); err != nil {
+			log.Fatalf("Error updating config: %v", err)
+		}
 
 	default: // Search
 		// Empty clipboard
@@ -130,4 +158,43 @@ func createBackendConfig(key string) error {
 	}
 
 	return nil
+}
+
+var keyRegex = regexp.MustCompile(`(\d+)`)
+
+func parseKey(args []string) (*[32]byte, error) {
+	cliDigits := strings.Join(args, ",")
+
+	// Pluck out all digit sequences, convert to numbers
+	nums := keyRegex.FindAllString(cliDigits, -1)
+	if len(nums) != 32 {
+		return nil, fmt.Errorf("Key must include 32 numbers, not %d", len(nums))
+	}
+
+	var newKey [32]byte
+
+	for i := 0; i < 32; i++ {
+		n, err := strconv.ParseUint(nums[i], 10, 8)
+		if err != nil {
+			return nil, fmt.Errorf("Number #%d '%v' was invalid: %v\n", i+1,
+				nums[i])
+		}
+		newKey[i] = byte(n)
+	}
+
+	return &newKey, nil
+}
+
+func fmtKey(key *[32]byte) string {
+	if key == nil {
+		return "<nil>"
+	}
+	k := *key
+
+	kStr := fmt.Sprintf("%d", k[0])
+
+	for i := 0; i < len(k)-1; i++ {
+		kStr += fmt.Sprintf(",%d", k[i+1])
+	}
+	return kStr
 }
