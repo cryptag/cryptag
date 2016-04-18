@@ -34,15 +34,16 @@ func (pairs TagPairs) AllRandom() []string {
 func (pairs TagPairs) HaveAllPlainTags(plaintags []string) (TagPairs, error) {
 	var matches TagPairs
 	for _, plain := range plaintags {
-		for _, pair := range pairs {
+		for i, pair := range pairs {
 			if pair.plain == plain {
 				matches = append(matches, pair)
 				break
 			}
+			// End of last loop, meaning no match was found
+			if i == len(pairs)-1 {
+				return nil, fmt.Errorf("PlainTag `%s` not found", plain)
+			}
 		}
-	}
-	if len(matches) == 0 {
-		return nil, ErrTagPairNotFound
 	}
 	return matches, nil
 }
@@ -50,15 +51,16 @@ func (pairs TagPairs) HaveAllPlainTags(plaintags []string) (TagPairs, error) {
 func (pairs TagPairs) HaveAllRandomTags(randomtags []string) (TagPairs, error) {
 	var matches TagPairs
 	for _, random := range randomtags {
-		for _, pair := range pairs {
+		for i, pair := range pairs {
 			if pair.Random == random {
 				matches = append(matches, pair)
 				break
 			}
+			// End of last loop, meaning no match was found
+			if i == len(pairs)-1 {
+				return nil, fmt.Errorf("RandomTag `%s` not found", random)
+			}
 		}
-	}
-	if len(matches) == 0 {
-		return nil, ErrTagPairNotFound
 	}
 	return matches, nil
 }
