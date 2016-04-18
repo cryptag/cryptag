@@ -47,7 +47,7 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 		log.Printf("tags: `%+v`\n", tags)
 	}
 
-	rows := allRows.HaveAllRandomTags(tags)
+	rows := allRows.WithAllRandomTags(tags)
 
 	if types.Debug {
 		log.Printf("%d/%d Rows retrieved:\n%s", len(rows), len(allRows), rows)
@@ -83,7 +83,7 @@ func GetTags(w http.ResponseWriter, req *http.Request) {
 	}
 	tags = strings.Split(tags[0], ",")
 
-	pairs, _ := allTagPairs.HaveAllRandomTags(tags)
+	pairs, _ := allTagPairs.WithAllRandomTags(tags)
 
 	if types.Debug {
 		log.Printf("%d TagPairs retrieved", len(pairs))

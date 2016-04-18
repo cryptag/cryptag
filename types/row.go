@@ -133,7 +133,7 @@ func (row *Row) Decrypt(key *[32]byte) error {
 
 // SetPlainTags uses row.RandomTags and pairs to set row.plainTags
 func (row *Row) SetPlainTags(pairs TagPairs) error {
-	matches, err := pairs.HaveAllRandomTags(row.RandomTags)
+	matches, err := pairs.WithAllRandomTags(row.RandomTags)
 	if err != nil {
 		return err
 	}

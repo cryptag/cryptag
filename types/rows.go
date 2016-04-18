@@ -26,9 +26,9 @@ func (rows Rows) Format() string {
 	return s
 }
 
-// HaveAllRandomTags returns the Rows within rows that has all the
+// WithAllRandomTags returns the Rows within rows that has all the
 // random strings in random
-func (rows Rows) HaveAllRandomTags(random []string) Rows {
+func (rows Rows) WithAllRandomTags(random []string) Rows {
 	// Copy rows
 	matches := make(Rows, len(rows))
 	copy(matches, rows)

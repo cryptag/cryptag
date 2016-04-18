@@ -31,7 +31,7 @@ func (pairs TagPairs) AllRandom() []string {
 	return random
 }
 
-func (pairs TagPairs) HaveAllPlainTags(plaintags []string) (TagPairs, error) {
+func (pairs TagPairs) WithAllPlainTags(plaintags []string) (TagPairs, error) {
 	var matches TagPairs
 	for _, plain := range plaintags {
 		for i, pair := range pairs {
@@ -48,7 +48,7 @@ func (pairs TagPairs) HaveAllPlainTags(plaintags []string) (TagPairs, error) {
 	return matches, nil
 }
 
-func (pairs TagPairs) HaveAllRandomTags(randomtags []string) (TagPairs, error) {
+func (pairs TagPairs) WithAllRandomTags(randomtags []string) (TagPairs, error) {
 	var matches TagPairs
 	for _, random := range randomtags {
 		for i, pair := range pairs {

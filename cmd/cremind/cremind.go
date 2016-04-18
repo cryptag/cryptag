@@ -91,7 +91,7 @@ func main() {
 		// user-specified plainTags => we grab each TagPair's random
 		// string so we can delete the rows tagged with those tags
 
-		pairs, err = pairs.HaveAllPlainTags(plainTags)
+		pairs, err = pairs.WithAllPlainTags(plainTags)
 		if err != nil {
 			log.Fatal(err)
 		}

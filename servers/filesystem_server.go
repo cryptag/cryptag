@@ -244,7 +244,7 @@ func GetTags(w http.ResponseWriter, req *http.Request) {
 	}
 	randtags = strings.Split(randtags[0], ",")
 
-	pairs, _ := allTagPairs.HaveAllRandomTags(randtags)
+	pairs, _ := allTagPairs.WithAllRandomTags(randtags)
 	help.WriteJSON(w, pairs)
 }
 

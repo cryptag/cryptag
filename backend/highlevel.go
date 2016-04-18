@@ -17,7 +17,7 @@ func ListRowsFromPlainTags(bk Backend, plaintags cryptag.PlainTags, pairs types.
 }
 
 func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetchByRandom func(cryptag.RandomTags) (types.Rows, error)) (types.Rows, error) {
-	matches, err := pairs.HaveAllPlainTags(plaintags)
+	matches, err := pairs.WithAllPlainTags(plaintags)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetc
 }
 
 func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) error {
-	matches, err := pairs.HaveAllPlainTags(plaintags)
+	matches, err := pairs.WithAllPlainTags(plaintags)
 	if err != nil {
 		return err
 	}
