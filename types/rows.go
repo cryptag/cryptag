@@ -26,9 +26,9 @@ func (rows Rows) Format() string {
 	return s
 }
 
-// HaveAllRandomTags returns the Rows within rows that has all the
+// WithAllRandomTags returns the Rows within rows that has all the
 // random strings in random
-func (rows Rows) HaveAllRandomTags(random []string) Rows {
+func (rows Rows) WithAllRandomTags(random []string) Rows {
 	// Copy rows
 	matches := make(Rows, len(rows))
 	copy(matches, rows)
@@ -45,4 +45,15 @@ func (rows Rows) HaveAllRandomTags(random []string) Rows {
 		}
 	}
 	return matches
+}
+
+func (rows Rows) Populate(key *[32]byte, pairs TagPairs) error {
+	// TODO: Benchmark whether parallelizing would increase
+	// performance
+	for i := range rows {
+		if err := rows[i].Populate(key, pairs); err != nil {
+			return err
+		}
+	}
+	return nil
 }

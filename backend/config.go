@@ -32,15 +32,28 @@ type Config struct {
 }
 
 func (conf *Config) Save(backendsDir string) error {
+	overwrite := false
+	return conf.save(backendsDir, overwrite)
+}
+
+func (conf *Config) Update(backendsDir string) error {
+	overwrite := true
+	return conf.save(backendsDir, overwrite)
+}
+
+func (conf *Config) save(backendsDir string, overwrite bool) error {
 	if err := os.MkdirAll(backendsDir, 0700); err != nil && os.IsExist(err) {
 		return err
 	}
 
-	filename := path.Join(backendsDir, conf.Name) + ".json"
-	if _, err := os.Stat(filename); err == nil {
-		log.Printf("Backend config already exists at %v; NOT overwriting",
-			filename)
-		return ErrConfigExists
+	filename := path.Join(backendsDir, conf.Name+".json")
+
+	if !overwrite {
+		if _, err := os.Stat(filename); err == nil {
+			log.Printf("Backend config already exists at %v; NOT overwriting",
+				filename)
+			return ErrConfigExists
+		}
 	}
 
 	if err := conf.Canonicalize(); err != nil {
@@ -51,10 +64,36 @@ func (conf *Config) Save(backendsDir string) error {
 		return err
 	}
 
+	if overwrite {
+		if err := conf.Backup(backendsDir); err != nil {
+			return err
+		}
+	}
+
 	if err = ioutil.WriteFile(filename, b, 0600); err != nil {
 		return err
 	}
-	log.Printf("Saved backend config to %v\n", filename)
+	log.Printf("Saved backend config: %v\n", filename)
+
+	return nil
+}
+
+func (conf *Config) Backup(backendsDir string) error {
+	filename := path.Join(backendsDir, conf.Name+".json")
+
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	// Back up old config
+	bkup := filename + "-" + cryptag.NowStr()
+
+	if err = ioutil.WriteFile(bkup, b, 0600); err != nil {
+		return err
+	}
+
+	log.Printf("Backed up %v to %v\n", filename, bkup)
 
 	return nil
 }

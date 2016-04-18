@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
@@ -41,8 +42,10 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	// TODO(elimisteve): Document `id:`-prefix and related conventions
 	uuidTag := "id:" + id.String()
 
+	created := "created:" + fmtDatetime(cryptag.Now())
+
 	// For future queryability-related reasons, UUID must come first!
-	plainTags = append([]string{uuidTag}, append(plainTags, "all")...)
+	plainTags = append([]string{uuidTag}, append(plainTags, created, "all")...)
 
 	nonce, err := cryptag.RandomNonce()
 	if err != nil {
@@ -52,6 +55,12 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	row := &Row{decrypted: decrypted, plainTags: plainTags, Nonce: nonce}
 
 	return row, nil
+}
+
+func fmtDatetime(t time.Time) string {
+	y, m, d := t.Date()
+	hr, min, sec := t.Clock()
+	return fmt.Sprintf("%d%02d%02d%02d%02d%02d", y, m, d, hr, min, sec)
 }
 
 // NewRowFromBytes unmarshals b into a new *Row.
@@ -97,7 +106,7 @@ func (row *Row) Format() string {
 // Decrypt sets row.decrypted, row.nonce based upon row.Encrypted,
 // nonce.  The passed-in `decrypt` function will typically be
 // bkend.Decrypt, where `bkend` is the backend storing this Row.
-func (row *Row) Decrypt(decrypt func(data []byte, nonce *[24]byte) ([]byte, error)) error {
+func (row *Row) Decrypt(key *[32]byte) error {
 	if len(row.Encrypted) == 0 {
 		if Debug {
 			log.Printf("row.Decrypt: no data to decrypt, returning nil (no error)\n")
@@ -105,7 +114,14 @@ func (row *Row) Decrypt(decrypt func(data []byte, nonce *[24]byte) ([]byte, erro
 		return nil
 	}
 
-	dec, err := decrypt(row.Encrypted, row.Nonce)
+	if key == nil {
+		if Debug {
+			log.Printf("nil key passed to row.Decrypt for row `%#v`\n", row)
+		}
+		return cryptag.ErrNilKey
+	}
+
+	dec, err := cryptag.Decrypt(row.Encrypted, row.Nonce, key)
 	if err != nil {
 		return fmt.Errorf("Error decrypting: %v", err)
 	}
@@ -115,18 +131,31 @@ func (row *Row) Decrypt(decrypt func(data []byte, nonce *[24]byte) ([]byte, erro
 	return nil
 }
 
-// SetPlainTags uses row.RandomTags and retrieved TagPairs to set
-// row.plainTags
-func (row *Row) SetPlainTags(getPairsFromRandom func(plain []string) (TagPairs, error)) error {
-	pairs, err := getPairsFromRandom(row.RandomTags)
+// SetPlainTags uses row.RandomTags and pairs to set row.plainTags
+func (row *Row) SetPlainTags(pairs TagPairs) error {
+	matches, err := pairs.WithAllRandomTags(row.RandomTags)
 	if err != nil {
 		return err
 	}
 
-	row.plainTags = pairs.AllPlain()
+	row.plainTags = matches.AllPlain()
+
 	if Debug {
 		log.Printf("row.plainTags set to `%#v`\n", row.plainTags)
 	}
 
+	return nil
+}
+
+// Populate sets row.decrypted based on row.Encrypted and
+// row.plainTags based on row.Randomtags, thereby populating row with
+// plaintext data.
+func (row *Row) Populate(key *[32]byte, pairs TagPairs) error {
+	if err := row.Decrypt(key); err != nil {
+		return fmt.Errorf("Error decrypting row: %v", err)
+	}
+	if err := row.SetPlainTags(pairs); err != nil {
+		return fmt.Errorf("Error setting row's plain tags: %v", err)
+	}
 	return nil
 }

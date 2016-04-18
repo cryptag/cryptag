@@ -18,53 +18,18 @@ var (
 )
 
 type Backend interface {
-	Encrypt(plain []byte, nonce *[24]byte) ([]byte, error)
-	Decrypt(cipher []byte, nonce *[24]byte) ([]byte, error)
+	Key() *[32]byte
 
 	AllTagPairs() (types.TagPairs, error)
-	TagPairsFromRandomTags(randtags []string) (types.TagPairs, error)
-	SaveTagPair(*types.TagPair) (*types.TagPair, error)
+	TagPairsFromRandomTags(randtags cryptag.RandomTags) (types.TagPairs, error)
+	SaveTagPair(pair *types.TagPair) error
 
-	ListRows(plaintags []string) (types.Rows, error)
-	RowsFromPlainTags(plaintags []string) (types.Rows, error)
-	SaveRow(*types.Row) (*types.Row, error)
-	DeleteRows(randTags []string) error
-}
+	ListRows(randtags cryptag.RandomTags) (types.Rows, error)
+	RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error)
+	SaveRow(row *types.Row) error
+	DeleteRows(randtags cryptag.RandomTags) error
 
-func randomFromPlain(backend Backend, plaintags []string) ([]string, error) {
-	// Get encrypted JSON containing the tag pairs, decrypt JSON,
-	// unmarshal.  for p in plain, find *TagPair with pair.Plain() ==
-	// plain, append pair.Random to results
-
-	pairs, err := backend.AllTagPairs()
-	if err != nil {
-		return nil, fmt.Errorf("Error from AllTagPairs: %v", err)
-	}
-
-	if types.Debug {
-		log.Printf("randomFromPlain: %d pairs fetched from AllTagPairs",
-			len(pairs))
-	}
-
-	var randoms []string
-	for _, plain := range plaintags {
-		for _, pair := range pairs {
-			if plain == pair.Plain() {
-				randoms = append(randoms, pair.Random)
-				break
-			}
-		}
-	}
-
-	if types.Debug {
-		log.Printf("Mapped plain `%#v` to random `%#v`\n", plaintags, randoms)
-	}
-
-	if len(randoms) == 0 {
-		return nil, types.ErrTagPairNotFound
-	}
-
-	return randoms, nil
+	ToConfig() (*Config, error)
 }
 
 func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.TagPairs, newPairs types.TagPairs, err error) {
@@ -75,7 +40,7 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 	}
 
 	if types.Debug {
-		log.Printf("Fetched all %d TagPairs from server\n", len(allPairs))
+		log.Printf("Fetched all %d TagPairs from backend\n", len(allPairs))
 	}
 
 	// Find out which members of plaintags don't have an existing,
@@ -102,7 +67,8 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 					return
 				}
 				if types.Debug {
-					log.Printf("Created tag pair `%#v` (%p)\n", pair, pair)
+					log.Printf("Created TagPair{plain: %q, Random: %q}\n",
+						pair.Plain(), pair.Random)
 				}
 				ch <- pair
 				return
@@ -126,7 +92,7 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 	return allPairs, newPairs, nil
 }
 
-func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
+func NewTagPair(key *[32]byte, plaintag string) (*types.TagPair, error) {
 	rand := fun.RandomString(RANDOM_TAG_ALPHABET, RANDOM_TAG_LENGTH)
 
 	nonce, err := cryptag.RandomNonce()
@@ -134,16 +100,31 @@ func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
 		return nil, err
 	}
 
-	plainEnc, err := backend.Encrypt([]byte(plaintag), nonce)
+	plainEnc, err := cryptag.Encrypt([]byte(plaintag), nonce, key)
 	if err != nil {
 		return nil, err
 	}
 
 	pair := types.NewTagPair(plainEnc, rand, nonce, plaintag)
-	return backend.SaveTagPair(pair)
+
+	return pair, nil
 }
 
-func PopulateRowBeforeSave(backend Backend, row *types.Row) (*types.Row, error) {
+func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
+	pair, err := NewTagPair(backend.Key(), plaintag)
+	if err != nil {
+		return nil, err
+	}
+
+	err = backend.SaveTagPair(pair)
+	if err != nil {
+		return nil, fmt.Errorf("Error saving tag pair: %v", err)
+	}
+
+	return pair, nil
+}
+
+func PopulateRowBeforeSave(backend Backend, row *types.Row) error {
 	// Fetch all tags.  For each element of row.plainTags that doesn't
 	// match an existing tag, call CreateTag().  Encrypt row.decrypted
 	// and store it in row.Encrypted.  POST to server.
@@ -151,7 +132,7 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row) (*types.Row, error) 
 	// TODO: Call this in parallel with encryption below
 	allTagPairs, _, err := CreateTagsFromPlain(backend, row.PlainTags())
 	if err != nil {
-		return nil, fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
+		return fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
 	}
 
 	// Set row.RandomTags
@@ -164,21 +145,11 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row) (*types.Row, error) 
 	// Set row.Encrypted
 
 	// Could also do something like `row.Encrypt(wb.Encrypt)`
-	encData, err := backend.Encrypt(row.Decrypted(), row.Nonce)
+	encData, err := cryptag.Encrypt(row.Decrypted(), row.Nonce, backend.Key())
 	if err != nil {
-		return nil, fmt.Errorf("Error encrypting data: %v", err)
+		return fmt.Errorf("Error encrypting data: %v", err)
 	}
 	row.Encrypted = encData
 
-	return row, nil
-}
-
-func PopulateRowAfterGet(backend Backend, row *types.Row) error {
-	if err := row.Decrypt(backend.Decrypt); err != nil {
-		return err
-	}
-	if err := row.SetPlainTags(backend.TagPairsFromRandomTags); err != nil {
-		return err
-	}
 	return nil
 }

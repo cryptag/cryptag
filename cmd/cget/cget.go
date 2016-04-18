@@ -4,15 +4,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -22,8 +21,8 @@ var (
 
 func init() {
 	fs, err := backend.LoadOrCreateFileSystem(
-		os.Getenv("CRYPTAG_BACKEND_PATH"),
-		os.Getenv("CRYPTAG_BACKEND_NAME"),
+		os.Getenv("BACKEND_PATH"),
+		os.Getenv("BACKEND"),
 	)
 	if err != nil {
 		log.Fatalf("LoadFileSystem error: %v\n", err)
@@ -44,14 +43,19 @@ func main() {
 	case "list":
 		plaintags := append(os.Args[2:], "type:file")
 
-		rows, err := db.ListRows(plaintags)
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rows, err := backend.ListRowsFromPlainTags(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, r := range rows {
-			fmt.Printf("%v\t\t%v\n\n", types.RowTagWithPrefix(r, "filename:"),
-				strings.Join(r.PlainTags(), "  "))
+			fname := types.RowTagWithPrefix(r, "filename:")
+			color.Printf("%s\n\n", color.TextAndTags(fname, r.PlainTags()))
 		}
 
 	case "tags":
@@ -60,7 +64,7 @@ func main() {
 			log.Fatal(err)
 		}
 		for _, pair := range pairs {
-			fmt.Printf("%s  %s\n", pair.Random, pair.Plain())
+			color.Printf("%s  %s\n", pair.Random, color.BlackOnWhite(pair.Plain()))
 		}
 
 	default: // Decrypt, save to ~/.cryptag/decrypted/(filename from filename:...)
@@ -69,13 +73,14 @@ func main() {
 		// TODO: Temporary?
 		plaintags = append(plaintags, "type:file")
 
-		rows, err := db.RowsFromPlainTags(plaintags)
+		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		var rowFilename string

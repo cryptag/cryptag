@@ -23,8 +23,8 @@ var (
 
 func init() {
 	fs, err := backend.LoadOrCreateFileSystem(
-		os.Getenv("CRYPTAG_BACKEND_PATH"),
-		os.Getenv("CRYPTAG_BACKEND_NAME"),
+		os.Getenv("BACKEND_PATH"),
+		os.Getenv("BACKEND"),
 	)
 	if err != nil {
 		log.Fatalf("LoadFileSystem error: %v\n", err)
@@ -58,12 +58,12 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", todo, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(todo), tags)
+		row, err := types.NewRow([]byte(todo), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
@@ -91,7 +91,7 @@ func main() {
 		// user-specified plainTags => we grab each TagPair's random
 		// string so we can delete the rows tagged with those tags
 
-		pairs, err = pairs.HaveAllPlainTags(plainTags)
+		pairs, err = pairs.WithAllPlainTags(plainTags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -111,13 +111,16 @@ func main() {
 		}
 
 		plaintags := append(tags, "type:calendarevent")
-		rows, err := db.RowsFromPlainTags(plaintags)
+
+		// TODO: Cache tags locally
+		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		// Sort and print
@@ -127,7 +130,7 @@ func main() {
 			events = append(events, fmtReminder(r))
 		}
 		sort.Strings(events)
-		fmt.Println(strings.Join(events, "\n\n"))
+		color.Println(strings.Join(events, "\n\n"))
 	}
 }
 

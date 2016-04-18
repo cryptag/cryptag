@@ -4,13 +4,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -20,11 +20,11 @@ var (
 
 func init() {
 	fs, err := backend.LoadOrCreateFileSystem(
-		os.Getenv("CRYPTAG_BACKEND_PATH"),
-		os.Getenv("CRYPTAG_BACKEND_NAME"),
+		os.Getenv("BACKEND_PATH"),
+		os.Getenv("BACKEND"),
 	)
 	if err != nil {
-		log.Fatalf("LoadFileSystem error: %v\n", err)
+		log.Fatalf("LoadOrCreateFileSystem error: %v\n", err)
 	}
 
 	db = fs
@@ -49,46 +49,30 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(data), tags)
+		row, err := types.NewRow([]byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Print(row.Format())
+		color.Println(color.TextRow(row))
 
 	case "delete":
 		if len(os.Args) < 3 {
 			log.Printf("At least 2 command line arguments must be included\n")
 			log.Fatalf(deleteUsage)
 		}
-		plainTags := os.Args[2:]
+		plaintags := append(os.Args[2:], "type:text")
 
 		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatalf("Error from AllTagPairs: %v\n", err)
 		}
 
-		// Get all the random tags associated with the tag pairs that
-		// contain every tag in plainTags.
-		//
-		// Got that?
-		//
-		// The flow: user specifies plainTags + we fetch all TagPairs
-		// => we filter the TagPairs based on those with the
-		// user-specified plainTags => we grab each TagPair's random
-		// string so we can delete the rows tagged with those tags
-
-		pairs, err = pairs.HaveAllPlainTags(plainTags)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Delete rows tagged with the random strings in pairs
-		err = db.DeleteRows(pairs.AllRandom())
+		err = backend.DeleteRows(db, plaintags, pairs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -98,14 +82,15 @@ func main() {
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
-		plaintags := append(os.Args[1:], "type:text")
-		rows, err := db.RowsFromPlainTags(plaintags)
+		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
+		plaintags := append(os.Args[1:], "type:text")
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		// Add first row's contents to clipboard
@@ -115,7 +100,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Print(rows.Format())
+		color.Println(color.TextRows(rows))
 	}
 }
 

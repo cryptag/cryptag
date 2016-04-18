@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/elimisteve/clipboard"
@@ -20,7 +22,7 @@ import (
 var backendName = "sandstorm-webserver"
 
 func init() {
-	if bn := os.Getenv("CRYPTAG_BACKEND_NAME"); bn != "" {
+	if bn := os.Getenv("BACKEND"); bn != "" {
 		backendName = bn
 	}
 }
@@ -49,6 +51,7 @@ func main() {
 		if err := createBackendConfig(os.Args[2]); err != nil {
 			log.Fatal(err)
 		}
+
 	case "create":
 		if len(os.Args) < 4 {
 			log.Println("At least 3 command line arguments must be included")
@@ -62,29 +65,59 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
 		}
 
-		newRow, err := types.NewRow([]byte(data), tags)
+		row, err := types.NewRow([]byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating new row: %v\n", err)
 		}
 
-		row, err := db.SaveRow(newRow)
+		err = db.SaveRow(row)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}
-		fmt.Print(row.Format())
+		color.Println(color.TextRow(row))
+
+	case "getkey":
+		fmt.Println(fmtKey(db.Key()))
+
+	case "setkey":
+		if len(os.Args) < 3 {
+			log.Println("At least 2 command line arguments must be included")
+			log.Fatal(usage)
+		}
+
+		keyStr := strings.Join(os.Args[2:], ",")
+
+		newKey, err := parseKey(keyStr)
+		if err != nil {
+			log.Fatalf("Error from parseKey: %v\n", err)
+		}
+
+		cfg, err := db.ToConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cfg.Key = newKey
+
+		if err := cfg.Update(cryptag.BackendPath); err != nil {
+			log.Fatalf("Error updating config: %v", err)
+		}
 
 	default: // Search
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
 		plaintags := append(os.Args[1:], "type:text")
-		rows, err := db.RowsFromPlainTags(plaintags)
+
+		// TODO: Consider caching locally
+		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if len(rows) == 0 {
-			log.Fatal(types.ErrRowsNotFound)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		// Add first row's contents to clipboard
@@ -94,7 +127,7 @@ func main() {
 		}
 		log.Printf("Added first result `%s` to clipboard\n", dec)
 
-		fmt.Print(color.TextRows(rows))
+		color.Println(color.TextRows(rows))
 	}
 }
 
@@ -116,7 +149,7 @@ func createBackendConfig(key string) error {
 		return fmt.Errorf("NewWebserverBackend error: %v\n", err)
 	}
 
-	cfg, err := db.Config()
+	cfg, err := db.ToConfig()
 	if err != nil {
 		return fmt.Errorf("Error getting backend config: %v\n", err)
 	}
@@ -127,4 +160,41 @@ func createBackendConfig(key string) error {
 	}
 
 	return nil
+}
+
+var keyRegex = regexp.MustCompile(`(\d+)`)
+
+func parseKey(cliDigits string) (*[32]byte, error) {
+	// Pluck out all digit sequences, convert to numbers
+	nums := keyRegex.FindAllString(cliDigits, -1)
+	if len(nums) != 32 {
+		return nil, fmt.Errorf("Key must include 32 numbers, not %d", len(nums))
+	}
+
+	var newKey [32]byte
+
+	for i := 0; i < 32; i++ {
+		n, err := strconv.ParseUint(nums[i], 10, 8)
+		if err != nil {
+			return nil, fmt.Errorf("Number #%d '%v' was invalid: %v\n", i+1,
+				nums[i])
+		}
+		newKey[i] = byte(n)
+	}
+
+	return &newKey, nil
+}
+
+func fmtKey(key *[32]byte) string {
+	if key == nil {
+		return "<nil>"
+	}
+	k := *key
+
+	kStr := fmt.Sprintf("%d", k[0])
+
+	for i := 0; i < len(k)-1; i++ {
+		kStr += fmt.Sprintf(",%d", k[i+1])
+	}
+	return kStr
 }

@@ -10,7 +10,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/elimisteve/cryptag"
 )
@@ -41,7 +40,7 @@ func RowTagWithPrefix(r *Row, prefixes ...string) string {
 func SaveRowAsFile(r *Row, dir string) (filepath string, err error) {
 	f := RowTagWithPrefix(r, "filename:", "id:")
 	if f == "" {
-		f = fmt.Sprintf("%d", time.Now().Unix())
+		f = fmt.Sprintf("%d", cryptag.Now().Unix())
 	}
 
 	if dir == "" {

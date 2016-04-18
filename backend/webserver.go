@@ -107,7 +107,7 @@ func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, e
 		webConf.AuthToken)
 }
 
-func (wb *WebserverBackend) Config() (*Config, error) {
+func (wb *WebserverBackend) ToConfig() (*Config, error) {
 	if wb.key == nil {
 		return nil, cryptag.ErrNilKey
 	}
@@ -126,29 +126,28 @@ func (wb *WebserverBackend) Key() *[32]byte {
 	return wb.key
 }
 
-func (wb *WebserverBackend) Encrypt(plain []byte, nonce *[24]byte) (cipher []byte, err error) {
-	return cryptag.Encrypt(plain, nonce, wb.key)
-}
-
-func (wb *WebserverBackend) Decrypt(cipher []byte, nonce *[24]byte) (plain []byte, err error) {
-	return cryptag.Decrypt(cipher, nonce, wb.key)
-}
-
 func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
-	return getTagsFromUrl(wb, wb.tagsUrl, wb.authToken)
+	pairs, err := getTagsFromUrl(wb.key, wb.tagsUrl, wb.authToken)
+	if err != nil {
+		return nil, err
+	}
+	if types.Debug {
+		log.Printf("AllTagPairs: returning %d pairs\n", len(pairs))
+	}
+	return pairs, nil
 }
 
-func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
+func (wb *WebserverBackend) SaveRow(row *types.Row) error {
 	// Populate row.{Encrypted,RandomTags} from
 	// row.{decrypted,plainTags}
-	row, err := PopulateRowBeforeSave(wb, r)
+	err := PopulateRowBeforeSave(wb, row)
 	if err != nil {
-		return nil, fmt.Errorf("Error populating row before save: %v", err)
+		return fmt.Errorf("Error populating row before save: %v", err)
 	}
 
 	rowBytes, err := json.Marshal(row)
 	if err != nil {
-		return nil, fmt.Errorf("Error marshaling row: %v", err)
+		return fmt.Errorf("Error marshaling row: %v", err)
 	}
 
 	if types.Debug {
@@ -157,37 +156,32 @@ func (wb *WebserverBackend) SaveRow(r *types.Row) (*types.Row, error) {
 
 	resp, err := post(wb.rowsUrl, rowBytes, wb.authToken)
 	if err != nil {
-		return nil, fmt.Errorf("Error POSTing row to URL %s: %v", wb.rowsUrl, err)
+		return fmt.Errorf("Error POSTing row to URL %s: %v", wb.rowsUrl, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading server response body: %v", err)
+		return fmt.Errorf("Error reading server response body: %v", err)
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Got HTTP %d from server: `%s`", resp.StatusCode, body)
+		return fmt.Errorf("Got HTTP %d from server: `%s`", resp.StatusCode, body)
 	}
 
-	newRow, err := types.NewRowFromBytes(body)
-	if err != nil {
-		return nil, fmt.Errorf("Error creating new row from server response: %v", err)
-	}
+	// // Populated newRow.{decrypted,plainTags} from
+	// // newRow.{Encrypted,RandomTags}
+	// if err = PopulateRowAfterGet(wb, newRow); err != nil {
+	// 	return err
+	// }
 
-	// Populated newRow.{decrypted,plainTags} from
-	// newRow.{Encrypted,RandomTags}
-	if err = PopulateRowAfterGet(wb, newRow); err != nil {
-		return nil, err
-	}
-
-	return newRow, nil
+	return nil
 }
 
-func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, error) {
+func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) error {
 	pairBytes, err := json.Marshal(pair)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if types.Debug {
@@ -196,7 +190,7 @@ func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, er
 
 	resp, err := post(wb.tagsUrl, pairBytes, wb.authToken)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -205,9 +199,9 @@ func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, er
 		// Read server response to debug
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return nil, fmt.Errorf("Got HTTP %d from server for data: `%s`",
+		return fmt.Errorf("Got HTTP %d from server for data: `%s`",
 			resp.StatusCode, body)
 	}
 
@@ -215,44 +209,36 @@ func (wb *WebserverBackend) SaveTagPair(pair *types.TagPair) (*types.TagPair, er
 		log.Printf("New *TagPair created: `%#v`\n", pair)
 	}
 
-	return pair, nil
+	return nil
 }
 
-func (wb *WebserverBackend) TagPairsFromRandomTags(randtags []string) (types.TagPairs, error) {
+func (wb *WebserverBackend) TagPairsFromRandomTags(randtags cryptag.RandomTags) (types.TagPairs, error) {
 	if len(randtags) == 0 {
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
 
 	url := wb.tagsUrl + "?tags=" + strings.Join(randtags, ",")
-	return getTagsFromUrl(wb, url, wb.authToken)
+	return getTagsFromUrl(wb.key, url, wb.authToken)
 }
 
-func (wb *WebserverBackend) ListRows(plaintags []string) (types.Rows, error) {
+func (wb *WebserverBackend) ListRows(randtags cryptag.RandomTags) (types.Rows, error) {
 	return nil, fmt.Errorf("WebserverBackend.ListRows: NOT IMPLEMENTED")
 }
 
-func (wb *WebserverBackend) RowsFromPlainTags(plaintags []string) (types.Rows, error) {
-	randtags, err := randomFromPlain(wb, plaintags)
-	if err != nil {
-		return nil, fmt.Errorf("Error from RandomTagsFromPlain: %v", err)
-	}
-	if types.Debug {
-		log.Printf("After randomTagsFromPlain: randtags == `%#v`\n", randtags)
-	}
-
+func (wb *WebserverBackend) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
 	fullURL := wb.rowsUrl + "?tags=" + strings.Join(randtags, ",")
 	if types.Debug {
 		log.Printf("fullURL == `%s`\n", fullURL)
 	}
 
-	rows, err := getRowsFromUrl(wb, fullURL, wb.authToken)
+	rows, err := getRowsFromUrl(fullURL, wb.authToken)
 	if err != nil {
 		return nil, fmt.Errorf("Error from getRowsFromUrl: %v", err)
 	}
 	return rows, nil
 }
 
-func (wb *WebserverBackend) DeleteRows(randTags []string) error {
+func (wb *WebserverBackend) DeleteRows(randtags cryptag.RandomTags) error {
 	return errors.New("WebserverBackend.DeleteRows NOT IMPLEMENTED")
 }
 
@@ -260,8 +246,9 @@ func (wb *WebserverBackend) DeleteRows(randTags []string) error {
 // Helpers
 //
 
-// getRowsFromUrl fetches the encrypted rows from url, decrypts them, then
-func getRowsFromUrl(backend Backend, url, authToken string) (types.Rows, error) {
+// getRowsFromUrl fetches the encrypted rows from url. Does not
+// decrypt and populate them.
+func getRowsFromUrl(url, authToken string) (types.Rows, error) {
 	var rows types.Rows
 
 	err := getInto(url, authToken, &rows)
@@ -269,26 +256,16 @@ func getRowsFromUrl(backend Backend, url, authToken string) (types.Rows, error) 
 		return nil, err
 	}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(len(rows))
-
-	for _, row := range rows {
-		go func(row *types.Row) {
-			if err := PopulateRowAfterGet(backend, row); err != nil {
-				log.Printf("Error populating row `%#v` after get: %v\n", row, err)
-			}
-			wg.Done()
-		}(row)
-	}
-
-	wg.Wait()
-
 	return rows, nil
 }
 
 // getTagsFromUrl fetches the encrypted tag pairs at url, decrypts them,
 // and unmarshals them into a TagPairs value
-func getTagsFromUrl(backend Backend, url, authToken string) (types.TagPairs, error) {
+func getTagsFromUrl(key *[32]byte, url, authToken string) (types.TagPairs, error) {
+	if key == nil {
+		return nil, cryptag.ErrNilKey
+	}
+
 	var pairs types.TagPairs
 	var err error
 
@@ -300,11 +277,20 @@ func getTagsFromUrl(backend Backend, url, authToken string) (types.TagPairs, err
 		return nil, fmt.Errorf("Error fetching pairs: %v", err)
 	}
 
+	wg := &sync.WaitGroup{}
+	wg.Add(len(pairs))
+
 	for _, pair := range pairs {
-		if err = pair.Decrypt(backend.Decrypt); err != nil {
-			return nil, fmt.Errorf("Error from pair.Decrypt: %v", err)
-		}
+		go func(pair *types.TagPair) {
+			// TODO: Return first error
+			if err = pair.Decrypt(key); err != nil {
+				log.Printf("Error from pair.Decrypt: %v", err)
+			}
+			wg.Done()
+		}(pair)
 	}
+
+	wg.Wait()
 
 	return pairs, nil
 }

@@ -33,10 +33,10 @@ type DropboxRemote struct {
 	cursorLock sync.RWMutex
 	tagCursor  string // Used to fetch latest tags only
 
-	cachedTagPairs types.TagPairs
-
 	// Used for encryption/decryption
 	key *[32]byte
+
+	dboxConf DropboxConfig
 }
 
 // SetTagCursor sets the cursor for the remote tags directory
@@ -97,7 +97,9 @@ func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) 
 // NewDropboxRemote will save this backend to disk if len(key) == 0 or
 // name == "".
 func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemote, error) {
-	cfg.BasePath = strings.TrimRight(cfg.BasePath, "/")
+	if cfg.BasePath != "/" {
+		cfg.BasePath = strings.TrimRight(cfg.BasePath, "/")
+	}
 
 	if err := cfg.Valid(); err != nil {
 		return nil, fmt.Errorf("Invalid token(s): %v", err)
@@ -153,29 +155,39 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 	db := DropboxRemote{
 		key:      goodKey,
 		dboxPath: dboxPath,
-		rowsURL:  dboxPath + "/rows",
-		tagsURL:  dboxPath + "/tags",
+		rowsURL:  path.Clean(dboxPath + "/rows"),
+		tagsURL:  path.Clean(dboxPath + "/tags"),
 		dbox:     dbox,
+		dboxConf: cfg,
 	}
 
 	return &db, nil
 }
 
-func (db *DropboxRemote) Encrypt(plain []byte, nonce *[24]byte) (cipher []byte, err error) {
-	return cryptag.Encrypt(plain, nonce, db.key)
+func (db *DropboxRemote) ToConfig() (*Config, error) {
+	if db.key == nil {
+		return nil, cryptag.ErrNilKey
+	}
+
+	host, err := os.Hostname()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting hostname for config Name: %v", err)
+	}
+	name := "dropbox-" + host
+
+	config := Config{
+		Key:    db.key,
+		Name:   name,
+		Custom: DropboxConfigToMap(db.dboxConf),
+	}
+	return &config, nil
 }
 
-func (db *DropboxRemote) Decrypt(cipher []byte, nonce *[24]byte) (plain []byte, err error) {
-	return cryptag.Decrypt(cipher, nonce, db.key)
+func (db *DropboxRemote) Key() *[32]byte {
+	return db.key
 }
 
 func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
-	if db.cachedTagPairs != nil {
-		log.Printf("AllTagPairs: Returning %v cached tag pairs",
-			len(db.cachedTagPairs))
-		return db.cachedTagPairs, nil
-	}
-
 	start := time.Now()
 
 	pairs, err := getAllTagsFromDbox(db)
@@ -183,25 +195,24 @@ func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
 		return nil, err
 	}
 	if types.Debug {
-		log.Printf("getAllTagsFromDbox took %v\n", time.Since(start))
+		log.Printf("getAllTagsFromDbox took %v, returning %d TagPairs\n",
+			time.Since(start), len(pairs))
 	}
-
-	db.cachedTagPairs = pairs
 
 	return pairs, nil
 }
 
-func (db *DropboxRemote) SaveRow(r *types.Row) (*types.Row, error) {
+func (db *DropboxRemote) SaveRow(row *types.Row) error {
 	// Populate row.{Encrypted,RandomTags} from
 	// row.{decrypted,plainTags}
-	row, err := PopulateRowBeforeSave(db, r)
+	err := PopulateRowBeforeSave(db, row)
 	if err != nil {
-		return nil, fmt.Errorf("Error populating row before save: %v", err)
+		return fmt.Errorf("Error populating row before save: %v", err)
 	}
 
 	rowB, err := json.Marshal(row)
 	if err != nil {
-		return nil, fmt.Errorf("Error marshaling row: %v", err)
+		return fmt.Errorf("Error marshaling row: %v", err)
 	}
 
 	if types.Debug {
@@ -217,16 +228,16 @@ func (db *DropboxRemote) SaveRow(r *types.Row) (*types.Row, error) {
 
 	_, err = db.dbox.FilesPut(rclose, int64(len(rowB)), dest, false, "")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return row, nil
+	return nil
 }
 
-func (db *DropboxRemote) SaveTagPair(pair *types.TagPair) (*types.TagPair, error) {
+func (db *DropboxRemote) SaveTagPair(pair *types.TagPair) error {
 	pairB, err := json.Marshal(pair)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if types.Debug {
@@ -238,32 +249,34 @@ func (db *DropboxRemote) SaveTagPair(pair *types.TagPair) (*types.TagPair, error
 
 	_, err = db.dbox.FilesPut(rclose, int64(len(pairB)), dest, false, "")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if types.Debug {
-		log.Printf("New *TagPair created: `%#v`\n", pair)
+		log.Printf("New *TagPair saved: `%#v`\n", pair)
 	}
 
-	return pair, nil
+	return nil
 }
 
-func (db *DropboxRemote) TagPairsFromRandomTags(randtags []string) (types.TagPairs, error) {
+func (db *DropboxRemote) TagPairsFromRandomTags(randtags cryptag.RandomTags) (types.TagPairs, error) {
 	if len(randtags) == 0 {
 		return nil, fmt.Errorf("Can't get 0 tags")
 	}
 	return getTagsFromDbox(db, randtags)
 }
 
-func (db *DropboxRemote) ListRows(plaintags []string) (types.Rows, error) {
-	return fetchRows(db, plaintags, false)
+func (db *DropboxRemote) ListRows(randtags cryptag.RandomTags) (types.Rows, error) {
+	includeFileBody := false
+	return fetchRows(db, randtags, includeFileBody)
 }
 
-func (db *DropboxRemote) RowsFromPlainTags(plaintags []string) (types.Rows, error) {
-	return fetchRows(db, plaintags, true)
+func (db *DropboxRemote) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
+	includeFileBody := true
+	return fetchRows(db, randtags, includeFileBody)
 }
 
-func (db *DropboxRemote) DeleteRows(randTags []string) error {
+func (db *DropboxRemote) DeleteRows(randTags cryptag.RandomTags) error {
 	return errors.New("DropboxRemote.DeleteRows NOT IMPLEMENTED")
 }
 
@@ -271,22 +284,18 @@ func (db *DropboxRemote) DeleteRows(randTags []string) error {
 // Helpers
 //
 
-func fetchRows(db *DropboxRemote, plaintags []string, populate bool) (types.Rows, error) {
-	randtags, err := randomFromPlain(db, plaintags)
-	if err != nil {
-		return nil, err
-	}
+func fetchRows(db *DropboxRemote, randtags cryptag.RandomTags, includeFileBody bool) (types.Rows, error) {
 	query := strings.Join(randtags, " ")
 	entries, err := db.dbox.Search(db.rowsURL, query, 0, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return entriesToRows(db, entries, populate)
+	return entriesToRows(db, entries, includeFileBody)
 }
 
 // getRowsFromDbox fetches the encrypted rows from url, decrypts them, then
-func getRowsFromDbox(db *DropboxRemote, url string) (types.Rows, error) {
+func getRowsFromDbox(key *[32]byte, url string, pairs types.TagPairs) (types.Rows, error) {
 	var rows types.Rows
 	var err error
 
@@ -295,7 +304,7 @@ func getRowsFromDbox(db *DropboxRemote, url string) (types.Rows, error) {
 	}
 
 	for _, row := range rows {
-		if err = PopulateRowAfterGet(db, row); err != nil {
+		if err = row.Populate(key, pairs); err != nil {
 			return nil, fmt.Errorf("Error from PopulateRowAfterGet: %v", err)
 		}
 	}
@@ -325,7 +334,7 @@ func getAllTagsFromDbox(db *DropboxRemote) (types.TagPairs, error) {
 
 // getTagsFromDbox fetches the encrypted tag pairs at db.tagsURL,
 // decrypts them, and unmarshals them into a TagPairs value
-func getTagsFromDbox(db *DropboxRemote, randtags []string) (types.TagPairs, error) {
+func getTagsFromDbox(db *DropboxRemote, randtags cryptag.RandomTags) (types.TagPairs, error) {
 	tags := make(chan *types.TagPair)
 
 	// Download tags in randtags
@@ -369,7 +378,7 @@ func getTagFromDbox(db *DropboxRemote, tag string) (*types.TagPair, error) {
 	}
 
 	// Decrypt, thereby setting pair.plain
-	if err = pair.Decrypt(db.Decrypt); err != nil {
+	if err = pair.Decrypt(db.Key()); err != nil {
 		return nil, fmt.Errorf("Error from Decrypt: %v\n", err)
 	}
 
@@ -387,29 +396,28 @@ func newTagPair(b []byte, filename string) (*types.TagPair, error) {
 	return &pair, nil
 }
 
-func entriesToRows(db *DropboxRemote, entries []dropbox.Entry, populate bool) (types.Rows, error) {
+func entriesToRows(db *DropboxRemote, entries []dropbox.Entry, includeFileBody bool) (types.Rows, error) {
+	// Fetch rows
 	rowCh := make(chan *types.Row)
+
 	for _, entry := range entries {
-		randomTags := strings.Split(filepath.Base(entry.Path), "-")
+		randtags := strings.Split(filepath.Base(entry.Path), "-")
+
 		go func(entry dropbox.Entry) {
-			r := &types.Row{}
-			if populate {
-				row, err := downloadAndPopulateRow(db, entry, randomTags)
+			// Row filename -> randtags
+
+			var r *types.Row
+
+			if includeFileBody {
+				row, err := downloadRow(db, entry, randtags)
 				if err != nil {
-					log.Printf("Error from downloadAndPopulateRow: %v\n", err)
+					log.Printf("Error from downloadRow: %v\n", err)
 					rowCh <- nil
 					return
 				}
 				r = row
-			}
-
-			// TODO(elimisteve): Again, RandomTags stored in the file and
-			// filename!  Should be filename only.
-			if len(r.RandomTags) == 0 {
-				r.RandomTags = randomTags
-			} else if !stringsEqual(randomTags, r.RandomTags) {
-				log.Printf("PROBLEM: Row `%v` contains randtags `%v`!\n",
-					entry.Path, r.RandomTags)
+			} else {
+				r = &types.Row{RandomTags: randtags}
 			}
 
 			rowCh <- r
@@ -441,7 +449,7 @@ func stringsEqual(s, s2 []string) bool {
 	return true
 }
 
-func downloadAndPopulateRow(db *DropboxRemote, entry dropbox.Entry, randomTags []string) (*types.Row, error) {
+func downloadRow(db *DropboxRemote, entry dropbox.Entry, randomTags []string) (*types.Row, error) {
 	rowB, err := download(db, entry.Path)
 	if err != nil {
 		return nil, fmt.Errorf("Error downloading %v: %v\n", entry.Path, err)
@@ -451,18 +459,20 @@ func downloadAndPopulateRow(db *DropboxRemote, entry dropbox.Entry, randomTags [
 	if err != nil {
 		return nil, fmt.Errorf("Error from NewRowFromBytes: %v\n", err)
 	}
-	row.RandomTags = randomTags
 
-	if err = PopulateRowAfterGet(db, row); err != nil {
-		return nil, fmt.Errorf("Error from PopulateRowAfterGet: %v\n", err)
+	if len(row.RandomTags) != 0 && !stringsEqual(randomTags, row.RandomTags) {
+		log.Printf("PROBLEM: Row `%v` contains randtags `%v`!\n",
+			entry.Path, row.RandomTags)
 	}
+
+	row.RandomTags = randomTags
 
 	return row, nil
 }
 
 func download(db *DropboxRemote, fullURL string) (body []byte, err error) {
 	if types.Debug {
-		log.Printf("Downloading `%v`...\n", fullURL)
+		log.Printf("Downloading `%v`\n", fullURL)
 	}
 	f, _, err := db.dbox.Download(fullURL, "", 0)
 	if err != nil {

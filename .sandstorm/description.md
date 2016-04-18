@@ -35,17 +35,17 @@ secrets. The three best things about CrypTag:
 Overview of daily use
 ---------------------
 
-$ cpass-sandstorm create mytw1tt3rp4ssword twitter @myusername login:myusername
+    $ cpass-sandstorm create mytw1tt3rp4ssword twitter @myusername login:myusername
 
 This stores your Twitter password (in encrypted form, of course) to Sandstorm.
 
 
-$ cpass-sandstorm @myusername
+    $ cpass-sandstorm @myusername
 
 This adds the Twitter password for @myusername to your clipboard automatically!
 
 
-$ cpass-sandstorm all
+    $ cpass-sandstorm all
 
 This will list all passwords (and, actually, all other textual data;
 see below) you've stored.
@@ -64,23 +64,54 @@ want to store and access:
 5. GitHub recovery codes (cpass-sandstorm github recoverycode)
 
 
-Get started
------------
+Getting started
+---------------
 
-Download and run the cpass-sandstorm Linux command line client:
+## Linux and Mac OS X
 
-$ mkdir ~/bin; cd ~/bin && wget https://github.com/elimisteve/cryptag/blob/master/bin/cpass-sandstorm?raw=true -O cpass-sandstorm && chmod +x cpass-sandstorm && ./cpass-sandstorm
+Run this to download the cpass-sandstorm command line program:
 
-Then click the Key icon on a CrypTag Sandstorm grain and generate a
-Sandstorm API key to give to cpass-sandstorm like so:
+    $ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
 
-$ ./cpass-sandstorm init <sandstorm_key>
+Then click the key icon above this web page (on Sandstorm) and
+generate a Sandstorm API key to give to cpass-sandstorm like so:
+
+    $ ./cpass-sandstorm init <sandstorm_key>
 
 To see the remaining valid commands (such as "create", seen above), run
 
-$ ./cpass-sandstorm
+    $ ./cpass-sandstorm
 
 Enjoy!
+
+
+## Windows
+
+Run this in PowerShell:
+
+    (New-Object Net.WebClient).DownloadFile("https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(If ([IntPtr]::size -eq 4) { '-32' }).exe?raw=true", "cpass-sandstorm.exe"); icacls.exe .\cpass-sandstorm.exe /grant everyone:rx
+
+Then click the key icon above this web page (on Sandstorm) and
+generate a Sandstorm API key to give to cpass-sandstorm.exe like so:
+
+    .\cpass-sandstorm.exe init <sandstorm_key>
+
+To see the remaining valid subcommands (such as "create", seen above), run
+
+    .\cpass-sandstorm.exe
+
+Enjoy!
+
+
+Help and feedback
+-----------------
+
+If you have questions or feedback (which is always welcome!), feel
+free to send a message the CrypTag mailing list:
+<https://groups.google.com/forum/#!forum/cryptag>
+
+If you experience a bug, you can report it here:
+<https://github.com/elimisteve/cryptag/issues>
 
 
 Learn more
@@ -88,9 +119,10 @@ Learn more
 
 You'll find more details at:
 
-- Conceptual overview in these slides from my DEFCON talk introducing CrypTag: https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/
+- Conceptual overview in these slides from my DEFCON talk introducing CrypTag:
+<https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/>
 
-- Details: https://github.com/elimisteve/cryptag
+- GitHub repo: <https://github.com/elimisteve/cryptag>
 
 
 ### cget, cput

@@ -6,6 +6,8 @@ package types
 import (
 	"errors"
 	"fmt"
+
+	"github.com/elimisteve/cryptag"
 )
 
 var (
@@ -34,8 +36,8 @@ func (pair *TagPair) Plain() string {
 }
 
 // Decrypt sets pair.plain based off of pair.PlainEncrypted
-func (pair *TagPair) Decrypt(decrypt func(enc []byte, nonce *[24]byte) ([]byte, error)) error {
-	plain, err := decrypt(pair.PlainEncrypted, pair.Nonce)
+func (pair *TagPair) Decrypt(key *[32]byte) error {
+	plain, err := cryptag.Decrypt(pair.PlainEncrypted, pair.Nonce, key)
 	if err != nil {
 		return fmt.Errorf("Error decrypting plain tag `%s` (%v): %v",
 			pair.PlainEncrypted, pair.PlainEncrypted, err)
