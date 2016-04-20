@@ -44,12 +44,7 @@ func main() {
 	case "list":
 		plaintags := append(os.Args[2:], "type:file")
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.ListRowsFromPlainTags(db, pairs, plaintags)
+		rows, err := backend.ListRowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -67,6 +62,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		for _, pair := range pairs {
 			color.Printf("%s  %s\n", pair.Random, color.BlackOnWhite(pair.Plain()))
 		}
@@ -77,12 +73,7 @@ func main() {
 		// TODO: Temporary?
 		plaintags = append(plaintags, "type:file")
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.RowsFromPlainTags(db, pairs, plaintags)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
