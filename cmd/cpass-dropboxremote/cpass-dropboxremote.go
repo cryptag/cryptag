@@ -71,7 +71,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		err = backend.DeleteRows(db, plaintags, pairs)
+		err = backend.DeleteRows(db, pairs, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -89,7 +89,7 @@ func main() {
 		plaintags := append(os.Args[1:], "type:text")
 
 		// Ensures len(rows) > 0
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, pairs, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}

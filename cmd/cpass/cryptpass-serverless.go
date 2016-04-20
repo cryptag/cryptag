@@ -58,7 +58,7 @@ func main() {
 		}
 		plaintags := append(os.Args[2:], "type:text")
 
-		err := backend.DeleteRows(db, plaintags, nil)
+		err := backend.DeleteRows(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -69,7 +69,7 @@ func main() {
 		clipboard.WriteAll(nil)
 
 		plaintags := append(os.Args[1:], "type:text")
-		rows, err := backend.RowsFromPlainTags(db, plaintags, nil)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}

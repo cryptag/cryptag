@@ -10,15 +10,15 @@ import (
 	"github.com/elimisteve/cryptag/types"
 )
 
-func RowsFromPlainTags(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) (types.Rows, error) {
-	return getRows(bk, plaintags, pairs, bk.RowsFromRandomTags)
+func RowsFromPlainTags(bk Backend, pairs types.TagPairs, plaintags cryptag.PlainTags) (types.Rows, error) {
+	return getRows(bk, pairs, plaintags, bk.RowsFromRandomTags)
 }
 
-func ListRowsFromPlainTags(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) (types.Rows, error) {
-	return getRows(bk, plaintags, pairs, bk.ListRows)
+func ListRowsFromPlainTags(bk Backend, pairs types.TagPairs, plaintags cryptag.PlainTags) (types.Rows, error) {
+	return getRows(bk, pairs, plaintags, bk.ListRows)
 }
 
-func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetchByRandom func(cryptag.RandomTags) (types.Rows, error)) (types.Rows, error) {
+func getRows(bk Backend, pairs types.TagPairs, plaintags cryptag.PlainTags, fetchByRandom func(cryptag.RandomTags) (types.Rows, error)) (types.Rows, error) {
 	if pairs == nil {
 		var err error
 		pairs, err = bk.AllTagPairs()
@@ -48,7 +48,7 @@ func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetc
 	return rows, nil
 }
 
-func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) error {
+func DeleteRows(bk Backend, pairs types.TagPairs, plaintags cryptag.PlainTags) error {
 	if pairs == nil {
 		var err error
 		pairs, err = bk.AllTagPairs()

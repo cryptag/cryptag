@@ -113,7 +113,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, pairs, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}

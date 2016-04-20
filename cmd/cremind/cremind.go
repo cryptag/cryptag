@@ -68,7 +68,7 @@ func main() {
 		}
 		plainTags := append(os.Args[2:], "type:calendarevent", "type:text")
 
-		err := backend.DeleteRows(db, plainTags, nil)
+		err := backend.DeleteRows(db, nil, plainTags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -83,7 +83,7 @@ func main() {
 
 		plaintags := append(tags, "type:calendarevent")
 
-		rows, err := backend.RowsFromPlainTags(db, plaintags, nil)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
