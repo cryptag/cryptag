@@ -87,9 +87,10 @@ func main() {
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
 		if err = clipboard.WriteAll(dec); err != nil {
-			log.Fatalf("Error writing first result to clipboard: %v\n", err)
+			log.Printf("Error writing first result to clipboard: %v\n", err)
+		} else {
+			log.Printf("Added first result `%s` to clipboard\n", dec)
 		}
-		log.Printf("Added first result `%s` to clipboard\n", dec)
 
 		color.Println(color.TextRows(rows))
 	}
