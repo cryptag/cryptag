@@ -68,13 +68,8 @@ func main() {
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		plaintags := append(os.Args[1:], "type:text")
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, nil)
 		if err != nil {
 			log.Fatal(err)
 		}

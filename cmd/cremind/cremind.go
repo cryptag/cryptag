@@ -83,13 +83,7 @@ func main() {
 
 		plaintags := append(tags, "type:calendarevent")
 
-		// TODO: Cache tags locally
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, plaintags, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
