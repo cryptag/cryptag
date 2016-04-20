@@ -148,7 +148,7 @@ func (row *Row) SetPlainTags(pairs TagPairs) error {
 }
 
 // Populate sets row.decrypted based on row.Encrypted and
-// row.plainTags based on row.Randomtags, thereby populating row with
+// row.plainTags based on row.RandomTags, thereby populating row with
 // plaintext data.
 func (row *Row) Populate(key *[32]byte, pairs TagPairs) error {
 	if err := row.Decrypt(key); err != nil {

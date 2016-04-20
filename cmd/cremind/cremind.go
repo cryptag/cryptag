@@ -63,7 +63,7 @@ func main() {
 			log.Fatalf("Error creating then saving new row: %v", err)
 		}
 
-		fmt.Println(fmtReminder(row))
+		color.Println(fmtReminder(row))
 
 	case "delete":
 		if len(os.Args) < 3 {
