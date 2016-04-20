@@ -4,6 +4,8 @@
 package backend
 
 import (
+	"log"
+
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
 )
@@ -65,6 +67,11 @@ func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) e
 }
 
 func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []string) (*types.Row, error) {
+	if types.Debug {
+		log.Printf("Creating row with data of length %d and tags `%#v`\n",
+			len(rowData), plaintags)
+	}
+
 	row, err := types.NewRow(rowData, plaintags)
 	if err != nil {
 		return nil, err

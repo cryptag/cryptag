@@ -12,7 +12,6 @@ import (
 
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
 )
 
 var (
@@ -58,11 +57,6 @@ func main() {
 		if lastDot != -1 {
 			fileExt := filename[lastDot+1:]
 			tags = append(tags, "type:"+fileExt)
-		}
-
-		if types.Debug {
-			log.Printf("Creating row with data of length `%v` and tags `%#v`\n",
-				len(data), tags)
 		}
 
 		row, err := backend.CreateRow(db, nil, data, tags)

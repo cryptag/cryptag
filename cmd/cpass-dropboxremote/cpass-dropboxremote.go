@@ -12,7 +12,6 @@ import (
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
 )
 
 var (
@@ -45,16 +44,12 @@ func main() {
 	switch os.Args[1] {
 	case "create":
 		if len(os.Args) < 4 {
-			log.Printf("At least 3 command line arguments must be included\n")
-			log.Fatalf(createUsage)
+			log.Println("At least 3 command line arguments must be included")
+			log.Fatal(createUsage)
 		}
 
 		data := os.Args[2]
 		tags := append(os.Args[3:], "app:cryptpass", "type:text")
-
-		if types.Debug {
-			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
-		}
 
 		row, err := backend.CreateRow(db, nil, []byte(data), tags)
 		if err != nil {

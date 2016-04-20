@@ -54,10 +54,6 @@ func main() {
 		tags := append(os.Args[4:], "when:"+when, "app:cremind",
 			"type:calendarevent", "type:text")
 
-		if types.Debug {
-			log.Printf("Creating row with data `%s` and tags `%#v`\n", todo, tags)
-		}
-
 		row, err := backend.CreateRow(db, nil, []byte(todo), tags)
 		if err != nil {
 			log.Fatalf("Error creating then saving new row: %v", err)

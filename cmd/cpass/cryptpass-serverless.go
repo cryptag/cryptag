@@ -11,7 +11,6 @@ import (
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
 )
 
 var (
@@ -44,10 +43,6 @@ func main() {
 
 		data := os.Args[2]
 		tags := append(os.Args[3:], "app:cryptpass", "type:text")
-
-		if types.Debug {
-			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
-		}
 
 		row, err := backend.CreateRow(db, nil, []byte(data), tags)
 		if err != nil {
