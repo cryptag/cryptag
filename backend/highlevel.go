@@ -62,8 +62,14 @@ func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) e
 		return err
 	}
 
-	// Delete rows tagged with the random strings in pairs
-	return bk.DeleteRows(matches.AllRandom())
+	randtags := matches.AllRandom()
+
+	if types.Debug {
+		log.Printf("Deleting rows with PlainTags `%v` / RandomTags `%v`\n",
+			plaintags, randtags)
+	}
+
+	return bk.DeleteRows(randtags)
 }
 
 func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []string) (*types.Row, error) {
