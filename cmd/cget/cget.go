@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
@@ -53,10 +54,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-		for _, r := range rows {
-			fname := types.RowTagWithPrefix(r, "filename:")
-			color.Printf("%s\n\n", color.TextAndTags(fname, r.PlainTags()))
+		rowStrs := make([]string, len(rows))
+
+		for i := range rows {
+			fname := types.RowTagWithPrefix(rows[i], "filename:")
+			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
+		color.Println(strings.Join(rowStrs, "\n\n"))
 
 	case "tags":
 		pairs, err := db.AllTagPairs()
