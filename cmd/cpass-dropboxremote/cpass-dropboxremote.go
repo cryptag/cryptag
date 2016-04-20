@@ -60,36 +60,26 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(deleteUsage)
+			log.Println("At least 2 command line arguments must be included")
+			log.Fatal(deleteUsage)
 		}
 
 		plaintags := append(os.Args[2:], "type:text")
 
-		pairs, err := db.AllTagPairs()
+		err = backend.DeleteRows(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		err = backend.DeleteRows(db, pairs, plaintags)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Row(s) successfully deleted\n")
+		log.Println("Row(s) successfully deleted")
 
 	default: // Search
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		plaintags := append(os.Args[1:], "type:text")
 
 		// Ensures len(rows) > 0
-		rows, err := backend.RowsFromPlainTags(db, pairs, plaintags)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}

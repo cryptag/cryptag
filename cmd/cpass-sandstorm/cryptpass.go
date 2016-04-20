@@ -107,13 +107,7 @@ func main() {
 
 		plaintags := append(os.Args[1:], "type:text")
 
-		// TODO: Consider caching locally
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.RowsFromPlainTags(db, pairs, plaintags)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
