@@ -63,10 +63,10 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(deleteUsage)
+			log.Println("At least 2 command line arguments must be included")
+			log.Fatal(deleteUsage)
 		}
-		plainTags := os.Args[2:]
+		plainTags := append(os.Args[2:], "type:calendarevent", "type:text")
 
 		err := backend.DeleteRows(db, plainTags, nil)
 		if err != nil {
