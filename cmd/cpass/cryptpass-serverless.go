@@ -63,12 +63,7 @@ func main() {
 		}
 		plaintags := append(os.Args[2:], "type:text")
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatalf("Error from AllTagPairs: %v\n", err)
-		}
-
-		err = backend.DeleteRows(db, plaintags, pairs)
+		err := backend.DeleteRows(db, plaintags, nil)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -39,6 +39,14 @@ func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetc
 }
 
 func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) error {
+	if pairs == nil {
+		var err error
+		pairs, err = bk.AllTagPairs()
+		if err != nil {
+			return err
+		}
+	}
+
 	matches, err := pairs.WithAllPlainTags(plaintags)
 	if err != nil {
 		return err
