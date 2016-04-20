@@ -168,11 +168,8 @@ func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
 }
 
 func (wb *WebserverBackend) SaveRow(row *types.Row) error {
-	// Populate row.{Encrypted,RandomTags} from
-	// row.{decrypted,plainTags}
-	err := PopulateRowBeforeSave(wb, row)
-	if err != nil {
-		return fmt.Errorf("Error populating row before save: %v", err)
+	if len(row.Encrypted) == 0 || len(row.RandomTags) == 0 || row.Nonce == nil || *row.Nonce == [24]byte{} {
+		return errors.New("Invalid row; requires Encrypted, RandomTags, Nonce fields")
 	}
 
 	rowBytes, err := json.Marshal(row)

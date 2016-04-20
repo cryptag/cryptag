@@ -66,17 +66,7 @@ func main() {
 				len(data), tags)
 		}
 
-		row, err := types.NewRow(data, tags)
-		if err != nil {
-			log.Fatalf("Error creating new row: %v\n", err)
-		}
-
-		err = backend.PopulateRowBeforeSave(db, row)
-		if err != nil {
-			log.Fatalf("Error populating row: %v\n", err)
-		}
-
-		err = db.SaveRow(row)
+		row, err := backend.CreateRow(db, nil, data, tags)
 		if err != nil {
 			log.Fatalf("Error saving new row: %v\n", err)
 		}

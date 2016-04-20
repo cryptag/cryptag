@@ -238,11 +238,6 @@ func (fs *FileSystem) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Row
 }
 
 func (fs *FileSystem) SaveRow(row *types.Row) error {
-	err := PopulateRowBeforeSave(fs, row)
-	if err != nil {
-		return err
-	}
-
 	if len(row.Encrypted) == 0 || len(row.RandomTags) == 0 || row.Nonce == nil || *row.Nonce == [24]byte{} {
 		if types.Debug {
 			log.Printf("Error saving row `%#v`\n", row)
