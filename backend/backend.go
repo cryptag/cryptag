@@ -123,12 +123,23 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs
 
 	allTagPairs := append(pairs, newPairs...)
 
+	var randtags []string
+
 	// Set row.RandomTags
-	for _, pair := range allTagPairs {
-		if row.HasPlainTag(pair.Plain()) {
-			row.RandomTags = append(row.RandomTags, pair.Random)
+
+	for _, plain := range row.PlainTags() {
+		for i, pair := range allTagPairs {
+			if plain == pair.Plain() {
+				randtags = append(randtags, pair.Random)
+				break
+			}
+			if i == len(allTagPairs)-1 {
+				return fmt.Errorf(
+					"No corresponding TagPair found for plain tag `%s`", plain)
+			}
 		}
 	}
+	row.RandomTags = randtags
 
 	// Set row.Encrypted
 
