@@ -49,15 +49,11 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
 		}
 
-		row, err := types.NewRow([]byte(data), tags)
+		row, err := backend.CreateRow(db, nil, []byte(data), tags)
 		if err != nil {
-			log.Fatalf("Error creating new row: %v\n", err)
+			log.Fatalf("Error creating then saving new row: %v", err)
 		}
 
-		err = db.SaveRow(row)
-		if err != nil {
-			log.Fatalf("Error saving new row: %v\n", err)
-		}
 		color.Println(color.TextRow(row))
 
 	case "delete":
@@ -67,12 +63,7 @@ func main() {
 		}
 		plaintags := append(os.Args[2:], "type:text")
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatalf("Error from AllTagPairs: %v\n", err)
-		}
-
-		err = backend.DeleteRows(db, plaintags, pairs)
+		err := backend.DeleteRows(db, plaintags, nil)
 		if err != nil {
 			log.Fatal(err)
 		}

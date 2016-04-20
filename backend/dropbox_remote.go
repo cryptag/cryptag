@@ -233,11 +233,11 @@ func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
 }
 
 func (db *DropboxRemote) SaveRow(row *types.Row) error {
-	// Populate row.{Encrypted,RandomTags} from
-	// row.{decrypted,plainTags}
-	err := PopulateRowBeforeSave(db, row)
-	if err != nil {
-		return fmt.Errorf("Error populating row before save: %v", err)
+	if len(row.Encrypted) == 0 || len(row.RandomTags) == 0 || row.Nonce == nil || *row.Nonce == [24]byte{} {
+		if types.Debug {
+			log.Printf("Error saving row `%#v`\n", row)
+		}
+		return errors.New("Invalid row; requires Encrypted, RandomTags, Nonce fields")
 	}
 
 	rowB, err := json.Marshal(row)

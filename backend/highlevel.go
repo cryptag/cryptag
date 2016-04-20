@@ -39,6 +39,14 @@ func getRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs, fetc
 }
 
 func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) error {
+	if pairs == nil {
+		var err error
+		pairs, err = bk.AllTagPairs()
+		if err != nil {
+			return err
+		}
+	}
+
 	matches, err := pairs.WithAllPlainTags(plaintags)
 	if err != nil {
 		return err
@@ -46,4 +54,30 @@ func DeleteRows(bk Backend, plaintags cryptag.PlainTags, pairs types.TagPairs) e
 
 	// Delete rows tagged with the random strings in pairs
 	return bk.DeleteRows(matches.AllRandom())
+}
+
+func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []string) (*types.Row, error) {
+	row, err := types.NewRow(rowData, plaintags)
+	if err != nil {
+		return nil, err
+	}
+
+	if pairs == nil {
+		pairs, err = bk.AllTagPairs()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = PopulateRowBeforeSave(bk, row, pairs)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bk.SaveRow(row)
+	if err != nil {
+		return nil, err
+	}
+
+	return row, nil
 }

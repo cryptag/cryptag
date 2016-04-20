@@ -32,21 +32,11 @@ type Backend interface {
 	ToConfig() (*Config, error)
 }
 
-func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.TagPairs, newPairs types.TagPairs, err error) {
-	// Fetch all tags
-	allPairs, err = backend.AllTagPairs()
-	if err != nil {
-		return nil, nil, fmt.Errorf("Error from AllTagPairs: %v", err)
-	}
-
-	if types.Debug {
-		log.Printf("Fetched all %d TagPairs from backend\n", len(allPairs))
-	}
-
+func CreateTagsFromPlain(backend Backend, plaintags []string, pairs types.TagPairs) (newPairs types.TagPairs, err error) {
 	// Find out which members of plaintags don't have an existing,
 	// corresponding TagPair
 
-	existingPlain := allPairs.AllPlain()
+	existingPlain := pairs.AllPlain()
 
 	// Concurrent Tag creation ftw
 	var chs []chan *types.TagPair
@@ -85,11 +75,7 @@ func CreateTagsFromPlain(backend Backend, plaintags []string) (allPairs types.Ta
 		}
 	}
 
-	// TODO(elimisteve): WTF?
-
-	allPairs = append(allPairs, newPairs...)
-
-	return allPairs, newPairs, nil
+	return newPairs, nil
 }
 
 func NewTagPair(key *[32]byte, plaintag string) (*types.TagPair, error) {
@@ -124,23 +110,36 @@ func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
 	return pair, nil
 }
 
-func PopulateRowBeforeSave(backend Backend, row *types.Row) error {
-	// Fetch all tags.  For each element of row.plainTags that doesn't
-	// match an existing tag, call CreateTag().  Encrypt row.decrypted
-	// and store it in row.Encrypted.  POST to server.
+func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs) error {
+	// For each element of row.plainTags that doesn't match an
+	// existing tag, call CreateTag().  Encrypt row.decrypted and
+	// store it in row.Encrypted.  POST to server.
 
 	// TODO: Call this in parallel with encryption below
-	allTagPairs, _, err := CreateTagsFromPlain(backend, row.PlainTags())
+	newPairs, err := CreateTagsFromPlain(backend, row.PlainTags(), pairs)
 	if err != nil {
 		return fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
 	}
 
+	allTagPairs := append(pairs, newPairs...)
+
+	var randtags []string
+
 	// Set row.RandomTags
-	for _, pair := range allTagPairs {
-		if row.HasPlainTag(pair.Plain()) {
-			row.RandomTags = append(row.RandomTags, pair.Random)
+
+	for _, plain := range row.PlainTags() {
+		for i, pair := range allTagPairs {
+			if plain == pair.Plain() {
+				randtags = append(randtags, pair.Random)
+				break
+			}
+			if i == len(allTagPairs)-1 {
+				return fmt.Errorf(
+					"No corresponding TagPair found for plain tag `%s`", plain)
+			}
 		}
 	}
+	row.RandomTags = randtags
 
 	// Set row.Encrypted
 

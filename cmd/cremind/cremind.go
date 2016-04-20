@@ -58,16 +58,12 @@ func main() {
 			log.Printf("Creating row with data `%s` and tags `%#v`\n", todo, tags)
 		}
 
-		row, err := types.NewRow([]byte(todo), tags)
+		row, err := backend.CreateRow(db, nil, []byte(todo), tags)
 		if err != nil {
-			log.Fatalf("Error creating new row: %v\n", err)
+			log.Fatalf("Error creating then saving new row: %v", err)
 		}
 
-		err = db.SaveRow(row)
-		if err != nil {
-			log.Fatalf("Error saving new row: %v\n", err)
-		}
-		fmt.Println(fmtReminder(row))
+		color.Println(fmtReminder(row))
 
 	case "delete":
 		if len(os.Args) < 3 {
@@ -76,28 +72,7 @@ func main() {
 		}
 		plainTags := os.Args[2:]
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatalf("Error from AllTagPairs: %v\n", err)
-		}
-
-		// Get all the random tags associated with the tag pairs that
-		// contain every tag in plainTags.
-		//
-		// Got that?
-		//
-		// The flow: user specifies plainTags + we fetch all TagPairs
-		// => we filter the TagPairs based on those with the
-		// user-specified plainTags => we grab each TagPair's random
-		// string so we can delete the rows tagged with those tags
-
-		pairs, err = pairs.WithAllPlainTags(plainTags)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Delete rows tagged with the random strings in pairs
-		err = db.DeleteRows(pairs.AllRandom())
+		err := backend.DeleteRows(db, plainTags, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
