@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,9 +19,12 @@ import (
 	"time"
 
 	"github.com/elimisteve/cryptag"
+	"github.com/elimisteve/cryptag/tor"
 	"github.com/elimisteve/cryptag/types"
 	"github.com/elimisteve/fun"
 	"github.com/stacktic/dropbox"
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 )
 
 type DropboxRemote struct {
@@ -56,6 +60,32 @@ func (db *DropboxRemote) GetTagCursor() string {
 	defer db.cursorLock.RUnlock()
 
 	return db.tagCursor
+}
+
+// SetHTTPClient sets the underlying HTTP client used. Probably most
+// useful for using a custom client that does proxied requests,
+// perhaps through Tor.
+func (db *DropboxRemote) SetHTTPClient(c *http.Client) {
+	// Goal: trigger
+	// https://github.com/golang/oauth2/blob/master/internal/transport.go#L37-38
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, c)
+	db.dbox.SetContext(ctx)
+}
+
+// UseTor sets db's HTTP client to one that uses Tor.
+func (db *DropboxRemote) UseTor() error {
+	c, err := tor.NewClient()
+	if err != nil {
+		return err
+	}
+
+	db.SetHTTPClient(c)
+
+	if types.Debug {
+		log.Println("*DropboxRemote to do HTTP calls over Tor")
+	}
+
+	return nil
 }
 
 func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) {

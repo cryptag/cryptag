@@ -32,7 +32,7 @@ func main() {
 		log.Fatalln(usage)
 	}
 
-	var db backend.Backend
+	var db *backend.WebserverBackend
 
 	if os.Args[1] != "init" {
 		var err error
@@ -40,6 +40,13 @@ func main() {
 		if err != nil {
 			log.Printf("%v\n", err)
 			log.Fatal(usage)
+		}
+	}
+
+	if cryptag.UseTor {
+		err := db.UseTor()
+		if err != nil {
+			log.Fatalf("Error trying to use Tor: %v\n", err)
 		}
 	}
 

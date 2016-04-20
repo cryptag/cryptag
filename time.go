@@ -13,8 +13,11 @@ func Now() time.Time {
 }
 
 func NowStr() string {
-	now := Now()
-	y, m, d := now.Date()
-	hr, min, sec := now.Clock()
+	return TimeStr(Now())
+}
+
+func TimeStr(t time.Time) string {
+	y, m, d := t.Date()
+	hr, min, sec := t.Clock()
 	return fmt.Sprintf("%d%02d%02d%02d%02d%02d", y, m, d, hr, min, sec)
 }

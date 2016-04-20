@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/elimisteve/clipboard"
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/types"
@@ -26,6 +27,13 @@ func init() {
 	)
 	if err != nil {
 		log.Fatalf("LoadDropboxRemote error: %v\n", err)
+	}
+
+	if cryptag.UseTor {
+		err = db.UseTor()
+		if err != nil {
+			log.Fatalf("Error creating Tor HTTP client: %v\n", err)
+		}
 	}
 }
 
