@@ -274,21 +274,21 @@ func (fs *FileSystem) DeleteRows(randTags cryptag.RandomTags) error {
 		log.Printf("DeleteRows(%#v)\n", randTags)
 	}
 
-	// Find
+	// Find rows matching given tags
 	rows, err := fs.rowsFromRandomTags(randTags, false)
 	if err != nil {
 		return err
 	}
 
 	if types.Debug {
-		log.Printf("DeleteRows: deleting rows: %s\n", rows)
+		log.Printf("DeleteRows: deleting %d rows: %s\n", len(rows), rows)
 	}
 
 	// Delete
 	for _, row := range rows {
 		filename := path.Join(fs.rowsPath, strings.Join(row.RandomTags, "-"))
 		if types.Debug {
-			log.Printf("Removing row file `%v`...\n", filename)
+			log.Printf("Removing row file `%v`\n", filename)
 		}
 		err = os.Remove(filename)
 		if err != nil {
@@ -389,11 +389,6 @@ func readRowFile(bk *FileSystem, rowFilePath string, rowTags []string) (*types.R
 	}
 
 	row.RandomTags = rowTags
-
-	// // Populate row.decrypted and row.plain
-	// if err = PopulateRowAfterGet(bk, &row); err != nil {
-	// 	return nil, err
-	// }
 
 	return &row, nil
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
@@ -43,26 +44,25 @@ func main() {
 	case "list":
 		plaintags := append(os.Args[2:], "type:file")
 
-		pairs, err := db.AllTagPairs()
+		rows, err := backend.ListRowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		rows, err := backend.ListRowsFromPlainTags(db, plaintags, pairs)
-		if err != nil {
-			log.Fatal(err)
-		}
+		rowStrs := make([]string, len(rows))
 
-		for _, r := range rows {
-			fname := types.RowTagWithPrefix(r, "filename:")
-			color.Printf("%s\n\n", color.TextAndTags(fname, r.PlainTags()))
+		for i := range rows {
+			fname := types.RowTagWithPrefix(rows[i], "filename:")
+			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
+		color.Println(strings.Join(rowStrs, "\n\n"))
 
 	case "tags":
 		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		for _, pair := range pairs {
 			color.Printf("%s  %s\n", pair.Random, color.BlackOnWhite(pair.Plain()))
 		}
@@ -73,12 +73,7 @@ func main() {
 		// TODO: Temporary?
 		plaintags = append(plaintags, "type:file")
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}

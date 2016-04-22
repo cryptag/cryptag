@@ -54,10 +54,6 @@ func main() {
 		tags := append(os.Args[4:], "when:"+when, "app:cremind",
 			"type:calendarevent", "type:text")
 
-		if types.Debug {
-			log.Printf("Creating row with data `%s` and tags `%#v`\n", todo, tags)
-		}
-
 		row, err := backend.CreateRow(db, nil, []byte(todo), tags)
 		if err != nil {
 			log.Fatalf("Error creating then saving new row: %v", err)
@@ -67,12 +63,12 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(deleteUsage)
+			log.Println("At least 2 command line arguments must be included")
+			log.Fatal(deleteUsage)
 		}
-		plainTags := os.Args[2:]
+		plainTags := append(os.Args[2:], "type:calendarevent", "type:text")
 
-		err := backend.DeleteRows(db, plainTags, nil)
+		err := backend.DeleteRows(db, nil, plainTags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -87,13 +83,7 @@ func main() {
 
 		plaintags := append(tags, "type:calendarevent")
 
-		// TODO: Cache tags locally
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}

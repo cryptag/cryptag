@@ -12,7 +12,6 @@ import (
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
 )
 
 var (
@@ -45,16 +44,12 @@ func main() {
 	switch os.Args[1] {
 	case "create":
 		if len(os.Args) < 4 {
-			log.Printf("At least 3 command line arguments must be included\n")
-			log.Fatalf(createUsage)
+			log.Println("At least 3 command line arguments must be included")
+			log.Fatal(createUsage)
 		}
 
 		data := os.Args[2]
 		tags := append(os.Args[3:], "app:cryptpass", "type:text")
-
-		if types.Debug {
-			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
-		}
 
 		row, err := backend.CreateRow(db, nil, []byte(data), tags)
 		if err != nil {
@@ -65,36 +60,26 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(deleteUsage)
+			log.Println("At least 2 command line arguments must be included")
+			log.Fatal(deleteUsage)
 		}
 
 		plaintags := append(os.Args[2:], "type:text")
 
-		pairs, err := db.AllTagPairs()
+		err = backend.DeleteRows(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		err = backend.DeleteRows(db, plaintags, pairs)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Row(s) successfully deleted\n")
+		log.Println("Row(s) successfully deleted")
 
 	default: // Search
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		plaintags := append(os.Args[1:], "type:text")
 
 		// Ensures len(rows) > 0
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -102,9 +87,10 @@ func main() {
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
 		if err = clipboard.WriteAll(dec); err != nil {
-			log.Fatalf("Error writing first result to clipboard: %v\n", err)
+			log.Printf("Error writing first result to clipboard: %v\n", err)
+		} else {
+			log.Printf("Added first result `%s` to clipboard\n", dec)
 		}
-		log.Printf("Added first result `%s` to clipboard\n", dec)
 
 		color.Println(color.TextRows(rows))
 	}

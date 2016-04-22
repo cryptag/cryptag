@@ -16,7 +16,6 @@ import (
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
 )
 
 var backendName = "sandstorm-webserver"
@@ -68,10 +67,6 @@ func main() {
 		data := os.Args[2]
 		tags := append(os.Args[3:], "app:cryptpass", "type:text")
 
-		if types.Debug {
-			log.Printf("Creating row with data `%s` and tags `%#v`\n", data, tags)
-		}
-
 		row, err := backend.CreateRow(db, nil, []byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating then saving new row: %v", err)
@@ -112,13 +107,7 @@ func main() {
 
 		plaintags := append(os.Args[1:], "type:text")
 
-		// TODO: Consider caching locally
-		pairs, err := db.AllTagPairs()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rows, err := backend.RowsFromPlainTags(db, plaintags, pairs)
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -126,9 +115,10 @@ func main() {
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
 		if err = clipboard.WriteAll(dec); err != nil {
-			log.Fatalf("Error writing first result to clipboard: %v\n", err)
+			log.Printf("Error writing first result to clipboard: %v\n", err)
+		} else {
+			log.Printf("Added first result `%s` to clipboard\n", dec)
 		}
-		log.Printf("Added first result `%s` to clipboard\n", dec)
 
 		color.Println(color.TextRows(rows))
 	}
