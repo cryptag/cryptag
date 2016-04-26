@@ -87,6 +87,10 @@ func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, e
 
 	configFile := path.Join(backendPath, backendName+".json")
 
+	if types.Debug {
+		log.Printf("Reading backend config file `%v`\n", configFile)
+	}
+
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -254,15 +258,7 @@ func (wb *WebserverBackend) ListRows(randtags cryptag.RandomTags) (types.Rows, e
 
 func (wb *WebserverBackend) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
 	fullURL := wb.rowsUrl + "?tags=" + strings.Join(randtags, ",")
-	if types.Debug {
-		log.Printf("fullURL == `%s`\n", fullURL)
-	}
-
-	rows, err := wb.getRowsFromUrl(fullURL)
-	if err != nil {
-		return nil, fmt.Errorf("Error from getRowsFromUrl: %v", err)
-	}
-	return rows, nil
+	return wb.getRowsFromUrl(fullURL)
 }
 
 func (wb *WebserverBackend) DeleteRows(randtags cryptag.RandomTags) error {
