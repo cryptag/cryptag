@@ -246,6 +246,11 @@ func ListRows(w http.ResponseWriter, req *http.Request) {
 	includeFileBody := false
 	rows, err := filesystem.RowsByTags(randtags, includeFileBody)
 	if err != nil {
+		if err == types.ErrRowsNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("[]"))
+			return
+		}
 		help.WriteError(w, "Error fetching rows: "+err.Error(),
 			http.StatusInternalServerError)
 		return
