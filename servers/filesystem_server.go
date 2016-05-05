@@ -189,6 +189,11 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 	includeFileBody := true
 	rows, err := filesystem.RowsByTags(tags, includeFileBody)
 	if err != nil {
+		if err == types.ErrRowsNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("[]"))
+			return
+		}
 		help.WriteError(w, "Error fetching rows: "+err.Error(),
 			http.StatusInternalServerError)
 		return
