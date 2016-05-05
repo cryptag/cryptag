@@ -354,6 +354,12 @@ func (wb *WebserverBackend) getInto(url string, strct interface{}) error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d from %s; response: %s", resp.StatusCode,
+			url, body)
+	}
+
 	return readInto(resp.Body, strct)
 }
 
@@ -392,5 +398,10 @@ func readInto(r io.Reader, strct interface{}) error {
 		return err
 	}
 
-	return json.Unmarshal(body, strct)
+	err = json.Unmarshal(body, strct)
+	if err != nil {
+		return fmt.Errorf("Error reading body `%s` into Go type: %v", body, err)
+	}
+
+	return nil
 }
