@@ -19,9 +19,9 @@ const pkgdef :Spk.PackageDefinition = (
 
     appTitle = (defaultText = "CrypTag"),
 
-    appVersion = 13,  # Increment this for every release.
+    appVersion = 14,  # Increment this for every release.
 
-    appMarketingVersion = (defaultText = "0.4.6"),
+    appMarketingVersion = (defaultText = "0.6"),
     # Human-readable representation of appVersion. Should match the way you
     # identify versions of your app in documentation and marketing.
 
