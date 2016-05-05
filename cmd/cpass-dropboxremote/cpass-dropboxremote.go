@@ -66,7 +66,7 @@ func main() {
 
 		plaintags := append(os.Args[2:], "type:text")
 
-		err = backend.DeleteRows(db, nil, plaintags)
+		err := backend.DeleteRows(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
