@@ -9,13 +9,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
@@ -38,13 +36,11 @@ func init() {
 
 const (
 	deleteRowDelete = "delete"
-	deleteRowIgnore = "ignore"
 	deleteRowMove   = "move"
 )
 
 var deleteOptions = []string{
 	deleteRowDelete,
-	deleteRowIgnore,
 	deleteRowMove,
 }
 
@@ -67,8 +63,6 @@ func init() {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	router := mux.NewRouter()
 
 	// Rows
@@ -283,18 +277,6 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 }
 
 func DeleteRows(w http.ResponseWriter, req *http.Request) {
-	if onRowDelete == deleteRowIgnore {
-		if types.Debug {
-			log.Println("Ignoring Row deletion")
-		}
-
-		ms := 200 + rand.Intn(300)
-		// Sleep 200ms - 500ms
-		time.Sleep(time.Duration(ms) * time.Millisecond)
-		help.WriteJSON(w, nil)
-		return
-	}
-
 	_ = req.ParseForm()
 
 	randtags, err := parseTags(req.Form["tags"])
