@@ -45,9 +45,11 @@ func SaveRowAsFile(r *Row, dir string) (filepath string, err error) {
 
 	if dir == "" {
 		dir = path.Join(cryptag.TrustedBasePath, "decrypted")
-		if err := os.MkdirAll(dir, 0700); err != nil {
-			log.Printf("Error creating directory `%v`: %v", dir, err)
-		}
+	}
+
+	// Create destination dir
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", fmt.Errorf("Error creating directory `%v`: %v", dir, err)
 	}
 
 	filepath = path.Join(dir, f)
