@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
@@ -34,7 +36,39 @@ func init() {
 	filesystem = fs
 }
 
+const (
+	deleteRowDelete = "delete"
+	deleteRowIgnore = "ignore"
+	deleteRowMove   = "move"
+)
+
+var deleteOptions = []string{
+	deleteRowDelete,
+	deleteRowIgnore,
+	deleteRowMove,
+}
+
+var onRowDelete string // defines what happens when Row is deleted
+
+func init() {
+	onDelete := os.Getenv("ON_DELETE")
+	if onDelete == "" {
+		onDelete = deleteRowMove
+	}
+
+	if !fun.SliceContains(deleteOptions, onDelete) {
+		log.Fatalf("ON_DELETE env var set to invalid option `%s`\n", onDelete)
+	}
+
+	// Set global `onRowDelete` var
+	onRowDelete = onDelete
+
+	log.Printf("Row deletion behavior: %s\n", onRowDelete)
+}
+
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	router := mux.NewRouter()
 
 	// Rows
@@ -249,6 +283,18 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 }
 
 func DeleteRows(w http.ResponseWriter, req *http.Request) {
+	if onRowDelete == deleteRowIgnore {
+		if types.Debug {
+			log.Println("Ignoring Row deletion")
+		}
+
+		ms := 200 + rand.Intn(300)
+		// Sleep 200ms - 500ms
+		time.Sleep(time.Duration(ms) * time.Millisecond)
+		help.WriteJSON(w, nil)
+		return
+	}
+
 	_ = req.ParseForm()
 
 	randtags, err := parseTags(req.Form["tags"])
@@ -265,9 +311,11 @@ func DeleteRows(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if types.Debug {
-		log.Printf("About to delete all %d files with all these tags: %#v\n",
-			len(rowFiles), randtags)
+		log.Printf("About to delete all files with all these tags: %#v\n",
+			randtags)
 	}
+
+	numDeleted := 0
 
 	for _, rowFile := range rowFiles {
 		// Row filenames are of the form randtag1-randtag2-randtag3
@@ -282,10 +330,46 @@ func DeleteRows(w http.ResponseWriter, req *http.Request) {
 			log.Printf("Deleting file `%v`\n", fname)
 		}
 
+		if onRowDelete == deleteRowMove {
+			dest := path.Join(filesystem.rowsDeletedPath, filepath.Base(rowFile))
+
+			// mv rows/tag1-tag2-tag3 -> rows_deleted/tag1-tag2-tag3
+			err = os.Rename(rowFile, dest)
+			if err != nil {
+				log.Printf("Error moving %s to %s\n", fname,
+					filesystem.rowsDeletedPath, err)
+				continue
+			}
+
+			if types.Debug {
+				numDeleted++
+				log.Printf("Successfully move-deleted row %s\n", fname)
+			}
+
+			continue
+		}
+
+		if onRowDelete != deleteRowDelete {
+			errStr := "Server misconfigured; set ON_DELETE to one of these: " +
+				strings.Join(deleteOptions, ", ")
+			log.Println(errStr)
+			help.WriteError(w, errStr, http.StatusInternalServerError)
+			return
+		}
+
 		if err := os.Remove(rowFile); err != nil {
 			log.Printf("Error deleting file `%v`: %v\n", rowFile, err)
 			continue
 		}
+
+		if types.Debug {
+			numDeleted++
+			log.Printf("Successfully deleted row %s\n", fname)
+		}
+	}
+
+	if types.Debug {
+		log.Printf("%d rows deleted\n", numDeleted)
 	}
 
 	help.WriteJSON(w, nil)
@@ -357,18 +441,20 @@ func parseTags(tags []string) ([]string, error) {
 //
 
 type FileSystem struct {
-	cryptagPath string
-	tagsPath    string
-	rowsPath    string
+	cryptagPath     string
+	tagsPath        string
+	rowsPath        string
+	rowsDeletedPath string
 }
 
 func NewFileSystem(cryptagPath string) (*FileSystem, error) {
 	cryptagPath = strings.TrimRight(cryptagPath, "/\\")
 
 	fs := &FileSystem{
-		cryptagPath: cryptagPath,
-		tagsPath:    path.Join(cryptagPath, "tags"),
-		rowsPath:    path.Join(cryptagPath, "rows"),
+		cryptagPath:     cryptagPath,
+		tagsPath:        path.Join(cryptagPath, "tags"),
+		rowsPath:        path.Join(cryptagPath, "rows"),
+		rowsDeletedPath: path.Join(cryptagPath, "rows_deleted"),
 	}
 	if err := fs.Init(); err != nil {
 		return nil, err
@@ -380,7 +466,8 @@ func NewFileSystem(cryptagPath string) (*FileSystem, error) {
 // Init creates the base CrypTag directories
 func (fs *FileSystem) Init() error {
 	var err error
-	for _, path := range []string{fs.cryptagPath, fs.tagsPath, fs.rowsPath} {
+	dirs := []string{fs.cryptagPath, fs.tagsPath, fs.rowsPath, fs.rowsDeletedPath}
+	for _, path := range dirs {
 		err = os.MkdirAll(path, 0755)
 		if err == nil || os.IsExist(err) {
 			// Created successfully or already exists
