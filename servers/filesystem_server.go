@@ -41,6 +41,8 @@ func main() {
 	router.HandleFunc("/", GetRoot).Methods("GET")
 	router.HandleFunc("/rows", GetRows).Methods("GET")
 	router.HandleFunc("/rows", PostRow).Methods("POST")
+	router.HandleFunc("/rows/list", ListRows).Methods("GET")
+	router.HandleFunc("/rows/delete", DeleteRows).Methods("GET")
 
 	// Tags
 	router.HandleFunc("/tags", GetTags).Methods("GET")
@@ -174,16 +176,11 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tags := req.Form["tags"]
-	if len(tags) == 0 {
-		log.Printf("No tags included; returning no rows")
-		help.WriteError(w, "No tags included; returning no rows",
-			http.StatusBadRequest)
+	tags, err := parseTags(req.Form["tags"])
+	if err != nil {
+		help.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	// Tag format: /?tags=tag1,tag2,tag3
-	tags = strings.Split(tags[0], ",")
 
 	if types.Debug {
 		log.Printf("Rows queried by these tags: %+v\n", tags)
@@ -191,6 +188,30 @@ func GetRows(w http.ResponseWriter, req *http.Request) {
 
 	includeFileBody := true
 	rows, err := filesystem.RowsByTags(tags, includeFileBody)
+	if err != nil {
+		help.WriteError(w, "Error fetching rows: "+err.Error(),
+			http.StatusInternalServerError)
+		return
+	}
+
+	help.WriteJSON(w, rows)
+}
+
+func ListRows(w http.ResponseWriter, req *http.Request) {
+	if err := req.ParseForm(); err != nil {
+		help.WriteError(w, "Error parsing URL parameters: "+err.Error(),
+			http.StatusBadRequest)
+		return
+	}
+
+	randtags, err := parseTags(req.Form["tags"])
+	if err != nil {
+		help.WriteError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	includeFileBody := false
+	rows, err := filesystem.RowsByTags(randtags, includeFileBody)
 	if err != nil {
 		help.WriteError(w, "Error fetching rows: "+err.Error(),
 			http.StatusInternalServerError)
@@ -220,6 +241,49 @@ func PostRow(w http.ResponseWriter, req *http.Request) {
 	}
 
 	help.WriteJSON(w, row)
+}
+
+func DeleteRows(w http.ResponseWriter, req *http.Request) {
+	_ = req.ParseForm()
+
+	randtags, err := parseTags(req.Form["tags"])
+	if err != nil {
+		help.WriteError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	rowFiles, err := filepath.Glob(path.Join(filesystem.rowsPath, "*"))
+	if err != nil {
+		help.WriteError(w, "Error getting file list: "+err.Error(),
+			http.StatusInternalServerError)
+		return
+	}
+
+	if types.Debug {
+		log.Printf("About to delete all %d files with all these tags: %#v\n",
+			len(rowFiles), randtags)
+	}
+
+	for _, rowFile := range rowFiles {
+		// Row filenames are of the form randtag1-randtag2-randtag3
+		fname := filepath.Base(rowFile)
+		rowTags := strings.Split(fname, "-")
+
+		if !fun.SliceContainsAll(rowTags, randtags) {
+			continue
+		}
+
+		if types.Debug {
+			log.Printf("Deleting file `%v`\n", fname)
+		}
+
+		if err := os.Remove(rowFile); err != nil {
+			log.Printf("Error deleting file `%v`: %v\n", rowFile, err)
+			continue
+		}
+	}
+
+	help.WriteJSON(w, nil)
 }
 
 func GetTags(w http.ResponseWriter, req *http.Request) {
@@ -270,6 +334,17 @@ func PostTag(w http.ResponseWriter, req *http.Request) {
 	}
 
 	help.WriteJSON(w, pair)
+}
+
+func parseTags(tags []string) ([]string, error) {
+	if len(tags) == 0 {
+		return nil, errors.New("No tags included in query (not allowed)")
+	}
+
+	// Tag format: /?tags=tag1,tag2,tag3
+	tags = strings.Split(tags[0], ",")
+
+	return tags, nil
 }
 
 //

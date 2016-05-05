@@ -253,7 +253,8 @@ func (wb *WebserverBackend) TagPairsFromRandomTags(randtags cryptag.RandomTags) 
 }
 
 func (wb *WebserverBackend) ListRows(randtags cryptag.RandomTags) (types.Rows, error) {
-	return nil, fmt.Errorf("WebserverBackend.ListRows: NOT IMPLEMENTED")
+	fullURL := wb.rowsUrl + "/list?tags=" + strings.Join(randtags, ",")
+	return wb.getRowsFromUrl(fullURL)
 }
 
 func (wb *WebserverBackend) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
@@ -262,7 +263,20 @@ func (wb *WebserverBackend) RowsFromRandomTags(randtags cryptag.RandomTags) (typ
 }
 
 func (wb *WebserverBackend) DeleteRows(randtags cryptag.RandomTags) error {
-	return errors.New("WebserverBackend.DeleteRows NOT IMPLEMENTED")
+	fullURL := wb.rowsUrl + "/delete?tags=" + strings.Join(randtags, ",")
+	resp, err := wb.get(fullURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Error deleting rows; got status code %d and body `%s`",
+			resp.StatusCode, body)
+	}
+
+	return nil
 }
 
 //
