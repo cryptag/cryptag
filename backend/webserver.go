@@ -200,12 +200,6 @@ func (wb *WebserverBackend) SaveRow(row *types.Row) error {
 		return fmt.Errorf("Got HTTP %d from server: `%s`", resp.StatusCode, body)
 	}
 
-	// // Populated newRow.{decrypted,plainTags} from
-	// // newRow.{Encrypted,RandomTags}
-	// if err = PopulateRowAfterGet(wb, newRow); err != nil {
-	// 	return err
-	// }
-
 	return nil
 }
 
@@ -376,16 +370,6 @@ func (wb *WebserverBackend) post(url string, data []byte) (*http.Response, error
 	req.Header.Add("Authorization", "Bearer "+wb.authToken)
 
 	return wb.client.Do(req)
-}
-
-func (wb *WebserverBackend) postInto(url string, data []byte, strct interface{}) error {
-	resp, err := wb.post(url, data)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	return readInto(resp.Body, strct)
 }
 
 //
