@@ -87,6 +87,10 @@ func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, e
 
 	configFile := path.Join(backendPath, backendName+".json")
 
+	if types.Debug {
+		log.Printf("Reading backend config file `%v`\n", configFile)
+	}
+
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -196,12 +200,6 @@ func (wb *WebserverBackend) SaveRow(row *types.Row) error {
 		return fmt.Errorf("Got HTTP %d from server: `%s`", resp.StatusCode, body)
 	}
 
-	// // Populated newRow.{decrypted,plainTags} from
-	// // newRow.{Encrypted,RandomTags}
-	// if err = PopulateRowAfterGet(wb, newRow); err != nil {
-	// 	return err
-	// }
-
 	return nil
 }
 
@@ -249,24 +247,30 @@ func (wb *WebserverBackend) TagPairsFromRandomTags(randtags cryptag.RandomTags) 
 }
 
 func (wb *WebserverBackend) ListRows(randtags cryptag.RandomTags) (types.Rows, error) {
-	return nil, fmt.Errorf("WebserverBackend.ListRows: NOT IMPLEMENTED")
+	fullURL := wb.rowsUrl + "/list?tags=" + strings.Join(randtags, ",")
+	return wb.getRowsFromUrl(fullURL)
 }
 
 func (wb *WebserverBackend) RowsFromRandomTags(randtags cryptag.RandomTags) (types.Rows, error) {
 	fullURL := wb.rowsUrl + "?tags=" + strings.Join(randtags, ",")
-	if types.Debug {
-		log.Printf("fullURL == `%s`\n", fullURL)
-	}
-
-	rows, err := wb.getRowsFromUrl(fullURL)
-	if err != nil {
-		return nil, fmt.Errorf("Error from getRowsFromUrl: %v", err)
-	}
-	return rows, nil
+	return wb.getRowsFromUrl(fullURL)
 }
 
 func (wb *WebserverBackend) DeleteRows(randtags cryptag.RandomTags) error {
-	return errors.New("WebserverBackend.DeleteRows NOT IMPLEMENTED")
+	fullURL := wb.rowsUrl + "/delete?tags=" + strings.Join(randtags, ",")
+	resp, err := wb.get(fullURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Error deleting rows; got status code %d and body `%s`",
+			resp.StatusCode, body)
+	}
+
+	return nil
 }
 
 //
@@ -344,6 +348,12 @@ func (wb *WebserverBackend) getInto(url string, strct interface{}) error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d from %s; response: %s", resp.StatusCode,
+			url, body)
+	}
+
 	return readInto(resp.Body, strct)
 }
 
@@ -362,16 +372,6 @@ func (wb *WebserverBackend) post(url string, data []byte) (*http.Response, error
 	return wb.client.Do(req)
 }
 
-func (wb *WebserverBackend) postInto(url string, data []byte, strct interface{}) error {
-	resp, err := wb.post(url, data)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	return readInto(resp.Body, strct)
-}
-
 //
 // Helpers
 //
@@ -382,5 +382,10 @@ func readInto(r io.Reader, strct interface{}) error {
 		return err
 	}
 
-	return json.Unmarshal(body, strct)
+	err = json.Unmarshal(body, strct)
+	if err != nil {
+		return fmt.Errorf("Error reading body `%s` into Go type: %v", body, err)
+	}
+
+	return nil
 }

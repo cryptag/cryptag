@@ -40,19 +40,22 @@ func RowTagWithPrefix(r *Row, prefixes ...string) string {
 func SaveRowAsFile(r *Row, dir string) (filepath string, err error) {
 	f := RowTagWithPrefix(r, "filename:", "id:")
 	if f == "" {
+		log.Printf("Warning: row doesn't have an id:... tag!\n")
 		f = fmt.Sprintf("%d", cryptag.Now().Unix())
 	}
 
 	if dir == "" {
 		dir = path.Join(cryptag.TrustedBasePath, "decrypted")
-		if err := os.MkdirAll(dir, 0700); err != nil {
-			log.Printf("Error creating directory `%v`: %v", dir, err)
-		}
+	}
+
+	// Create destination dir
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", fmt.Errorf("Error creating directory `%v`: %v", dir, err)
 	}
 
 	filepath = path.Join(dir, f)
 
-	if err := ioutil.WriteFile(filepath, r.Decrypted(), 0644); err != nil {
+	if err := ioutil.WriteFile(filepath, r.Decrypted(), 0600); err != nil {
 		return "", err
 	}
 
