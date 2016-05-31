@@ -10,9 +10,10 @@ func (c *Counter) Inc() { c.Value++ }
 func New() *Counter { return &Counter{5} }
 */
 
-func NewTask(id int, description, assignee string) *Task {
+func NewTask(id int, title, description, assignee string) *Task {
 	return &Task{
 		ID:          id,
+		Title:       title,
 		Description: description,
 		Assignee:    assignee,
 	}
@@ -20,6 +21,7 @@ func NewTask(id int, description, assignee string) *Task {
 
 type Task struct {
 	ID          int
+	Title       string
 	Description string
 	Assignee    string
 }
