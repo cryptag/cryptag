@@ -19,15 +19,16 @@ var (
 	ErrDecryptEmpty = fmt.Errorf("Error decrypting empty ciphertext")
 	ErrInvalidKey   = fmt.Errorf("Invalid key")
 	ErrNilKey       = fmt.Errorf("Nil key")
+	ErrNilNonce     = fmt.Errorf("Nil nonce")
 	ErrInvalidNonce = fmt.Errorf("Invalid nonce")
 )
 
 func Encrypt(plain []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 	if nonce == nil {
-		return nil, fmt.Errorf("nonce is nil")
+		return nil, ErrNilNonce
 	}
 	if key == nil {
-		return nil, fmt.Errorf("key is nil")
+		return nil, ErrNilKey
 	}
 
 	cipher := secretbox.Seal(nil, plain, nonce, key)
@@ -36,10 +37,10 @@ func Encrypt(plain []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 
 func Decrypt(cipher []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 	if nonce == nil {
-		return nil, fmt.Errorf("nonce is nil")
+		return nil, ErrNilNonce
 	}
 	if key == nil {
-		return nil, fmt.Errorf("key is nil")
+		return nil, ErrNilKey
 	}
 
 	plain, ok := secretbox.Open(nil, cipher, nonce, key)
