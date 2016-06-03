@@ -17,7 +17,7 @@ import (
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/elimisteve/cryptag/rowutil"
 )
 
 var backendName = "sandstorm-webserver"
@@ -140,7 +140,7 @@ func main() {
 
 		for i := range rows {
 			// For non-file Rows, this will be empty string
-			fname := types.RowTagWithPrefix(rows[i], "filename:")
+			fname := rowutil.TagWithPrefix(rows[i], "filename:")
 			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
 		color.Println(strings.Join(rowStrs, "\n\n"))
@@ -170,7 +170,7 @@ func main() {
 
 		dir := path.Join(cryptag.TrustedBasePath, "decrypted", backendName)
 		for _, row := range rows {
-			fname, err := types.SaveRowAsFile(row, dir)
+			fname, err := rowutil.SaveAsFile(row, dir)
 			if err != nil {
 				log.Printf("Error locally saving file: %s\n", err)
 				continue
