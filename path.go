@@ -36,7 +36,7 @@ var (
 
 func init() {
 	if errHome != nil {
-		log.Printf("Error getting/setting home directory path: %v\n", err)
+		log.Printf("Error getting/setting home directory path: %v\n", errHome)
 	}
 
 	if p := os.Getenv("BACKEND_PATH"); p != "" {
