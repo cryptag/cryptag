@@ -32,14 +32,11 @@ type WebserverBackend struct {
 	rowsUrl       string
 	tagsUrl       string
 
-	// cachedTags types.TagPairs
-
 	client *http.Client
 	useTor bool
 
 	authToken string
 
-	// Used for encryption/decryption
 	key *[32]byte
 }
 
@@ -70,7 +67,7 @@ func NewWebserverBackend(key []byte, serverName, serverBaseUrl, authToken string
 		rowsUrl:       serverBaseUrl + "/rows",
 		tagsUrl:       serverBaseUrl + "/tags",
 		authToken:     authToken,
-		client:        &http.Client{Timeout: HttpGetTimeout},
+		client:        &http.Client{},
 	}
 
 	return ws, nil
