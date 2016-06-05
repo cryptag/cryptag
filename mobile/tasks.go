@@ -8,16 +8,12 @@ import (
 	"time"
 
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/mobile/cryptask"
 	"github.com/elimisteve/cryptag/rowutil"
 	"github.com/elimisteve/cryptag/types"
 )
 
-type Task struct {
-	ID          string `json:"-"` // Save as tag, not in Row.decrypted
-	Title       string
-	Description string
-	Assignee    string `json:"-"` // Save as tag, not in Row.decrypted
-}
+type Task cryptask.Task
 
 func (t *Task) String() string {
 	if t == nil {
