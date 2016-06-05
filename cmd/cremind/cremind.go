@@ -8,12 +8,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
+	"github.com/elimisteve/cryptag/rowutil"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -88,14 +88,12 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// Sort and print
+		// Sort events by when they are scheduled for
+		rows.Sort(rowutil.ByTagPrefix("when:", true))
 
-		events := make([]string, 0, len(rows))
-		for _, r := range rows {
-			events = append(events, fmtReminder(r))
-		}
-		sort.Strings(events)
-		color.Println(strings.Join(events, "\n\n"))
+		// Format each row according to fmtReminder, print result
+		rowStrs := rowutil.MapToStrings(fmtReminder, rows)
+		color.Println(strings.Join(rowStrs, "\n\n"))
 	}
 }
 
@@ -104,7 +102,7 @@ var (
 )
 
 func fmtReminder(r *types.Row) string {
-	whenStr := types.RowTagWithPrefix(r, "when:")
+	whenStr := rowutil.TagWithPrefix(r, "when:")
 	when, err := time.Parse(timeLayout, whenStr)
 	if err != nil {
 		log.Printf("Error parsing timestamp `%v` as format `%v`: %v\n", whenStr,

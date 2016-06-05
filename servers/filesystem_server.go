@@ -17,7 +17,6 @@ import (
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
-	"github.com/elimisteve/fun"
 	"github.com/elimisteve/help"
 	"github.com/gorilla/mux"
 )
@@ -52,7 +51,7 @@ func init() {
 		onDelete = deleteRowMove
 	}
 
-	if !fun.SliceContains(deleteOptions, onDelete) {
+	if !SliceContains(deleteOptions, onDelete) {
 		log.Fatalf("ON_DELETE env var set to invalid option `%s`\n", onDelete)
 	}
 
@@ -82,10 +81,11 @@ func main() {
 	if port == "" {
 		port = "7777"
 	}
-	server := fun.SimpleHTTPServer(router, ":"+port)
 
-	log.Printf("HTTP server trying to listen on %v...\n", server.Addr)
-	log.Fatal(server.ListenAndServe())
+	listenAddr := ":" + port
+
+	log.Printf("HTTP server trying to listen on %v\n", listenAddr)
+	log.Fatal(http.ListenAndServe(listenAddr, router))
 }
 
 func GetRoot(w http.ResponseWriter, req *http.Request) {
@@ -309,7 +309,7 @@ func DeleteRows(w http.ResponseWriter, req *http.Request) {
 		fname := filepath.Base(rowFile)
 		rowTags := strings.Split(fname, "-")
 
-		if !fun.SliceContainsAll(rowTags, randtags) {
+		if !SliceContainsAll(rowTags, randtags) {
 			continue
 		}
 
@@ -573,7 +573,7 @@ func (fs *FileSystem) RowsByTags(randTags []string, includeFileBody bool) (types
 		// Row filenames are of the form randtag1-randtag2-randtag3
 		rowTags := strings.Split(filepath.Base(rowFile), "-")
 
-		if !fun.SliceContainsAll(rowTags, randTags) {
+		if !SliceContainsAll(rowTags, randTags) {
 			continue
 		}
 
@@ -618,4 +618,22 @@ func readRowFile(rowFilePath string, rowTags []string) (*types.Row, error) {
 	row.RandomTags = rowTags
 
 	return &row, nil
+}
+
+func SliceContains(slice []string, s string) bool {
+	for _, str := range slice {
+		if str == s {
+			return true
+		}
+	}
+	return false
+}
+
+func SliceContainsAll(slice []string, all []string) bool {
+	for _, s := range all {
+		if !SliceContains(slice, s) {
+			return false
+		}
+	}
+	return true
 }

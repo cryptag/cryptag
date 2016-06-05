@@ -6,6 +6,7 @@ package types
 import (
 	"fmt"
 	"log"
+	"sort"
 )
 
 type Rows []*Row
@@ -56,4 +57,24 @@ func (rows Rows) Populate(key *[32]byte, pairs TagPairs) error {
 		}
 	}
 	return nil
+}
+
+func (rows Rows) Sort(less func(r1, r2 *Row) bool) {
+	rs := rowSorter{rows, less}
+	sort.Sort(rs)
+}
+
+type rowSorter struct {
+	rows Rows
+	less func(r1, r2 *Row) bool
+}
+
+func (rs rowSorter) Swap(i, j int) {
+	rs.rows[i], rs.rows[j] = rs.rows[j], rs.rows[i]
+}
+
+func (rs rowSorter) Len() int { return len(rs.rows) }
+
+func (rs rowSorter) Less(i, j int) bool {
+	return rs.less(rs.rows[i], rs.rows[j])
 }
