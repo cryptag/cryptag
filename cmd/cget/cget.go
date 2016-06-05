@@ -52,7 +52,7 @@ func main() {
 		rowStrs := make([]string, len(rows))
 
 		for i := range rows {
-			fname := rowutil.TagWithPrefix(rows[i], "filename:")
+			fname := rowutil.TagWithPrefixStripped(rows[i], "filename:")
 			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
 		color.Println(strings.Join(rowStrs, "\n\n"))

@@ -40,6 +40,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "create":
+		// Format: `cremind create <date> <reminder> <tag1> [<tag2> ...]`
 		if len(os.Args) < 5 {
 			log.Printf("At least 4 command line arguments must be included\n")
 			log.Fatalf(createUsage)
@@ -102,7 +103,7 @@ var (
 )
 
 func fmtReminder(r *types.Row) string {
-	whenStr := rowutil.TagWithPrefix(r, "when:")
+	whenStr := rowutil.TagWithPrefixStripped(r, "when:")
 	when, err := time.Parse(timeLayout, whenStr)
 	if err != nil {
 		log.Printf("Error parsing timestamp `%v` as format `%v`: %v\n", whenStr,

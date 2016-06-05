@@ -140,7 +140,7 @@ func main() {
 
 		for i := range rows {
 			// For non-file Rows, this will be empty string
-			fname := rowutil.TagWithPrefix(rows[i], "filename:")
+			fname := rowutil.TagWithPrefixStripped(rows[i], "filename:")
 			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
 		color.Println(strings.Join(rowStrs, "\n\n"))
