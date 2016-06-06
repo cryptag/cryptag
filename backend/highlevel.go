@@ -5,7 +5,9 @@ package backend
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/keyutil"
@@ -103,6 +105,17 @@ func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []str
 	}
 
 	return row, nil
+}
+
+func CreateFileRow(bk Backend, pairs types.TagPairs, filename string, plaintags []string) (*types.Row, error) {
+	rowData, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("Error reading file `%s`: %v\n", filename, err)
+	}
+
+	plaintags = append(plaintags, "type:file", "filename:"+filepath.Base(filename))
+
+	return CreateRow(bk, pairs, rowData, plaintags)
 }
 
 // newKey can be of type *[32]byte, []byte (with length 32), or a
