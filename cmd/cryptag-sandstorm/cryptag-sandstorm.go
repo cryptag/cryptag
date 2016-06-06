@@ -41,12 +41,12 @@ func main() {
 			log.Printf("%v\n", err)
 			log.Fatal(usage)
 		}
-	}
 
-	if cryptag.UseTor {
-		err := db.UseTor()
-		if err != nil {
-			log.Fatalf("Error trying to use Tor: %v\n", err)
+		if cryptag.UseTor {
+			err := db.UseTor()
+			if err != nil {
+				log.Fatalf("Error trying to use Tor: %v\n", err)
+			}
 		}
 	}
 
