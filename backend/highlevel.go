@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/keyutil"
@@ -115,6 +116,13 @@ func CreateFileRow(bk Backend, pairs types.TagPairs, filename string, plaintags 
 	}
 
 	plaintags = append(plaintags, "type:file", "filename:"+filepath.Base(filename))
+
+	// Add tag based on filetype (e.g., type:pdf)
+	lastDot := strings.LastIndex(filename, ".")
+	if lastDot != -1 {
+		fileExt := filename[lastDot+1:]
+		plaintags = append(plaintags, "type:"+strings.ToLower(fileExt))
+	}
 
 	return CreateRow(bk, pairs, rowData, plaintags)
 }
