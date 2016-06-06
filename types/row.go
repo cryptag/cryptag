@@ -63,6 +63,10 @@ func fmtDatetime(t time.Time) string {
 	return fmt.Sprintf("%d%02d%02d%02d%02d%02d", y, m, d, hr, min, sec)
 }
 
+func NewRowSimple(decrypted []byte, plainTags []string) *Row {
+	return &Row{decrypted: decrypted, plainTags: plainTags}
+}
+
 // NewRowFromBytes unmarshals b into a new *Row.
 func NewRowFromBytes(b []byte) (*Row, error) {
 	row := &Row{}

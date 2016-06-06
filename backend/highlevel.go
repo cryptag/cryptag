@@ -4,9 +4,14 @@
 package backend
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"github.com/elimisteve/cryptag"
+	"github.com/elimisteve/cryptag/keyutil"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -101,4 +106,63 @@ func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []str
 	}
 
 	return row, nil
+}
+
+func CreateFileRow(bk Backend, pairs types.TagPairs, filename string, plaintags []string) (*types.Row, error) {
+	rowData, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("Error reading file `%s`: %v\n", filename, err)
+	}
+
+	plaintags = append(plaintags, "type:file", "filename:"+filepath.Base(filename))
+
+	return CreateRow(bk, pairs, rowData, plaintags)
+}
+
+func CreateJSONRow(bk Backend, pairs types.TagPairs, obj interface{}, plaintags []string) (*types.Row, error) {
+	rowData, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return CreateRow(bk, pairs, rowData, plaintags)
+}
+
+// newKey can be of type *[32]byte, []byte (with length 32), or a
+// string to be parsed with keyutil.Parse.
+func UpdateKey(bk Backend, newKey interface{}) error {
+	var goodKey *[32]byte
+
+	switch newKey := newKey.(type) {
+	case *[32]byte:
+		goodKey = newKey
+	case []byte:
+		k, err := cryptag.ConvertKey(newKey)
+		if err != nil {
+			return err
+		}
+		goodKey = k
+	case string:
+		k, err := keyutil.Parse(newKey)
+		if err != nil {
+			return err
+		}
+		goodKey = k
+	default:
+		panic(fmt.Sprintf("Key of invalid type: %T", newKey))
+	}
+
+	if goodKey == nil {
+		return fmt.Errorf("New key %v (of type %[1]T) passed in,"+
+			" yet goodKey not set correctly", newKey)
+	}
+
+	cfg, err := bk.ToConfig()
+	if err != nil {
+		return err
+	}
+
+	cfg.Key = goodKey
+
+	return cfg.Update(cryptag.BackendPath)
 }

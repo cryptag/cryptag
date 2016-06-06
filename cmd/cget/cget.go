@@ -13,7 +13,7 @@ import (
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/elimisteve/cryptag/rowutil"
 )
 
 var (
@@ -52,7 +52,7 @@ func main() {
 		rowStrs := make([]string, len(rows))
 
 		for i := range rows {
-			fname := types.RowTagWithPrefix(rows[i], "filename:")
+			fname := rowutil.TagWithPrefixStripped(rows[i], "filename:")
 			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
 		color.Println(strings.Join(rowStrs, "\n\n"))
@@ -81,7 +81,7 @@ func main() {
 		var rowFilename string
 		for _, r := range rows {
 			dir := path.Join(cryptag.TrustedBasePath, "decrypted")
-			if rowFilename, err = types.SaveRowAsFile(r, dir); err != nil {
+			if rowFilename, err = rowutil.SaveAsFile(r, dir); err != nil {
 				log.Printf("Error locally saving file: %v\n", err)
 				continue
 			}
