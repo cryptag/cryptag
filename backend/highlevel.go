@@ -4,9 +4,11 @@
 package backend
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/elimisteve/cryptag"
+	"github.com/elimisteve/cryptag/keyutil"
 	"github.com/elimisteve/cryptag/types"
 )
 
@@ -101,4 +103,43 @@ func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []str
 	}
 
 	return row, nil
+}
+
+// newKey can be of type *[32]byte, []byte (with length 32), or a
+// string to be parsed with keyutil.Parse.
+func UpdateKey(bk Backend, newKey interface{}) error {
+	var goodKey *[32]byte
+
+	switch newKey := newKey.(type) {
+	case *[32]byte:
+		goodKey = newKey
+	case []byte:
+		k, err := cryptag.ConvertKey(newKey)
+		if err != nil {
+			return err
+		}
+		goodKey = k
+	case string:
+		k, err := keyutil.Parse(newKey)
+		if err != nil {
+			return err
+		}
+		goodKey = k
+	default:
+		panic(fmt.Sprintf("Key of invalid type: %T", newKey))
+	}
+
+	if goodKey == nil {
+		return fmt.Errorf("New key %v (of type %[1]T) passed in,"+
+			" yet goodKey not set correctly", newKey)
+	}
+
+	cfg, err := bk.ToConfig()
+	if err != nil {
+		return err
+	}
+
+	cfg.Key = goodKey
+
+	return cfg.Update(cryptag.BackendPath)
 }
