@@ -9,12 +9,19 @@ func ByTagPrefix(tagPrefix string, ascending bool) types.RowSorter {
 		minLen := min(len(r1Str), len(r2Str))
 
 		for i := 0; i < minLen; i++ {
+			if r1Str[i] == r2Str[i] {
+				continue
+			}
 			if r1Str[i] < r2Str[i] {
-				// "Smaller" row occurs before if ascending, after if descending
+				// "Smaller" row occurs before if ascending
 				return ascending
 			}
+			if r1Str[i] > r2Str[i] {
+				// ...after if descending
+				return !ascending
+			}
 		}
-		return !ascending
+		return ascending
 	}
 }
 

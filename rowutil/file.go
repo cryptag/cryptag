@@ -17,7 +17,7 @@ import (
 // r is stored in the "decrypted" directory within
 // cryptag.TrustedBasePath ($HOME/.cryptag by default).
 func SaveAsFile(r *types.Row, dir string) (filepath string, err error) {
-	f := TagWithPrefix(r, "filename:", "id:")
+	f := TagWithPrefixStripped(r, "filename:", "id:")
 	if f == "" {
 		log.Printf("Warning: row doesn't have an id:... tag!\n")
 		f = fmt.Sprintf("%d", cryptag.Now().Unix())

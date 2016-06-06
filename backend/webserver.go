@@ -73,6 +73,29 @@ func NewWebserverBackend(key []byte, serverName, serverBaseUrl, authToken string
 	return ws, nil
 }
 
+// CreateWebserver is a high-level function that creates a new
+// WebserverBackend and saves its config to disk. (Useful for config
+// init and more.)
+func CreateWebserver(key []byte, backendName, baseURL, authToken string) (*WebserverBackend, error) {
+	db, err := NewWebserverBackend(key, backendName, baseURL, authToken)
+	if err != nil {
+		return nil, fmt.Errorf("Error from NewWebserverBackend: %v", err)
+	}
+
+	cfg, err := db.ToConfig()
+	if err != nil {
+		return db, fmt.Errorf("Error converting WebserverBackend to Config: %v",
+			err)
+	}
+
+	err = cfg.Save(cryptag.BackendPath)
+	if err != nil {
+		return db, fmt.Errorf("Error saving backend config to disk: %v\n", err)
+	}
+
+	return db, nil
+}
+
 func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, error) {
 	if backendPath == "" {
 		backendPath = cryptag.BackendPath
