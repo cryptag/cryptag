@@ -4,6 +4,7 @@
 package backend
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -114,6 +115,15 @@ func CreateFileRow(bk Backend, pairs types.TagPairs, filename string, plaintags 
 	}
 
 	plaintags = append(plaintags, "type:file", "filename:"+filepath.Base(filename))
+
+	return CreateRow(bk, pairs, rowData, plaintags)
+}
+
+func CreateJSONRow(bk Backend, pairs types.TagPairs, obj interface{}, plaintags []string) (*types.Row, error) {
+	rowData, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
 
 	return CreateRow(bk, pairs, rowData, plaintags)
 }
