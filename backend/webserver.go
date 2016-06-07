@@ -185,9 +185,6 @@ func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if types.Debug {
-		log.Printf("AllTagPairs: returning %d pairs\n", len(pairs))
-	}
 	return pairs, nil
 }
 
@@ -311,6 +308,10 @@ func (wb *WebserverBackend) getRowsFromUrl(url string) (types.Rows, error) {
 		return nil, err
 	}
 
+	if types.Debug {
+		log.Printf("getRowsFromUrl: returning %d Rows\n", len(rows))
+	}
+
 	return rows, nil
 }
 
@@ -342,6 +343,10 @@ func (wb *WebserverBackend) getTagsFromUrl(url string) (types.TagPairs, error) {
 	}
 
 	wg.Wait()
+
+	if types.Debug {
+		log.Printf("getTagsFromUrl: returning %d TagPairs\n", len(pairs))
+	}
 
 	return pairs, nil
 }

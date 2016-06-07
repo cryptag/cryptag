@@ -18,7 +18,7 @@ var (
 // Map returns a copy of the given []string with each contained string
 // colorized with the 'colorize' function.
 //
-// Example: fmt.Printf("%s", Map(BlackOnWhite, []string{"tag1", "tag2", "tag3"}))
+// Example: color.Printf("%s", Map(BlackOnWhite, []string{"tag1", "tag2", "tag3"}))
 func Map(colorize func(...interface{}) string, strs []string) []string {
 	outStrs := make([]string, len(strs))
 	for i := range strs {

@@ -7,10 +7,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/cli/color"
+	"github.com/elimisteve/cryptag/importer"
+	"github.com/elimisteve/cryptag/rowutil"
 )
 
 var (
@@ -31,14 +35,13 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatalln(usage)
+		cli.ArgFatal(allUsage)
 	}
 
 	switch os.Args[1] {
 	case "create":
 		if len(os.Args) < 4 {
-			log.Printf("At least 3 command line arguments must be included\n")
-			log.Fatalf(createUsage)
+			cli.ArgFatal(createUsage)
 		}
 
 		data := os.Args[2]
@@ -53,9 +56,9 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(deleteUsage)
+			cli.ArgFatal(deleteUsage)
 		}
+
 		plaintags := append(os.Args[2:], "type:text")
 
 		err := backend.DeleteRows(db, nil, plaintags)
@@ -63,6 +66,38 @@ func main() {
 			log.Fatal(err)
 		}
 		log.Printf("Row(s) successfully deleted\n")
+
+	case "import":
+		if len(os.Args) < 3 {
+			cli.ArgFatal(importUsage)
+		}
+
+		filename := os.Args[2]
+		plaintags := os.Args[3:]
+
+		rows, err := importer.KeePassCSV(filename, plaintags)
+		if err != nil {
+			log.Fatalf("Error importing KeePass CSV `%v`: %v", filename, err)
+		}
+
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatalf("Error fetching all TagPairs: %v\n", err)
+		}
+
+		for _, row := range rows {
+			if err = backend.PopulateRowBeforeSave(db, row, pairs); err != nil {
+				log.Printf("Error decrypting row %#v: %v\n", row, err)
+				continue
+			}
+			if err := db.SaveRow(row); err != nil {
+				log.Printf("Error saving row %#v: %v\n", row, err)
+				continue
+			}
+
+			log.Printf("Successfully imported password for site %s\n",
+				rowutil.TagWithPrefixStripped(row, "url:"))
+		}
 
 	default: // Search
 		// Empty clipboard
@@ -73,6 +108,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
@@ -87,7 +124,11 @@ func main() {
 }
 
 var (
-	usage       = "Usage: " + filepath.Base(os.Args[0]) + " [create <yourpassword> | delete] tag1 [tag2 ...]"
-	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " create <yourpassword> tag1 [tag2 ...]"
-	deleteUsage = "Usage: " + filepath.Base(os.Args[0]) + " delete tag1 [tag2 ...]"
+	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
+
+	createUsage = prefix + "create <password or text> <tag1> [type:password <tag3> ...]"
+	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
+	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
+
+	allUsage = strings.Join([]string{createUsage, deleteUsage, importUsage}, "\n")
 )

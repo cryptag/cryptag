@@ -12,6 +12,7 @@ import (
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/cli/color"
 	"github.com/elimisteve/cryptag/rowutil"
 )
@@ -34,7 +35,7 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatalln(usage)
+		cli.ArgFatal(allUsage)
 	}
 
 	switch os.Args[1] {
@@ -68,28 +69,31 @@ func main() {
 		}
 
 	default: // Decrypt, save to ~/.cryptag/decrypted/(filename from filename:...)
-		plaintags := os.Args[1:]
-
-		// TODO: Temporary?
-		plaintags = append(plaintags, "type:file")
+		plaintags := append(os.Args[1:], "type:file")
 
 		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		var rowFilename string
 		for _, r := range rows {
 			dir := path.Join(cryptag.TrustedBasePath, "decrypted")
-			if rowFilename, err = rowutil.SaveAsFile(r, dir); err != nil {
+			if _, err = rowutil.SaveAsFile(r, dir); err != nil {
 				log.Printf("Error locally saving file: %v\n", err)
 				continue
 			}
-			log.Printf("Saved new file: %v\n", rowFilename)
+			color.Printf("Successfully saved new row with these tags:\n%v\n",
+				color.Tags(r.PlainTags()))
 		}
 	}
 }
 
 var (
-	usage = "Usage: " + filepath.Base(os.Args[0]) + " tag1 [tag2 ...]"
+	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
+
+	getUsage  = prefix + "<tag1> [<tag2> ...]"
+	listUsage = prefix + "list [<tag1> ...]"
+	tagUsage  = prefix + "tags"
+
+	allUsage = strings.Join([]string{getUsage, listUsage, tagUsage}, "\n")
 )
