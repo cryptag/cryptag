@@ -7,9 +7,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/elimisteve/clipboard"
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/cli/color"
 )
 
@@ -31,14 +33,13 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatalln(usage)
+		cli.ArgFatal(allUsage)
 	}
 
 	switch os.Args[1] {
 	case "create":
 		if len(os.Args) < 4 {
-			log.Printf("At least 3 command line arguments must be included\n")
-			log.Fatalf(createUsage)
+			cli.ArgFatal(createUsage)
 		}
 
 		data := os.Args[2]
@@ -53,9 +54,9 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(deleteUsage)
+			cli.ArgFatal(deleteUsage)
 		}
+
 		plaintags := append(os.Args[2:], "type:text")
 
 		err := backend.DeleteRows(db, nil, plaintags)
@@ -87,7 +88,10 @@ func main() {
 }
 
 var (
-	usage       = "Usage: " + filepath.Base(os.Args[0]) + " [create <yourpassword> | delete] tag1 [tag2 ...]"
-	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " create <yourpassword> tag1 [tag2 ...]"
-	deleteUsage = "Usage: " + filepath.Base(os.Args[0]) + " delete tag1 [tag2 ...]"
+	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
+
+	createUsage = prefix + "create <password or text> <tag1> [type:password <tag3> ...]"
+	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
+
+	allUsage = strings.Join([]string{createUsage, deleteUsage}, "\n")
 )
