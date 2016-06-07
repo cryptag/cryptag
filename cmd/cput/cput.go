@@ -54,5 +54,7 @@ func main() {
 }
 
 var (
-	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " filename tag1 [tag2 ...]"
+	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
+
+	createUsage = prefix + "<filename> <tag1> [<tag2> ...]"
 )
