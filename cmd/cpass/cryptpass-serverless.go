@@ -13,6 +13,7 @@ import (
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/cli/color"
+	"github.com/elimisteve/cryptag/importer"
 	"github.com/elimisteve/cryptag/rowutil"
 )
 
@@ -66,6 +67,38 @@ func main() {
 		}
 		log.Printf("Row(s) successfully deleted\n")
 
+	case "import":
+		if len(os.Args) < 3 {
+			cli.ArgFatal(importUsage)
+		}
+
+		filename := os.Args[2]
+		plaintags := os.Args[3:]
+
+		rows, err := importer.KeePassCSV(filename, plaintags)
+		if err != nil {
+			log.Fatalf("Error importing KeePass CSV `%v`: %v", filename, err)
+		}
+
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatalf("Error fetching all TagPairs: %v\n", err)
+		}
+
+		for _, row := range rows {
+			if err = backend.PopulateRowBeforeSave(db, row, pairs); err != nil {
+				log.Printf("Error decrypting row %#v: %v\n", row, err)
+				continue
+			}
+			if err := db.SaveRow(row); err != nil {
+				log.Printf("Error saving row %#v: %v\n", row, err)
+				continue
+			}
+
+			log.Printf("Successfully imported password for site %s\n",
+				rowutil.TagWithPrefixStripped(row, "url:"))
+		}
+
 	default: // Search
 		// Empty clipboard
 		clipboard.WriteAll(nil)
@@ -95,6 +128,7 @@ var (
 
 	createUsage = prefix + "create <password or text> <tag1> [type:password <tag3> ...]"
 	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
+	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
 
-	allUsage = strings.Join([]string{createUsage, deleteUsage}, "\n")
+	allUsage = strings.Join([]string{createUsage, deleteUsage, importUsage}, "\n")
 )
