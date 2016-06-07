@@ -13,6 +13,7 @@ import (
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/cli/color"
+	"github.com/elimisteve/cryptag/rowutil"
 )
 
 var (
@@ -74,6 +75,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
