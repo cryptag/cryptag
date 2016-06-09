@@ -4,13 +4,12 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/elimisteve/cryptag/backend"
+	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/cli/color"
 )
 
@@ -24,7 +23,7 @@ func init() {
 		os.Getenv("BACKEND"),
 	)
 	if err != nil {
-		log.Fatalf("LoadFileSystem error: %v\n", err)
+		log.Fatalf("LoadOrCreateFileSystem error: %v\n", err)
 	}
 
 	db = fs
@@ -32,36 +31,21 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatalln(createUsage)
+		cli.Fatal(createUsage)
 	}
 
 	switch os.Args[1] {
 	default: // Create file
 		if len(os.Args) < 3 {
-			log.Printf("At least 2 command line arguments must be included\n")
-			log.Fatalf(createUsage)
+			cli.ArgFatal(createUsage)
 		}
 
 		filename := os.Args[1]
+		tags := append(os.Args[2:], "app:cput")
 
-		// TODO: Do streaming file reads
-		data, err := ioutil.ReadFile(filename)
+		row, err := backend.CreateFileRow(db, nil, filename, tags)
 		if err != nil {
-			log.Fatalf("Error reading file `%v`: %v\n", filename, err)
-		}
-
-		// Add tags
-		tags := append(os.Args[2:], "app:cput", "type:file",
-			"filename:"+filepath.Base(filename))
-		lastDot := strings.LastIndex(filename, ".")
-		if lastDot != -1 {
-			fileExt := filename[lastDot+1:]
-			tags = append(tags, "type:"+fileExt)
-		}
-
-		row, err := backend.CreateRow(db, nil, data, tags)
-		if err != nil {
-			log.Fatalf("Error saving new row: %v\n", err)
+			log.Fatalf("Error saving file: %v\n", err)
 		}
 
 		color.Printf("Successfully saved new row with these tags:\n%v\n",
@@ -70,5 +54,7 @@ func main() {
 }
 
 var (
-	createUsage = "Usage: " + filepath.Base(os.Args[0]) + " filename tag1 [tag2 ...]"
+	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
+
+	createUsage = prefix + "<filename> <tag1> [<tag2> ...]"
 )

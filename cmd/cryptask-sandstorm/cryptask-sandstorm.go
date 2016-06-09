@@ -33,8 +33,7 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Println("Command line args required")
-		fatal(allUsage)
+		cli.Fatal(allUsage)
 	}
 
 	var db *backend.WebserverBackend
@@ -43,8 +42,7 @@ func main() {
 		var err error
 		db, err = backend.LoadWebserverBackend("", backendName)
 		if err != nil {
-			log.Printf("%v\n", err)
-			fatal(allUsage)
+			log.Fatalf("Error loading webserver config: %v", err)
 		}
 
 		if cryptag.UseTor {
@@ -58,17 +56,19 @@ func main() {
 	switch os.Args[1] {
 	case "init":
 		if len(os.Args) < 3 {
-			argFatal(initUsage)
+			cli.ArgFatal(initUsage)
 		}
+
 		webkey := os.Args[2]
+
 		if err := cli.InitSandstorm(backendName, webkey); err != nil {
-			fatal(err)
+			cli.Fatal(err)
 		}
 
 	case "create":
 		// 0:cryptask 1:create 2:<title> 3:<description> 4:[<assignee:NAME> <tag2> ...]
 		if len(os.Args) < 4 {
-			argFatal(createUsage)
+			cli.ArgFatal(createUsage)
 		}
 
 		task := cryptask.Task{Title: os.Args[2], Description: os.Args[3]}
@@ -83,8 +83,9 @@ func main() {
 
 	case "delete":
 		if len(os.Args) < 3 {
-			argFatal(deleteUsage)
+			cli.ArgFatal(deleteUsage)
 		}
+
 		plainTags := append(os.Args[2:], "app:cryptask", "type:task")
 
 		err := backend.DeleteRows(db, nil, plainTags)
@@ -98,7 +99,7 @@ func main() {
 
 	case "setkey":
 		if len(os.Args) < 3 {
-			argFatal(setkeyUsage)
+			cli.ArgFatal(setkeyUsage)
 		}
 
 		keyStr := strings.Join(os.Args[2:], ",")
@@ -109,16 +110,13 @@ func main() {
 		}
 
 	case "get": // Search
-		tags := os.Args[2:]
-
-		plaintags := append(tags, "app:cryptask", "type:task")
+		plaintags := append(os.Args[2:], "app:cryptask", "type:task")
 
 		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// Sort tasks by when they were created
 		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		// Format each row according to fmtTask, print result
@@ -127,7 +125,7 @@ func main() {
 
 	default:
 		log.Printf("Subcommand `%s` not valid\n", os.Args[1])
-		fatal(allUsage)
+		cli.Fatal(allUsage)
 	}
 }
 
@@ -158,25 +156,15 @@ func fmtTask(r *types.Row) string {
 		color.Tags(r.PlainTags()))
 }
 
-func argFatal(s interface{}) {
-	log.Println("Not enough arguments included")
-	fatal(s)
-}
-
-func fatal(s interface{}) {
-	fmt.Printf("%v\n", s)
-	os.Exit(0)
-}
-
 var (
 	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
 
 	initUsage   = prefix + "init <sandstorm_key>"
-	getUsage    = prefix + "get [assignee:NAME] [<tag2> ...]"
 	createUsage = prefix + "create <title> <description> [assignee:NAME] [<tag2> ...]"
+	getUsage    = prefix + "get [assignee:NAME] [<tag2> ...]"
+	deleteUsage = prefix + "delete <tag1> [id:UUID] [<tag3> ...]"
 	getkeyUsage = prefix + "getkey"
 	setkeyUsage = prefix + "setkey <32-number crypto key>"
-	deleteUsage = prefix + "delete <tag1> [id:UUID] [<tag3> ...]"
 
 	allUsages = []string{initUsage, createUsage, getUsage,
 		deleteUsage, getkeyUsage, setkeyUsage}
