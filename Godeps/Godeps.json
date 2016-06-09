@@ -1,0 +1,36 @@
+{
+	"ImportPath": "github.com/elimisteve/cryptag",
+	"GoVersion": "go1.5",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/go-homedir",
+			"Rev": "981ab348d865cf048eb7d17e78ac7192632d8415"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.0-88-ge3a8ff8",
+			"Rev": "e3a8ff8ce36581f87a15341206f205b1da467059"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
+			"Rev": "2f3083f6163ef51179ad42ed523a18c9a1141467"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/poly1305",
+			"Rev": "2f3083f6163ef51179ad42ed523a18c9a1141467"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/salsa20/salsa",
+			"Rev": "2f3083f6163ef51179ad42ed523a18c9a1141467"
+		}
+	]
+}
