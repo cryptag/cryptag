@@ -11,10 +11,10 @@ import (
 )
 
 func TestByTagPrefix(t *testing.T) {
-	r1 := types.NewRowSimple(nil, []string{"tag:01"})
-	r2 := types.NewRowSimple(nil, []string{"tag:02"})
-	r3 := types.NewRowSimple(nil, []string{"tag:03"})
-	r4 := types.NewRowSimple(nil, []string{"tag:04"})
+	r1, _ := types.NewRowSimple(nil, []string{"tag:01"})
+	r2, _ := types.NewRowSimple(nil, []string{"tag:02"})
+	r3, _ := types.NewRowSimple(nil, []string{"tag:03"})
+	r4, _ := types.NewRowSimple(nil, []string{"tag:04"})
 
 	rows := types.Rows{r2, r1, r4, r3}
 	ascend := true
@@ -50,10 +50,10 @@ func TestByTagPrefix(t *testing.T) {
 }
 
 func TestByTagPrefix2(t *testing.T) {
-	r1 := types.NewRowSimple(nil, []string{"created:20160605100227-1"})
-	r2 := types.NewRowSimple(nil, []string{"created:20160605100238-2"})
-	r3 := types.NewRowSimple(nil, []string{"created:20160605132634-3"})
-	r4 := types.NewRowSimple(nil, []string{"created:20160605134527-4"})
+	r1, _ := types.NewRowSimple(nil, []string{"created:20160605100227-1"})
+	r2, _ := types.NewRowSimple(nil, []string{"created:20160605100238-2"})
+	r3, _ := types.NewRowSimple(nil, []string{"created:20160605132634-3"})
+	r4, _ := types.NewRowSimple(nil, []string{"created:20160605134527-4"})
 
 	rows := types.Rows{r2, r1, r4, r3}
 	ascend := true

@@ -56,8 +56,17 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	return row, nil
 }
 
-func NewRowSimple(decrypted []byte, plainTags []string) *Row {
-	return &Row{decrypted: decrypted, plainTags: plainTags}
+func NewRowSimple(decrypted []byte, plainTags []string) (*Row, error) {
+	// TODO: Ensure that len(plainTags) > 0?
+
+	nonce, err := cryptag.RandomNonce()
+	if err != nil {
+		return nil, err
+	}
+
+	row := &Row{decrypted: decrypted, plainTags: plainTags, Nonce: nonce}
+
+	return row, nil
 }
 
 // NewRowFromBytes unmarshals b into a new *Row.
