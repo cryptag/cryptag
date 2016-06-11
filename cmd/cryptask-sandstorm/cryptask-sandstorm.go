@@ -62,7 +62,7 @@ func main() {
 		webkey := os.Args[2]
 
 		if err := cli.InitSandstorm(backendName, webkey); err != nil {
-			cli.Fatal(err)
+			log.Fatal(err)
 		}
 
 	case "create":
