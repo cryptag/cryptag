@@ -143,9 +143,8 @@ func fmtTask(r *types.Row) string {
 	var assignee string
 
 	if len(assignees) > 0 {
-		label := "Assignee(s)"
 		assigneesStr := strings.Join(assignees, ", ")
-		assignee = "\n" + color.BlackOnCyan(label) + ": " + assigneesStr
+		assignee = "\n" + color.BlackOnCyan("Assignee(s)") + ": " + assigneesStr
 	}
 
 	return fmt.Sprintf(`%s:  %s
