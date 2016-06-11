@@ -29,7 +29,7 @@ func init() {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatalln(usage)
+		cli.Fatal(allUsage)
 	}
 
 	var db *backend.WebserverBackend
@@ -38,8 +38,8 @@ func main() {
 		var err error
 		db, err = backend.LoadWebserverBackend("", backendName)
 		if err != nil {
-			log.Printf("%v\n", err)
-			log.Fatal(usage)
+			log.Fatalf("Error loading config for webserver backend `%s`: %v",
+				backendName, err)
 		}
 
 		if cryptag.UseTor {
@@ -53,23 +53,25 @@ func main() {
 	switch os.Args[1] {
 	case "init":
 		if len(os.Args) < 3 {
-			log.Fatalf("%s\n%s\n", initUsage, usage)
+			cli.ArgFatal(initUsage)
 		}
+
 		webkey := os.Args[2]
+
 		if err := cli.InitSandstorm(backendName, webkey); err != nil {
 			log.Fatal(err)
 		}
 
-	case "create", "createfile":
+	case "createtext", "ct", "createfile", "cf":
 		if len(os.Args) < 4 {
-			log.Println("At least 3 command line arguments must be included")
-			log.Fatal(usage)
+			cli.ArgFatal(allCreateUsage)
 		}
 
-		createFile := (os.Args[1] == "createfile")
+		createFile := (os.Args[1] == "createfile" || os.Args[1] == "cf")
 
 		tags := append(os.Args[3:], "app:cryptag")
 
+		// Create file row
 		if createFile {
 			filename := os.Args[2]
 
@@ -83,7 +85,9 @@ func main() {
 			return
 		}
 
+		//
 		// Create text row
+		//
 
 		text := os.Args[2]
 		tags = append(tags, "type:text")
@@ -100,8 +104,7 @@ func main() {
 
 	case "setkey":
 		if len(os.Args) < 3 {
-			log.Println("At least 2 command line arguments must be included")
-			log.Fatal(usage)
+			cli.ArgFatal(setkeyUsage)
 		}
 
 		keyStr := strings.Join(os.Args[2:], ",")
@@ -111,16 +114,26 @@ func main() {
 			log.Fatalf("Error updating config with new key: %v", err)
 		}
 
-	case "list":
-		plaintags := os.Args[2:]
-		if len(plaintags) == 0 {
-			plaintags = []string{"all"}
+	case "listtext", "lt", "listfiles", "lf", "listany", "la":
+		listFile := (os.Args[1] == "listfiles" || os.Args[1] == "lf")
+		listAny := (os.Args[1] == "listany" || os.Args[1] == "la")
+
+		plaintags := append(os.Args[2:], "all")
+
+		if !listAny {
+			if listFile {
+				plaintags = append(plaintags, "type:file")
+			} else {
+				plaintags = append(plaintags, "type:text")
+			}
 		}
 
 		rows, err := backend.ListRowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		rowStrs := make([]string, len(rows))
 
@@ -129,16 +142,21 @@ func main() {
 			fname := rowutil.TagWithPrefixStripped(rows[i], "filename:")
 			rowStrs[i] = color.TextAndTags(fname, rows[i].PlainTags())
 		}
+
 		color.Println(strings.Join(rowStrs, "\n\n"))
 
-	case "get", "getfiles":
-		getFile := (os.Args[1] == "getfiles")
+	case "gettext", "gt", "getfiles", "gf", "getany", "ga":
+		getFile := (os.Args[1] == "getfiles" || os.Args[1] == "gf")
+		getAny := (os.Args[1] == "getany" || os.Args[1] == "ga")
 
-		plaintags := os.Args[2:]
-		if getFile {
-			plaintags = append(plaintags, "type:file")
-		} else {
-			plaintags = append(plaintags, "type:text")
+		plaintags := append(os.Args[2:], "all")
+
+		if !getAny {
+			if getFile {
+				plaintags = append(plaintags, "type:file")
+			} else {
+				plaintags = append(plaintags, "type:text")
+			}
 		}
 
 		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
@@ -146,16 +164,17 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// Text rows; print then exit
-		if !getFile {
-			color.Println(color.TextRows(rows))
-			return
-		}
-
-		// File rows; save them to files
+		// Sort oldest to newest
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		dir := path.Join(cryptag.TrustedBasePath, "decrypted", backendName)
 		for _, row := range rows {
+			// Print bodies of non-file rows as text (includes Tasks, etc)
+			if !row.HasPlainTag("type:file") {
+				color.Println(color.TextRow(row))
+				continue
+			}
+
 			fname, err := rowutil.SaveAsFile(row, dir)
 			if err != nil {
 				log.Printf("Error locally saving file: %s\n", err)
@@ -164,7 +183,7 @@ func main() {
 			log.Printf("Successfully saved row to file %s", fname)
 		}
 
-	case "tags":
+	case "tags", "t":
 		pairs, err := db.AllTagPairs()
 		if err != nil {
 			log.Fatal(err)
@@ -174,19 +193,22 @@ func main() {
 			color.Printf("%s  %s\n", pair.Random, color.BlackOnWhite(pair.Plain()))
 		}
 
-	case "delete", "deletefiles":
+	case "deletetext", "dt", "deletefiles", "df", "deleteany", "da":
 		if len(os.Args) < 3 {
-			log.Println("At least 2 command line arguments must be included")
-			log.Fatal(usage)
+			cli.ArgFatal(allDeleteUsage)
 		}
 
-		deleteFiles := (os.Args[1] == "deletefiles")
+		deleteFiles := (os.Args[1] == "deletefiles" || os.Args[1] == "df")
+		deleteAny := (os.Args[1] == "deleteany" || os.Args[1] == "da")
 
-		plaintags := os.Args[2:]
-		if deleteFiles {
-			plaintags = append(plaintags, "type:file")
-		} else {
-			plaintags = append(plaintags, "type:text")
+		plaintags := append(os.Args[2:], "all")
+
+		if !deleteAny {
+			if deleteFiles {
+				plaintags = append(plaintags, "type:file")
+			} else {
+				plaintags = append(plaintags, "type:text")
+			}
 		}
 
 		if err := backend.DeleteRows(db, nil, plaintags); err != nil {
@@ -197,9 +219,38 @@ func main() {
 
 	default:
 		log.Printf("Subcommand `%s` not valid\n", os.Args[1])
-		log.Println(usage)
+		cli.Fatal(allUsage)
 	}
 }
 
-var usage = "Usage: " + filepath.Base(os.Args[0]) + " [create <yourpassword>] tag1 [tag2 ...]"
-var initUsage = "Usage: " + filepath.Base(os.Args[0]) + " init <sandstorm_key>"
+var (
+	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
+
+	initUsage = prefix + "init <sandstorm_key>"
+
+	createTextUsage = prefix + "createtext <text>     <tag1> [<tag2> ...]"
+	createFileUsage = prefix + "createfile <filename> <tag1> [<tag2> ...]"
+	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage}, "\n")
+
+	getTextUsage  = prefix + "gettext  <tag1> [<tag2> ...]"
+	getFilesUsage = prefix + "getfiles <tag1> [<tag2> ...]"
+	getAnyUsage   = prefix + "getany   <tag1> [<tag2> ...]"
+	allGetUsage   = strings.Join([]string{getTextUsage, getFilesUsage, getAnyUsage}, "\n")
+
+	deleteTextUsage  = prefix + "deletetext  <tag1> [<tag2> ...]"
+	deleteFilesUsage = prefix + "deletefiles <tag1> [<tag2> ...]"
+	deleteAnyUsage   = prefix + "deleteany   <tag1> [<tag2> ...]"
+	allDeleteUsage   = strings.Join([]string{deleteTextUsage, deleteFilesUsage, deleteAnyUsage}, "\n")
+
+	getkeyUsage = prefix + "getkey"
+	setkeyUsage = prefix + "setkey <key>"
+
+	allUsages = []string{
+		initUsage, "",
+		createTextUsage, createFileUsage, "",
+		getTextUsage, getFilesUsage, getAnyUsage, "",
+		deleteTextUsage, deleteFilesUsage, deleteAnyUsage, "",
+		getkeyUsage, setkeyUsage,
+	}
+	allUsage = strings.Join(allUsages, "\n")
+)

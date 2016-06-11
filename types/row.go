@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
@@ -42,7 +41,7 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	// TODO(elimisteve): Document `id:`-prefix and related conventions
 	uuidTag := "id:" + id.String()
 
-	created := "created:" + fmtDatetime(cryptag.Now())
+	created := "created:" + cryptag.TimeStr(cryptag.Now())
 
 	// For future queryability-related reasons, UUID must come first!
 	plainTags = append([]string{uuidTag}, append(plainTags, created, "all")...)
@@ -57,14 +56,17 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	return row, nil
 }
 
-func fmtDatetime(t time.Time) string {
-	y, m, d := t.Date()
-	hr, min, sec := t.Clock()
-	return fmt.Sprintf("%d%02d%02d%02d%02d%02d", y, m, d, hr, min, sec)
-}
+func NewRowSimple(decrypted []byte, plainTags []string) (*Row, error) {
+	// TODO: Ensure that len(plainTags) > 0?
 
-func NewRowSimple(decrypted []byte, plainTags []string) *Row {
-	return &Row{decrypted: decrypted, plainTags: plainTags}
+	nonce, err := cryptag.RandomNonce()
+	if err != nil {
+		return nil, err
+	}
+
+	row := &Row{decrypted: decrypted, plainTags: plainTags, Nonce: nonce}
+
+	return row, nil
 }
 
 // NewRowFromBytes unmarshals b into a new *Row.
