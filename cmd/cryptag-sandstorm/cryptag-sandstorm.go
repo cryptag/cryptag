@@ -133,6 +133,8 @@ func main() {
 			log.Fatal(err)
 		}
 
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
+
 		rowStrs := make([]string, len(rows))
 
 		for i := range rows {
@@ -162,6 +164,8 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// Sort oldest to newest
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		dir := path.Join(cryptag.TrustedBasePath, "decrypted", backendName)
 		for _, row := range rows {
