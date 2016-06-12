@@ -80,8 +80,9 @@ func main() {
 				log.Fatalf("Error creating then saving file: %v", err)
 			}
 
-			color.Printf("Successfully saved new file %s with these tags:"+
-				"\n%v\n", filepath.Base(filename), color.Tags(row.PlainTags()))
+			color.Printf("%s successfully saved with these tags:"+
+				"\n%v\n", color.BlackOnCyan(filepath.Base(filename)),
+				color.Tags(row.PlainTags()))
 			return
 		}
 
@@ -168,7 +169,11 @@ func main() {
 		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		dir := path.Join(cryptag.TrustedBasePath, "decrypted", backendName)
-		for _, row := range rows {
+		for i, row := range rows {
+			if i != 0 {
+				fmt.Println("")
+			}
+
 			// Print bodies of non-file rows as text (includes Tasks, etc)
 			if !row.HasPlainTag("type:file") {
 				color.Println(color.TextRow(row))
@@ -180,7 +185,8 @@ func main() {
 				log.Printf("Error locally saving file: %s\n", err)
 				continue
 			}
-			log.Printf("Successfully saved row to file %s", fname)
+			color.Printf("%s successfully downloaded; has these tags:\n%v\n",
+				color.BlackOnCyan(fname), color.Tags(row.PlainTags()))
 		}
 
 	case "tags", "t":
