@@ -21,7 +21,7 @@ func writeJSON(w http.ResponseWriter, obj interface{}) {
 
 	log.Printf("Writing JSON: `%s`\n", b)
 
-	w.Header().Set("Context-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }
@@ -29,7 +29,7 @@ func writeJSON(w http.ResponseWriter, obj interface{}) {
 func writeError(w http.ResponseWriter, errStr string, status int) {
 	log.Printf("Returning HTTP %d w/error: %q\n", status, errStr)
 
-	w.Header().Set("Context-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	io.WriteString(w, fmt.Sprintf(`{"error": %q}`, errStr))
 }
