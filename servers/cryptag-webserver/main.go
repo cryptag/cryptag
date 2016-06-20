@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/types"
 	"github.com/elimisteve/help"
 	"github.com/gorilla/mux"
@@ -23,7 +24,11 @@ import (
 var filesystem *FileSystem
 
 func init() {
-	fs, err := NewFileSystem(".")
+	dataPath := cryptag.LocalDataPath
+	if len(os.Args) > 1 {
+		dataPath = os.Args[1]
+	}
+	fs, err := NewFileSystem(dataPath)
 	if err != nil {
 		log.Fatalf("Error from NewFileSystem: %v", err)
 	}
