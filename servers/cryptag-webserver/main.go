@@ -24,13 +24,20 @@ import (
 var filesystem *FileSystem
 
 func init() {
-	fs, err := NewFileSystem(cryptag.LocalDataPath)
+	dataPath := cryptag.LocalDataPath
+	if len(os.Args) > 1 {
+		dataPath = os.Args[1]
+	}
+	fs, err := NewFileSystem(dataPath)
 	if err != nil {
 		log.Fatalf("Error from NewFileSystem: %v", err)
 	}
 
 	// Set global `filesystem` var
 	filesystem = fs
+
+	log.Printf("New FileSystem directory being used at %v\n",
+		filesystem.cryptagPath)
 }
 
 const (
