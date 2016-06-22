@@ -100,6 +100,10 @@ func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) 
 
 	configFile := path.Join(backendPath, backendName+".json")
 
+	if types.Debug {
+		log.Printf("Reading backend config file `%v`\n", configFile)
+	}
+
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, err
