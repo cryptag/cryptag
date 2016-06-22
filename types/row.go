@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/fun"
@@ -101,12 +100,6 @@ func (row *Row) HasRandomTag(randtag string) bool {
 // HasPlainTag answers the question, "does row have the plain tag plain?"
 func (row *Row) HasPlainTag(plain string) bool {
 	return fun.SliceContains(row.plainTags, plain)
-}
-
-// Format formats row for printing to the terminal.  Only suitable for
-// plain text Rows.
-func (row *Row) Format() string {
-	return fmt.Sprintf("%s    %s\n", row.decrypted, strings.Join(row.plainTags, "   "))
 }
 
 // Decrypt sets row.decrypted, row.nonce based upon row.Encrypted,
