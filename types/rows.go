@@ -19,14 +19,6 @@ func (rows Rows) String() string {
 	return s
 }
 
-func (rows Rows) Format() string {
-	var s string
-	for _, row := range rows {
-		s += "\n" + row.Format()
-	}
-	return s
-}
-
 // WithAllRandomTags returns the Rows within rows that has all the
 // random strings in random
 func (rows Rows) WithAllRandomTags(random []string) Rows {
