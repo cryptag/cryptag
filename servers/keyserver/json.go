@@ -4,32 +4,26 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
+
+	"github.com/elimisteve/cryptag/api"
 )
 
-func writeJSON(w http.ResponseWriter, obj interface{}) {
-	b, err := json.Marshal(obj)
-	if err != nil {
-		log.Printf("Error marshaling `%#v`: %v\n", obj, err)
-		writeError(w, "Error preparing response", http.StatusInternalServerError)
-		return
+func writeError(w http.ResponseWriter, errStr string, secretErr error) {
+	if Debug {
+		log.Printf("Returning HTTP %d w/error: %q;\n  real error: %s\n",
+			http.StatusInternalServerError, errStr, secretErr)
 	}
 
-	log.Printf("Writing JSON: `%s`\n", b)
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(b)
+	api.WriteError(w, errStr)
 }
 
-func writeError(w http.ResponseWriter, errStr string, status int) {
-	log.Printf("Returning HTTP %d w/error: %q\n", status, errStr)
+func writeErrorStatus(w http.ResponseWriter, errStr string, status int, secretErr error) {
+	if Debug {
+		log.Printf("Returning HTTP %d w/error: %q; real error: %q\n", status,
+			errStr, secretErr)
+	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	io.WriteString(w, fmt.Sprintf(`{"error": %q}`, errStr))
+	api.WriteErrorStatus(w, errStr, status)
 }

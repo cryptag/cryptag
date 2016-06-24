@@ -125,7 +125,7 @@ func main() {
 }
 
 var usage = "Usage: " + filepath.Base(os.Args[0]) + " [create <yourpassword>] tag1 [tag2 ...]"
-var initUsage = "Usage: " + filepath.Base(os.Args[0]) + " init <sandstorm_key>"
+var initUsage = "Usage: " + filepath.Base(os.Args[0]) + " init <sandstorm_webkey>"
 
 func createBackendConfig(key string) error {
 	info := strings.SplitN(key, "#", 2)

@@ -90,7 +90,7 @@ func CreateWebserver(key []byte, backendName, baseURL, authToken string) (*Webse
 
 	err = cfg.Save(cryptag.BackendPath)
 	if err != nil {
-		return db, fmt.Errorf("Error saving backend config to disk: %v\n", err)
+		return db, fmt.Errorf("Error saving backend config to disk: %v", err)
 	}
 
 	return db, nil

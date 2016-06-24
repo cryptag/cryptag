@@ -232,7 +232,7 @@ func main() {
 var (
 	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
 
-	initUsage = prefix + "init <sandstorm_key>"
+	initUsage = prefix + "init <sandstorm_webkey>"
 
 	createTextUsage = prefix + "createtext <text>     <tag1> [<tag2> ...]"
 	createFileUsage = prefix + "createfile <filename> <tag1> [<tag2> ...]"

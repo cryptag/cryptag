@@ -442,7 +442,9 @@ func entriesToRows(db *DropboxRemote, entries []dropbox.Entry, includeFileBody b
 
 			var r *types.Row
 
-			if includeFileBody {
+			if !includeFileBody {
+				r = &types.Row{RandomTags: randtags}
+			} else {
 				row, err := downloadRow(db, entry, randtags)
 				if err != nil {
 					log.Printf("Error from downloadRow: %v\n", err)
@@ -450,8 +452,6 @@ func entriesToRows(db *DropboxRemote, entries []dropbox.Entry, includeFileBody b
 					return
 				}
 				r = row
-			} else {
-				r = &types.Row{RandomTags: randtags}
 			}
 
 			rowCh <- r

@@ -154,7 +154,7 @@ Run this to download the cpass-sandstorm command line program:
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm like so:
 
-    $ ./cpass-sandstorm init <sandstorm_key>
+    $ ./cpass-sandstorm init <sandstorm_webkey>
 
 To see the remaining valid commands (such as "create", seen above), run
 
@@ -172,7 +172,7 @@ Run this in PowerShell:
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm.exe like so:
 
-    .\cpass-sandstorm.exe init <sandstorm_key>
+    .\cpass-sandstorm.exe init <sandstorm_webkey>
 
 To see the remaining valid subcommands (such as "create", seen above), run
 

@@ -158,7 +158,7 @@ func fmtTask(r *types.Row) string {
 var (
 	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
 
-	initUsage   = prefix + "init <sandstorm_key>"
+	initUsage   = prefix + "init <sandstorm_webkey>"
 	createUsage = prefix + "create <title> <description> [assignee:NAME] [<tag2> ...]"
 	getUsage    = prefix + "get [assignee:NAME] [<tag2> ...]"
 	deleteUsage = prefix + "delete <tag1> [id:UUID] [<tag3> ...]"
