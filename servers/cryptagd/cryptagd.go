@@ -45,6 +45,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error from LoadOrCreateFileSystem: %s", err)
 		}
+		log.Println("...but a FileSystem Backend loaded successfully")
 	}
 
 	if bk, ok := db.(cryptag.CanUseTor); ok && cryptag.UseTor {
