@@ -14,3 +14,7 @@ func init() {
 		UseTor = true
 	}
 }
+
+type CanUseTor interface {
+	UseTor() error
+}
