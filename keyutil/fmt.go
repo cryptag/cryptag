@@ -13,10 +13,21 @@ func Format(key *[32]byte) string {
 	}
 	k := *key
 
-	kStr := fmt.Sprintf("%d", k[0])
+	return FormatSlice(k[:])
+}
 
-	for i := 1; i < len(k); i++ {
-		kStr += fmt.Sprintf(",%d", k[i])
+func FormatSlice(b []byte) string {
+	if b == nil {
+		return "<nil>"
 	}
-	return kStr
+	if len(b) == 0 {
+		return ""
+	}
+
+	bStr := fmt.Sprintf("%d", b[0])
+
+	for i := 1; i < len(b); i++ {
+		bStr += fmt.Sprintf(",%d", b[i])
+	}
+	return bStr
 }
