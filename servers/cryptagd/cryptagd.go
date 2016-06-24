@@ -130,7 +130,7 @@ func main() {
 			return
 		}
 
-		if err := backend.UpdateKey(db, newKey); err != nil {
+		if err = backend.UpdateKey(db, newKey); err != nil {
 			api.WriteError(w, "Error updating key: "+err.Error())
 			return
 		}
@@ -222,7 +222,7 @@ func main() {
 			return
 		}
 
-		if err := backend.DeleteRows(db, nil, plaintags); err != nil {
+		if err = backend.DeleteRows(db, nil, plaintags); err != nil {
 			api.WriteError(w, "Error deleting rows: "+err.Error())
 			return
 		}
