@@ -31,13 +31,24 @@ func init() {
 }
 
 func main() {
+	var db backend.Backend
+
 	db, err := backend.LoadWebserverBackend("", backendName)
 	if err != nil {
-		log.Fatalf("Error from LoadWebserverBackend: %v", err)
+		// TODO: Generically parse all Backend Configs
+		log.Printf("Error from LoadWebserverBackend: %v", err)
+
+		db, err = backend.LoadOrCreateFileSystem(
+			os.Getenv("BACKEND_PATH"),
+			os.Getenv("BACKEND"),
+		)
+		if err != nil {
+			log.Fatalf("Error from LoadOrCreateFileSystem: %s", err)
+		}
 	}
 
-	if cryptag.UseTor {
-		if err = db.UseTor(); err != nil {
+	if bk, ok := db.(cryptag.CanUseTor); ok && cryptag.UseTor {
+		if err = bk.UseTor(); err != nil {
 			log.Fatalf("Error trying to use Tor: %v\n", err)
 		}
 	}
@@ -119,7 +130,7 @@ func main() {
 			return
 		}
 
-		if err := backend.UpdateKey(db, newKey); err != nil {
+		if err = backend.UpdateKey(db, newKey); err != nil {
 			api.WriteError(w, "Error updating key: "+err.Error())
 			return
 		}
@@ -211,7 +222,7 @@ func main() {
 			return
 		}
 
-		if err := backend.DeleteRows(db, nil, plaintags); err != nil {
+		if err = backend.DeleteRows(db, nil, plaintags); err != nil {
 			api.WriteError(w, "Error deleting rows: "+err.Error())
 			return
 		}
