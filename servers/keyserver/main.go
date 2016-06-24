@@ -11,8 +11,17 @@ import (
 	"os"
 
 	"github.com/boltdb/bolt"
+	"github.com/elimisteve/cryptag/api"
 	"github.com/gorilla/mux"
 )
+
+var Debug = false
+
+func init() {
+	if os.Getenv("DEBUG") == "1" {
+		Debug = true
+	}
+}
 
 func main() {
 	db := mustInitDB()
@@ -40,15 +49,14 @@ func GetMinilockID(db *bolt.DB) func(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Printf("Error from GetMinilockIDByEmail(%q): %v\n", email, err)
 			if err == ErrMinilockIDNotFound {
-				writeError(w, err.Error(), http.StatusNotFound)
+				writeErrorStatus(w, err.Error(), http.StatusNotFound, err)
 				return
 			}
-			writeError(w, "Error fetching miniLock ID",
-				http.StatusInternalServerError)
+			writeError(w, "Error fetching miniLock ID", err)
 			return
 		}
 		ident := &Identity{Email: email, MinilockID: mID}
-		writeJSON(w, ident)
+		api.WriteJSON(w, ident)
 		return
 	}
 }
@@ -57,16 +65,15 @@ func PostMinilockID(db *bolt.DB) func(w http.ResponseWriter, req *http.Request) 
 	return func(w http.ResponseWriter, req *http.Request) {
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			log.Printf("Error reading body: %v\n", err)
-			writeError(w, "Unknown error", http.StatusInternalServerError)
+			writeError(w, "Error reading POST data", err)
 			return
 		}
 
 		var ident Identity
 		_ = json.Unmarshal(body, &ident)
 		if !ident.Valid() {
-			writeError(w, "Invalid JSON; populate 'email' and 'minilock_id'",
-				http.StatusBadRequest)
+			writeErrorStatus(w, "Invalid JSON; populate 'email' and 'minilock_id'",
+				http.StatusBadRequest, nil)
 			return
 		}
 
@@ -75,16 +82,17 @@ func PostMinilockID(db *bolt.DB) func(w http.ResponseWriter, req *http.Request) 
 			log.Printf("Error from CreateMinilockIDByEmail(%q, %q): %v\n",
 				ident.Email, ident.MinilockID, err)
 			if err == ErrMinilockIDExists {
-				writeError(w, err.Error(), http.StatusConflict)
+				writeErrorStatus(w, err.Error(), http.StatusConflict, err)
 				return
 			}
-			writeError(w, "Error saving new miniLock ID",
-				http.StatusInternalServerError)
+			writeError(w, "Error saving new miniLock ID", err)
 			return
 		}
 
-		log.Printf("New MinilockID successfully stored: %s -> %s\n",
-			ident.Email, ident.MinilockID)
+		if Debug {
+			log.Printf("New MinilockID successfully stored: %s -> %s\n",
+				ident.Email, ident.MinilockID)
+		}
 
 		w.WriteHeader(http.StatusCreated)
 	}
