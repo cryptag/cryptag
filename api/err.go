@@ -11,6 +11,12 @@ import (
 
 const contentTypeJSON = "application/json; charset=utf-8"
 
+func WriteJSONB(w http.ResponseWriter, jsonB []byte) {
+	w.Header().Set("Content-Type", contentTypeJSON)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonB)
+}
+
 func WriteJSONStatus(w http.ResponseWriter, obj interface{}, statusCode int) {
 	writeJSON(w, obj, statusCode)
 }
