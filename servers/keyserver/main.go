@@ -68,6 +68,7 @@ func PostMinilockID(db *bolt.DB) func(w http.ResponseWriter, req *http.Request) 
 			writeError(w, "Error reading POST data", err)
 			return
 		}
+		defer req.Body.Close()
 
 		var ident Identity
 		_ = json.Unmarshal(body, &ident)
