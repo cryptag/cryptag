@@ -108,8 +108,7 @@ func main() {
 		newTrow := trusted.Row{PlainTags: row.PlainTags()}
 		trowB, _ := json.Marshal(&newTrow)
 
-		w.WriteHeader(http.StatusCreated)
-		api.WriteJSONB(w, trowB)
+		api.WriteJSONBStatus(w, trowB, http.StatusCreated)
 	}
 
 	GetKey := func(w http.ResponseWriter, req *http.Request) {
