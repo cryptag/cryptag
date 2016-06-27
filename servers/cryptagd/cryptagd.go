@@ -165,9 +165,18 @@ func main() {
 	GetRows := func(w http.ResponseWriter, req *http.Request) {
 		_ = req.ParseForm()
 
-		plaintags, err := parseTags(req.Form["plaintags"])
+		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			api.WriteErrorStatus(w, err.Error(), http.StatusBadRequest)
+			api.WriteError(w, err.Error())
+			return
+		}
+		defer req.Body.Close()
+
+		var plaintags []string
+		err = json.Unmarshal(body, &plaintags)
+		if err != nil {
+			api.WriteErrorStatus(w, "Error parsing POSTed JSON array of tags: "+
+				err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -236,7 +245,7 @@ func main() {
 
 	r.HandleFunc("/trusted/init", Init).Methods("POST")
 
-	r.HandleFunc("/trusted/rows", GetRows).Methods("GET")
+	r.HandleFunc("/trusted/rows/get", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows", CreateRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/list", ListRows).Methods("GET")
 	r.HandleFunc("/trusted/rows/delete", DeleteRows).Methods("GET")
