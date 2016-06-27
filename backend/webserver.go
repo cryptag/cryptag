@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	HttpGetTimeout = 30 * time.Second
+	HttpGetTimeout = 300 * time.Second
 )
 
 type WebserverBackend struct {
