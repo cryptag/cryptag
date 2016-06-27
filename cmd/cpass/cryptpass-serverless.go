@@ -54,6 +54,16 @@ func main() {
 
 		color.Println(color.TextRow(row))
 
+	case "tags":
+		pairs, err := db.AllTagPairs()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, pair := range pairs {
+			color.Printf("%s  %s\n", pair.Random, color.BlackOnWhite(pair.Plain()))
+		}
+
 	case "delete":
 		if len(os.Args) < 3 {
 			cli.ArgFatal(deleteUsage)
@@ -127,8 +137,9 @@ var (
 	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
 
 	createUsage = prefix + "create <password or text> <tag1> [type:password <tag3> ...]"
+	tagsUsage   = prefix + "tags"
 	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
 	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
 
-	allUsage = strings.Join([]string{createUsage, deleteUsage, importUsage}, "\n")
+	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, importUsage}, "\n")
 )
