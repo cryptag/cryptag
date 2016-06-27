@@ -11,21 +11,21 @@ import (
 
 const contentTypeJSON = "application/json; charset=utf-8"
 
-func WriteJSONB(w http.ResponseWriter, jsonB []byte) {
+func WriteJSONBStatus(w http.ResponseWriter, jsonB []byte, statusCode int) {
 	w.Header().Set("Content-Type", contentTypeJSON)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(statusCode)
 	w.Write(jsonB)
 }
 
-func WriteJSONStatus(w http.ResponseWriter, obj interface{}, statusCode int) {
-	writeJSON(w, obj, statusCode)
+func WriteJSONB(w http.ResponseWriter, jsonB []byte) {
+	WriteJSONBStatus(w, jsonB, http.StatusOK)
 }
 
 func WriteJSON(w http.ResponseWriter, obj interface{}) {
-	writeJSON(w, obj, http.StatusOK)
+	WriteJSONStatus(w, obj, http.StatusOK)
 }
 
-func writeJSON(w http.ResponseWriter, obj interface{}, statusCode int) {
+func WriteJSONStatus(w http.ResponseWriter, obj interface{}, statusCode int) {
 	b, err := json.Marshal(obj)
 	if err != nil {
 		if types.Debug {
@@ -39,20 +39,14 @@ func writeJSON(w http.ResponseWriter, obj interface{}, statusCode int) {
 		log.Printf("Writing JSON: `%s`\n", b)
 	}
 
-	w.Header().Set("Content-Type", contentTypeJSON)
-	w.WriteHeader(statusCode)
-	w.Write(b)
-}
-
-func WriteErrorStatus(w http.ResponseWriter, errStr string, statusCode int) {
-	writeError(w, errStr, statusCode)
+	WriteJSONBStatus(w, b, statusCode)
 }
 
 func WriteError(w http.ResponseWriter, errStr string) {
-	writeError(w, errStr, http.StatusInternalServerError)
+	WriteErrorStatus(w, errStr, http.StatusInternalServerError)
 }
 
-func writeError(w http.ResponseWriter, errStr string, status int) {
+func WriteErrorStatus(w http.ResponseWriter, errStr string, status int) {
 	if types.Debug {
 		log.Printf("Returning HTTP %d w/error: %q\n", status, errStr)
 	}
