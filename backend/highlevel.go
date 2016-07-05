@@ -96,7 +96,7 @@ func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []str
 		}
 	}
 
-	err = PopulateRowBeforeSave(bk, row, pairs)
+	_, err = PopulateRowBeforeSave(bk, row, pairs)
 	if err != nil {
 		return nil, err
 	}
