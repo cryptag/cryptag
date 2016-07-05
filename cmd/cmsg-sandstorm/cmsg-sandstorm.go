@@ -165,6 +165,18 @@ func main() {
 		rowStrs := rowutil.MapToStrings(fmtMsg, rows)
 		color.Println(strings.Join(rowStrs, "\n\n"))
 
+	case "listrooms":
+		plaintags := append(os.Args[2:], "type:chatroom")
+
+		rows, err := backend.ListRowsFromPlainTags(db, nil, plaintags)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
+		rowStrs := rowutil.MapToStrings(fmtRoom, rows)
+		color.Println(strings.Join(rowStrs, "\n\n"))
+
 	case "deleteroom", "deletemsg":
 		if len(os.Args) < 3 {
 			if os.Args[1] == "deleteroom" {
@@ -243,6 +255,18 @@ func fmtMsg(r *types.Row) string {
 		color.Tags(r.PlainTags()))
 }
 
+func fmtRoom(r *types.Row) string {
+	roomName := rowutil.TagWithPrefixStripped(r, "roomname:")
+	id := rowutil.TagWithPrefix(r, "id:")
+
+	return fmt.Sprintf(`%s: %s
+%s:   %s
+%s`,
+		color.BlackOnCyan("Room Name"), roomName,
+		color.BlackOnCyan("Room ID"), id,
+		color.Tags(r.PlainTags()))
+}
+
 type Message struct {
 	Msg string `json:"msg"`
 }
@@ -254,6 +278,7 @@ var (
 	createroomUsage = prefix + "createroom <name> [<tag1> ...]"
 	sendUsage       = prefix + "send <from> <room name> <msg> [<tag1> ...]"
 	viewroomUsage   = prefix + "viewroom <room name> [<tag1> ...]"
+	listroomsUsage  = prefix + "listrooms [<tag1> ...]"
 	getmsgsUsage    = prefix + "getmsgs [roomname:... from:... <tag3> ...]"
 	deleteroomUsage = prefix + "deleteroom <room name> [<tag1> ...]"
 	deletemsgUsage  = prefix + "deletemsg <tag1> [<tag2> ...]"
@@ -261,7 +286,8 @@ var (
 	setkeyUsage     = prefix + "setkey <32-number crypto key>"
 
 	allUsages = []string{initUsage, createroomUsage, sendUsage, viewroomUsage,
-		getmsgsUsage, deleteroomUsage, deletemsgUsage, getkeyUsage, setkeyUsage}
+		listroomsUsage, getmsgsUsage, deleteroomUsage, deletemsgUsage,
+		getkeyUsage, setkeyUsage}
 
 	allUsage = strings.Join(allUsages, "\n")
 )
