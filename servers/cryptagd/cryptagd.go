@@ -138,8 +138,8 @@ func main() {
 	}
 
 	ListRows := func(w http.ResponseWriter, req *http.Request) {
-		plaintags, returnEarly := parsePlaintags(w, req)
-		if returnEarly {
+		plaintags, handledReq := parsePlaintags(w, req)
+		if handledReq {
 			return
 		}
 
@@ -159,8 +159,8 @@ func main() {
 	}
 
 	GetRows := func(w http.ResponseWriter, req *http.Request) {
-		plaintags, returnEarly := parsePlaintags(w, req)
-		if returnEarly {
+		plaintags, handledReq := parsePlaintags(w, req)
+		if handledReq {
 			return
 		}
 
@@ -201,8 +201,8 @@ func main() {
 	}
 
 	DeleteRows := func(w http.ResponseWriter, req *http.Request) {
-		plaintags, returnEarly := parsePlaintags(w, req)
-		if returnEarly {
+		plaintags, handledReq := parsePlaintags(w, req)
+		if handledReq {
 			return
 		}
 
@@ -243,7 +243,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(listenAddr, r))
 }
 
-func parsePlaintags(w http.ResponseWriter, r *http.Request) (plaintags []string, err bool) {
+func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []string, handledReq bool) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		api.WriteError(w, err.Error())
@@ -253,8 +253,9 @@ func parsePlaintags(w http.ResponseWriter, r *http.Request) (plaintags []string,
 
 	err = json.Unmarshal(body, &plaintags)
 	if err != nil {
-		api.WriteErrorStatus(w, "Error parsing POSTed JSON array of tags: "+
-			err.Error(), http.StatusBadRequest)
+		errStr := fmt.Sprintf("Error parsing POSTed JSON array of tags `%s`: %s",
+			body, err)
+		api.WriteErrorStatus(w, errStr, http.StatusBadRequest)
 		return nil, true
 	}
 
