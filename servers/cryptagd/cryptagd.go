@@ -5,7 +5,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -139,11 +138,8 @@ func main() {
 	}
 
 	ListRows := func(w http.ResponseWriter, req *http.Request) {
-		_ = req.ParseForm()
-
-		plaintags, err := parseTags(req.Form["plaintags"])
-		if err != nil {
-			api.WriteErrorStatus(w, err.Error(), http.StatusBadRequest)
+		plaintags, returnEarly := parsePlaintags(w, req)
+		if returnEarly {
 			return
 		}
 
@@ -163,20 +159,8 @@ func main() {
 	}
 
 	GetRows := func(w http.ResponseWriter, req *http.Request) {
-		_ = req.ParseForm()
-
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			api.WriteError(w, err.Error())
-			return
-		}
-		defer req.Body.Close()
-
-		var plaintags []string
-		err = json.Unmarshal(body, &plaintags)
-		if err != nil {
-			api.WriteErrorStatus(w, "Error parsing POSTed JSON array of tags: "+
-				err.Error(), http.StatusBadRequest)
+		plaintags, returnEarly := parsePlaintags(w, req)
+		if returnEarly {
 			return
 		}
 
@@ -217,11 +201,8 @@ func main() {
 	}
 
 	DeleteRows := func(w http.ResponseWriter, req *http.Request) {
-		_ = req.ParseForm()
-
-		plaintags, err := parseTags(req.Form["plaintags"])
-		if err != nil {
-			api.WriteErrorStatus(w, err.Error(), http.StatusBadRequest)
+		plaintags, returnEarly := parsePlaintags(w, req)
+		if returnEarly {
 			return
 		}
 
@@ -247,8 +228,8 @@ func main() {
 
 	r.HandleFunc("/trusted/rows/get", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows", CreateRow).Methods("POST")
-	r.HandleFunc("/trusted/rows/list", ListRows).Methods("GET")
-	r.HandleFunc("/trusted/rows/delete", DeleteRows).Methods("GET")
+	r.HandleFunc("/trusted/rows/list", ListRows).Methods("POST")
+	r.HandleFunc("/trusted/rows/delete", DeleteRows).Methods("POST")
 
 	r.HandleFunc("/trusted/tags", GetTags).Methods("GET")
 
@@ -262,13 +243,20 @@ func main() {
 	log.Fatal(http.ListenAndServe(listenAddr, r))
 }
 
-func parseTags(tags []string) ([]string, error) {
-	if len(tags) == 0 {
-		return nil, errors.New("No tags included in query (not allowed)")
+func parsePlaintags(w http.ResponseWriter, r *http.Request) (plaintags []string, err bool) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		api.WriteError(w, err.Error())
+		return nil, true
+	}
+	defer req.Body.Close()
+
+	err = json.Unmarshal(body, &plaintags)
+	if err != nil {
+		api.WriteErrorStatus(w, "Error parsing POSTed JSON array of tags: "+
+			err.Error(), http.StatusBadRequest)
+		return nil, true
 	}
 
-	// Tag format: /?tags=tag1,tag2,tag3
-	tags = strings.Split(tags[0], ",")
-
-	return tags, nil
+	return plaintags, false
 }

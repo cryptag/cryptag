@@ -96,7 +96,7 @@ func main() {
 		}
 
 		for _, row := range rows {
-			if err = backend.PopulateRowBeforeSave(db, row, pairs); err != nil {
+			if _, err = backend.PopulateRowBeforeSave(db, row, pairs); err != nil {
 				log.Printf("Error decrypting row %#v: %v\n", row, err)
 				continue
 			}

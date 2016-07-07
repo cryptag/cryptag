@@ -110,15 +110,15 @@ func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
 	return pair, nil
 }
 
-func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs) error {
+func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs) (newPairs types.TagPairs, err error) {
 	// For each element of row.plainTags that doesn't match an
 	// existing tag, call CreateTag().  Encrypt row.decrypted and
 	// store it in row.Encrypted.  POST to server.
 
 	// TODO: Call this in parallel with encryption below
-	newPairs, err := CreateTagsFromPlain(backend, row.PlainTags(), pairs)
+	newPairs, err = CreateTagsFromPlain(backend, row.PlainTags(), pairs)
 	if err != nil {
-		return fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
+		return newPairs, fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
 	}
 
 	allTagPairs := append(pairs, newPairs...)
@@ -134,7 +134,7 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs
 				break
 			}
 			if i == len(allTagPairs)-1 {
-				return fmt.Errorf(
+				return newPairs, fmt.Errorf(
 					"No corresponding TagPair found for plain tag `%s`", plain)
 			}
 		}
@@ -146,9 +146,9 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs
 	// Could also do something like `row.Encrypt(wb.Encrypt)`
 	encData, err := cryptag.Encrypt(row.Decrypted(), row.Nonce, backend.Key())
 	if err != nil {
-		return fmt.Errorf("Error encrypting data: %v", err)
+		return newPairs, fmt.Errorf("Error encrypting data: %v", err)
 	}
 	row.Encrypted = encData
 
-	return nil
+	return newPairs, nil
 }
