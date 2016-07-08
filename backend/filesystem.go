@@ -139,6 +139,10 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 	return NewFileSystem(&conf)
 }
 
+func (fs *FileSystem) Name() string {
+	return fs.name
+}
+
 func (fs *FileSystem) ToConfig() (*Config, error) {
 	name := fs.name
 

@@ -198,6 +198,14 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 	return &db, nil
 }
 
+func (db *DropboxRemote) Name() string {
+	cfg, err := db.ToConfig()
+	if err != nil {
+		return ""
+	}
+	return cfg.Name
+}
+
 func (db *DropboxRemote) ToConfig() (*Config, error) {
 	if db.key == nil {
 		return nil, cryptag.ErrNilKey

@@ -18,6 +18,7 @@ var (
 )
 
 type Backend interface {
+	Name() string
 	Key() *[32]byte
 
 	AllTagPairs() (types.TagPairs, error)

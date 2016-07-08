@@ -176,6 +176,10 @@ func (wb *WebserverBackend) UseTor() error {
 	return nil
 }
 
+func (wb *WebserverBackend) Name() string {
+	return wb.serverName
+}
+
 func (wb *WebserverBackend) Key() *[32]byte {
 	return wb.key
 }
