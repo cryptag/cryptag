@@ -62,12 +62,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-	case "createtext", "ct", "createfile", "cf":
+	case "createtext", "ct", "createfile", "cf", "createany", "ca":
 		if len(os.Args) < 4 {
 			cli.ArgFatal(allCreateUsage)
 		}
 
 		createFile := (os.Args[1] == "createfile" || os.Args[1] == "cf")
+		createAny := (os.Args[1] == "createany" || os.Args[1] == "ca")
 
 		tags := append(os.Args[3:], "app:cryptag")
 
@@ -87,13 +88,15 @@ func main() {
 		}
 
 		//
-		// Create text row
+		// Create text row _or_ custom row
 		//
 
-		text := os.Args[2]
-		tags = append(tags, "type:text")
+		data := os.Args[2]
+		if !createAny {
+			tags = append(tags, "type:text")
+		}
 
-		row, err := backend.CreateRow(db, nil, []byte(text), tags)
+		row, err := backend.CreateRow(db, nil, []byte(data), tags)
 		if err != nil {
 			log.Fatalf("Error creating text: %v\n", err)
 		}
@@ -236,7 +239,8 @@ var (
 
 	createTextUsage = prefix + "createtext <text>     <tag1> [<tag2> ...]"
 	createFileUsage = prefix + "createfile <filename> <tag1> [<tag2> ...]"
-	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage}, "\n")
+	createAnyUsage  = prefix + "createany  <data>     <tag1> [<type:...> <tag2> ...]"
+	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage, createAnyUsage}, "\n")
 
 	getTextUsage  = prefix + "gettext  <tag1> [<tag2> ...]"
 	getFilesUsage = prefix + "getfiles <tag1> [<tag2> ...]"
@@ -253,7 +257,7 @@ var (
 
 	allUsages = []string{
 		initUsage, "",
-		createTextUsage, createFileUsage, "",
+		createTextUsage, createFileUsage, createAnyUsage, "",
 		getTextUsage, getFilesUsage, getAnyUsage, "",
 		deleteTextUsage, deleteFilesUsage, deleteAnyUsage, "",
 		getkeyUsage, setkeyUsage,
