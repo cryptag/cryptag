@@ -12,6 +12,10 @@ import (
 const contentTypeJSON = "application/json; charset=utf-8"
 
 func WriteJSONBStatus(w http.ResponseWriter, jsonB []byte, statusCode int) {
+	if types.Debug {
+		log.Printf("Writing JSON: `%s`\n", jsonB)
+	}
+
 	w.Header().Set("Content-Type", contentTypeJSON)
 	w.WriteHeader(statusCode)
 	w.Write(jsonB)
@@ -33,10 +37,6 @@ func WriteJSONStatus(w http.ResponseWriter, obj interface{}, statusCode int) {
 		}
 		WriteError(w, "Error preparing response")
 		return
-	}
-
-	if types.Debug {
-		log.Printf("Writing JSON: `%s`\n", b)
 	}
 
 	WriteJSONBStatus(w, b, statusCode)

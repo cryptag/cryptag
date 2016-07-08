@@ -110,6 +110,37 @@ func main() {
 		api.WriteJSONBStatus(w, trowB, http.StatusCreated)
 	}
 
+	CreateFileRow := func(w http.ResponseWriter, req *http.Request) {
+		// TODO: Do streaming reads
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+		defer req.Body.Close()
+
+		var trow trusted.FileRow
+		err = json.Unmarshal(body, &trow)
+		if err != nil {
+			api.WriteErrorStatus(w, `Error parsing POST of the form`+
+				` {"file_path": "/full/path/to/file", "plaintags":`+
+				` ["tag1", "tag2"]}`+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		row, err := backend.CreateFileRow(db, nil, trow.FilePath, trow.PlainTags)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+
+		// Return Row with null data, populated tags
+		newTrow := trusted.Row{PlainTags: row.PlainTags()}
+		trowB, _ := json.Marshal(&newTrow)
+
+		api.WriteJSONBStatus(w, trowB, http.StatusCreated)
+	}
+
 	GetKey := func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, `{"key":[%s]}`, keyutil.Format(db.Key()))
 	}
@@ -228,6 +259,7 @@ func main() {
 
 	r.HandleFunc("/trusted/rows/get", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows", CreateRow).Methods("POST")
+	r.HandleFunc("/trusted/rows/file", CreateFileRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/list", ListRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/delete", DeleteRows).Methods("POST")
 

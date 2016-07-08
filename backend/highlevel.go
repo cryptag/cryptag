@@ -112,7 +112,7 @@ func CreateRow(bk Backend, pairs types.TagPairs, rowData []byte, plaintags []str
 func CreateFileRow(bk Backend, pairs types.TagPairs, filename string, plaintags []string) (*types.Row, error) {
 	rowData, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Fatalf("Error reading file `%s`: %v\n", filename, err)
+		return nil, fmt.Errorf("Error reading file `%s`: %v\n", filename, err)
 	}
 
 	plaintags = append(plaintags, "type:file", "filename:"+filepath.Base(filename))
