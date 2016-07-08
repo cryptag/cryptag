@@ -167,7 +167,7 @@ func (fs *FileSystem) Key() *[32]byte {
 	return fs.key
 }
 
-func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
+func (fs *FileSystem) AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, error) {
 	tagFiles, err := filepath.Glob(path.Join(fs.tagsPath, "*"))
 	if err != nil {
 		return nil, fmt.Errorf("Error listing tags: %v", err)
@@ -186,7 +186,8 @@ func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
 	}
 
 	if types.Debug {
-		log.Printf("AllTagPairs: returning %d pairs\n", len(pairs))
+		log.Printf("AllTagPairs: returning %d pairs (%d new)\n", len(pairs),
+			len(pairs)-len(oldPairs))
 	}
 
 	return pairs, nil

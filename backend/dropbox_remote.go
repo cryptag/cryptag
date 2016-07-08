@@ -229,7 +229,7 @@ func (db *DropboxRemote) Key() *[32]byte {
 	return db.key
 }
 
-func (db *DropboxRemote) AllTagPairs() (types.TagPairs, error) {
+func (db *DropboxRemote) AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, error) {
 	start := time.Now()
 
 	pairs, err := getAllTagsFromDbox(db)

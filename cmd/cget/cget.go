@@ -59,7 +59,7 @@ func main() {
 		color.Println(strings.Join(rowStrs, "\n\n"))
 
 	case "tags":
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

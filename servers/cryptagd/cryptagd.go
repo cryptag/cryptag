@@ -216,7 +216,7 @@ func main() {
 	}
 
 	GetTags := func(w http.ResponseWriter, req *http.Request) {
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			api.WriteError(w, "Error fetching tag pairs: "+err.Error())
 			return

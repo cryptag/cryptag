@@ -47,7 +47,7 @@ func init() {
 	bk = ws
 
 	go func() {
-		pairs, _ := bk.AllTagPairs()
+		pairs, _ := bk.AllTagPairs(nil)
 		log.Printf("AllTagPairs initially fetched %d pairs\n", len(pairs))
 		tagPairCh <- pairs
 
@@ -58,12 +58,13 @@ func init() {
 				// Pass to polling goroutine, below
 			case <-tick:
 				// Fetch latest TagPairs
-				latestPairs, err := bk.AllTagPairs()
+				latestPairs, err := bk.AllTagPairs(pairs)
 				if err != nil {
 					log.Printf("Error from AllTagPairs: %v\n", err)
 					continue
 				}
-				log.Printf("Just fetched %d TagPairs\n", len(latestPairs))
+				log.Printf("Just fetched %d TagPairs (%d new)\n",
+					len(latestPairs), len(latestPairs)-len(pairs))
 				pairs = latestPairs
 			}
 		}

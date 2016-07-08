@@ -91,7 +91,7 @@ func main() {
 		roomName := os.Args[3]
 		msg := os.Args[4]
 
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -137,7 +137,7 @@ func main() {
 		roomName := os.Args[2]
 		plaintags := append(os.Args[3:], "type:chatroom", "roomname:"+roomName)
 
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -193,7 +193,7 @@ func main() {
 		}
 
 	case "tags", "t":
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}

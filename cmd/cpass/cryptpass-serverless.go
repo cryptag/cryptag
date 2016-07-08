@@ -55,7 +55,7 @@ func main() {
 		color.Println(color.TextRow(row))
 
 	case "tags":
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -90,7 +90,7 @@ func main() {
 			log.Fatalf("Error importing KeePass CSV `%v`: %v", filename, err)
 		}
 
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatalf("Error fetching all TagPairs: %v\n", err)
 		}
