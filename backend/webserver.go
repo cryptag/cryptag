@@ -176,11 +176,15 @@ func (wb *WebserverBackend) UseTor() error {
 	return nil
 }
 
+func (wb *WebserverBackend) Name() string {
+	return wb.serverName
+}
+
 func (wb *WebserverBackend) Key() *[32]byte {
 	return wb.key
 }
 
-func (wb *WebserverBackend) AllTagPairs() (types.TagPairs, error) {
+func (wb *WebserverBackend) AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, error) {
 	pairs, err := wb.getTagsFromUrl(wb.tagsUrl)
 	if err != nil {
 		return nil, err

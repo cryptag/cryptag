@@ -374,7 +374,7 @@ func GetTags(w http.ResponseWriter, req *http.Request) {
 
 	// TODO(elimisteve): Should use filesytem.TagPairsFromRandomTags
 	// to find all TagPairs with those random tags.
-	allTagPairs, err := filesystem.AllTagPairs()
+	allTagPairs, err := filesystem.AllTagPairs(nil)
 	if err != nil {
 		help.WriteError(w, "Error getting TagPairs: "+err.Error(),
 			http.StatusInternalServerError)
@@ -494,7 +494,7 @@ func (fs *FileSystem) SaveTagPair(pair *types.TagPair) error {
 	return ioutil.WriteFile(filename, b, 0644)
 }
 
-func (fs *FileSystem) AllTagPairs() (types.TagPairs, error) {
+func (fs *FileSystem) AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, error) {
 	tagFiles, err := filepath.Glob(path.Join(fs.tagsPath, "*"))
 	if err != nil {
 		return nil, fmt.Errorf("Error listing tags: %v", err)

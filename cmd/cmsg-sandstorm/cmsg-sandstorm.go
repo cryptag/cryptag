@@ -72,7 +72,7 @@ func main() {
 
 		roomName := os.Args[2]
 		plaintags := append(os.Args[3:], "app:cryptmessage", "type:chatroom",
-			"roomname:"+roomName)
+			"name:"+roomName)
 
 		row, err := backend.CreateRow(db, nil, nil, plaintags)
 		if err != nil {
@@ -91,12 +91,12 @@ func main() {
 		roomName := os.Args[3]
 		msg := os.Args[4]
 
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		roomPlaintags := cryptag.PlainTags{"type:chatroom", "roomname:" + roomName}
+		roomPlaintags := cryptag.PlainTags{"type:chatroom", "name:" + roomName}
 
 		rows, err := backend.ListRowsFromPlainTags(db, pairs, roomPlaintags)
 		if err != nil {
@@ -135,9 +135,9 @@ func main() {
 	case "viewroom":
 		// 0:cryptmessage 1:viewroom 2:<roomname> 3:[<tag1> ...]
 		roomName := os.Args[2]
-		plaintags := append(os.Args[3:], "type:chatroom", "roomname:"+roomName)
+		plaintags := append(os.Args[3:], "type:chatroom", "name:"+roomName)
 
-		pairs, err := db.AllTagPairs()
+		pairs, err := db.AllTagPairs(nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -189,7 +189,7 @@ func main() {
 		if os.Args[1] == "deletemsg" {
 			typeTag = "type:chatroom"
 			// First arg after subcommand is room name
-			os.Args[2] = "roomname:" + os.Args[2]
+			os.Args[2] = "name:" + os.Args[2]
 		}
 
 		plainTags := append(os.Args[2:], typeTag)
@@ -256,7 +256,7 @@ func fmtMsg(r *types.Row) string {
 }
 
 func fmtRoom(r *types.Row) string {
-	roomName := rowutil.TagWithPrefixStripped(r, "roomname:")
+	roomName := rowutil.TagWithPrefixStripped(r, "name:")
 	id := rowutil.TagWithPrefix(r, "id:")
 
 	return fmt.Sprintf(`%s: %s

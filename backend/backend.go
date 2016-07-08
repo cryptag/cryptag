@@ -18,9 +18,10 @@ var (
 )
 
 type Backend interface {
+	Name() string
 	Key() *[32]byte
 
-	AllTagPairs() (types.TagPairs, error)
+	AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, error)
 	TagPairsFromRandomTags(randtags cryptag.RandomTags) (types.TagPairs, error)
 	SaveTagPair(pair *types.TagPair) error
 
