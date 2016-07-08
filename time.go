@@ -19,5 +19,6 @@ func NowStr() string {
 func TimeStr(t time.Time) string {
 	y, m, d := t.Date()
 	hr, min, sec := t.Clock()
-	return fmt.Sprintf("%d%02d%02d%02d%02d%02d", y, m, d, hr, min, sec)
+	nano := t.Nanosecond()
+	return fmt.Sprintf("%d%02d%02d%02d%02d%02d%09d", y, m, d, hr, min, sec, nano)
 }
