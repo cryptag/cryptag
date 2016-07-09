@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/api"
@@ -18,6 +19,7 @@ import (
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/keyutil"
+	"github.com/elimisteve/cryptag/types"
 	"github.com/gorilla/mux"
 )
 
@@ -52,6 +54,14 @@ func main() {
 			log.Fatalf("Error trying to use Tor: %v\n", err)
 		}
 	}
+
+	// Fetch and maintain up-to-date list of TagPairs
+	pairs := NewTagPairStore()
+	go func() {
+		if err := pairs.Update(db); err != nil {
+			log.Printf("Initial TagPair fetching failed! %v\n", err)
+		}
+	}()
 
 	jsonNoError := map[string]string{"error": ""}
 
@@ -97,11 +107,13 @@ func main() {
 			return
 		}
 
-		row, err := backend.CreateRow(db, nil, trow.Unencrypted, trow.PlainTags)
+		row, err := backend.CreateRow(db, pairs.Get(db), trow.Unencrypted, trow.PlainTags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
 		}
+
+		go pairs.AsyncUpdate(db)
 
 		// Return Row with null data, populated tags
 		newTrow := trusted.Row{PlainTags: row.PlainTags()}
@@ -128,11 +140,13 @@ func main() {
 			return
 		}
 
-		row, err := backend.CreateFileRow(db, nil, trow.FilePath, trow.PlainTags)
+		row, err := backend.CreateFileRow(db, pairs.Get(db), trow.FilePath, trow.PlainTags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
 		}
+
+		go pairs.AsyncUpdate(db)
 
 		// Return Row with null data, populated tags
 		newTrow := trusted.Row{PlainTags: row.PlainTags()}
@@ -174,7 +188,7 @@ func main() {
 			return
 		}
 
-		rows, err := backend.ListRowsFromPlainTags(db, nil, plaintags)
+		rows, err := backend.ListRowsFromPlainTags(db, pairs.Get(db), plaintags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
@@ -195,7 +209,7 @@ func main() {
 			return
 		}
 
-		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
+		rows, err := backend.RowsFromPlainTags(db, pairs.Get(db), plaintags)
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "found") {
@@ -216,13 +230,15 @@ func main() {
 	}
 
 	GetTags := func(w http.ResponseWriter, req *http.Request) {
-		pairs, err := db.AllTagPairs(nil)
+		newPairs, err := db.AllTagPairs(pairs.Get(db))
 		if err != nil {
 			api.WriteError(w, "Error fetching tag pairs: "+err.Error())
 			return
 		}
 
-		pairsB, err := json.Marshal(trusted.FromTagPairs(pairs))
+		pairs.Set(db, newPairs)
+
+		pairsB, err := json.Marshal(trusted.FromTagPairs(newPairs))
 		if err != nil {
 			api.WriteError(w, "Error marshaling tag pairs: "+err.Error())
 			return
@@ -243,7 +259,7 @@ func main() {
 			return
 		}
 
-		if err = backend.DeleteRows(db, nil, plaintags); err != nil {
+		if err = backend.DeleteRows(db, pairs.Get(db), plaintags); err != nil {
 			api.WriteError(w, "Error deleting rows: "+err.Error())
 			return
 		}
@@ -292,4 +308,52 @@ func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []strin
 	}
 
 	return plaintags, false
+}
+
+func NewTagPairStore() *TagPairStore {
+	store := &TagPairStore{pairs: map[string]types.TagPairs{}}
+	// go store.loop()
+	return store
+}
+
+type TagPairStore struct {
+	mu sync.RWMutex
+
+	// map[backendName]pairs
+	pairs map[string]types.TagPairs
+}
+
+func (store *TagPairStore) Update(bk backend.Backend) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	oldPairs := store.pairs[bk.Name()]
+
+	newPairs, err := bk.AllTagPairs(oldPairs)
+	if err != nil {
+		return fmt.Errorf("Error updating %s's TagPairs: %v", bk.Name(), err)
+	}
+
+	store.pairs[bk.Name()] = newPairs
+	return nil
+}
+
+func (store *TagPairStore) AsyncUpdate(bk backend.Backend) {
+	if err := store.Update(bk); err != nil {
+		log.Println(err)
+	}
+}
+
+func (store *TagPairStore) Get(bk backend.Backend) types.TagPairs {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+
+	return store.pairs[bk.Name()]
+}
+
+func (store *TagPairStore) Set(bk backend.Backend, newPairs types.TagPairs) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	store.pairs[bk.Name()] = newPairs
 }
