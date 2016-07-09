@@ -20,7 +20,9 @@ import (
 	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/keyutil"
 	"github.com/elimisteve/cryptag/types"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 var backendName = "sandstorm-webserver"
@@ -286,9 +288,21 @@ func main() {
 
 	http.Handle("/", r)
 
+	logger := func(h http.Handler) http.Handler {
+		return handlers.LoggingHandler(os.Stderr, h)
+	}
+	middleware := alice.New(logIncomingReq, logger)
+
 	listenAddr := "localhost:7878"
 	log.Printf("Listening on %v\n", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, r))
+	log.Fatal(http.ListenAndServe(listenAddr, middleware.Then(r)))
+}
+
+func logIncomingReq(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		log.Printf("INCOMING: %v %v\n", req.Method, req.URL.Path)
+		h.ServeHTTP(w, req)
+	})
 }
 
 func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []string, handledReq bool) {
