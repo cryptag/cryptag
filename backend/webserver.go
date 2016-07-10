@@ -377,7 +377,7 @@ func (wb *WebserverBackend) getInto(url string, strct interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+	if 400 <= resp.StatusCode && resp.StatusCode <= 599 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("HTTP %d from %s; response: %s", resp.StatusCode,
 			url, body)

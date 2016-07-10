@@ -10,7 +10,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/elimisteve/cryptag"
 	"github.com/elimisteve/cryptag/api"
@@ -18,7 +20,10 @@ import (
 	"github.com/elimisteve/cryptag/backend"
 	"github.com/elimisteve/cryptag/cli"
 	"github.com/elimisteve/cryptag/keyutil"
+	"github.com/elimisteve/cryptag/types"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 var backendName = "sandstorm-webserver"
@@ -52,6 +57,14 @@ func main() {
 			log.Fatalf("Error trying to use Tor: %v\n", err)
 		}
 	}
+
+	// Fetch and maintain up-to-date list of TagPairs
+	pairs := NewTagPairStore()
+	go func() {
+		if err := pairs.Update(db); err != nil {
+			log.Printf("Initial TagPair fetching failed! %v\n", err)
+		}
+	}()
 
 	jsonNoError := map[string]string{"error": ""}
 
@@ -97,11 +110,13 @@ func main() {
 			return
 		}
 
-		row, err := backend.CreateRow(db, nil, trow.Unencrypted, trow.PlainTags)
+		row, err := backend.CreateRow(db, pairs.Get(db), trow.Unencrypted, trow.PlainTags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
 		}
+
+		go pairs.AsyncUpdate(db)
 
 		// Return Row with null data, populated tags
 		newTrow := trusted.Row{PlainTags: row.PlainTags()}
@@ -128,11 +143,13 @@ func main() {
 			return
 		}
 
-		row, err := backend.CreateFileRow(db, nil, trow.FilePath, trow.PlainTags)
+		row, err := backend.CreateFileRow(db, pairs.Get(db), trow.FilePath, trow.PlainTags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
 		}
+
+		go pairs.AsyncUpdate(db)
 
 		// Return Row with null data, populated tags
 		newTrow := trusted.Row{PlainTags: row.PlainTags()}
@@ -174,9 +191,14 @@ func main() {
 			return
 		}
 
-		rows, err := backend.ListRowsFromPlainTags(db, nil, plaintags)
+		rows, err := fetchRowsFromPlainTags(backend.ListRowsFromPlainTags, db, pairs, plaintags)
 		if err != nil {
-			api.WriteError(w, err.Error())
+			errStr := err.Error()
+			if strings.Contains(errStr, "found") {
+				api.WriteErrorStatus(w, errStr, http.StatusNotFound)
+				return
+			}
+			api.WriteError(w, errStr)
 			return
 		}
 
@@ -195,7 +217,7 @@ func main() {
 			return
 		}
 
-		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
+		rows, err := fetchRowsFromPlainTags(backend.RowsFromPlainTags, db, pairs, plaintags)
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "found") {
@@ -216,13 +238,15 @@ func main() {
 	}
 
 	GetTags := func(w http.ResponseWriter, req *http.Request) {
-		pairs, err := db.AllTagPairs(nil)
+		newPairs, err := db.AllTagPairs(pairs.Get(db))
 		if err != nil {
 			api.WriteError(w, "Error fetching tag pairs: "+err.Error())
 			return
 		}
 
-		pairsB, err := json.Marshal(trusted.FromTagPairs(pairs))
+		pairs.Set(db, newPairs)
+
+		pairsB, err := json.Marshal(trusted.FromTagPairs(newPairs))
 		if err != nil {
 			api.WriteError(w, "Error marshaling tag pairs: "+err.Error())
 			return
@@ -243,7 +267,7 @@ func main() {
 			return
 		}
 
-		if err = backend.DeleteRows(db, nil, plaintags); err != nil {
+		if err = backend.DeleteRows(db, pairs.Get(db), plaintags); err != nil {
 			api.WriteError(w, "Error deleting rows: "+err.Error())
 			return
 		}
@@ -270,9 +294,21 @@ func main() {
 
 	http.Handle("/", r)
 
+	logger := func(h http.Handler) http.Handler {
+		return handlers.LoggingHandler(os.Stderr, h)
+	}
+	middleware := alice.New(logIncomingReq, logger)
+
 	listenAddr := "localhost:7878"
 	log.Printf("Listening on %v\n", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, r))
+	log.Fatal(http.ListenAndServe(listenAddr, middleware.Then(r)))
+}
+
+func logIncomingReq(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		log.Printf("INCOMING: %v %v\n", req.Method, req.URL.Path)
+		h.ServeHTTP(w, req)
+	})
 }
 
 func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []string, handledReq bool) {
@@ -292,4 +328,73 @@ func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []strin
 	}
 
 	return plaintags, false
+}
+
+func NewTagPairStore() *TagPairStore {
+	store := &TagPairStore{pairs: map[string]types.TagPairs{}}
+	// go store.loop()
+	return store
+}
+
+type TagPairStore struct {
+	mu sync.RWMutex
+
+	// map[backendName]pairs
+	pairs map[string]types.TagPairs
+}
+
+func (store *TagPairStore) Update(bk backend.Backend) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	oldPairs := store.pairs[bk.Name()]
+
+	newPairs, err := bk.AllTagPairs(oldPairs)
+	if err != nil {
+		return fmt.Errorf("Error updating %s's TagPairs: %v", bk.Name(), err)
+	}
+
+	store.pairs[bk.Name()] = newPairs
+	return nil
+}
+
+func (store *TagPairStore) AsyncUpdate(bk backend.Backend) {
+	if err := store.Update(bk); err != nil {
+		log.Println(err)
+	}
+}
+
+func (store *TagPairStore) Get(bk backend.Backend) types.TagPairs {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+
+	return store.pairs[bk.Name()]
+}
+
+func (store *TagPairStore) Set(bk backend.Backend, newPairs types.TagPairs) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	store.pairs[bk.Name()] = newPairs
+}
+
+//
+// If Row-fetching error was caused by out-of-date TagPairs, fetch
+// them and retry
+//
+
+func fetchRowsFromPlainTags(fetcher func(backend.Backend, types.TagPairs, cryptag.PlainTags) (types.Rows, error), bk backend.Backend, pairStore *TagPairStore, plaintags []string) (types.Rows, error) {
+	rows, err := fetcher(bk, pairStore.Get(bk), plaintags)
+	if err == nil {
+		return rows, nil
+	}
+
+	if match, _ := regexp.MatchString("(?:Random|Plain)Tag `[a-z0-9]+?` not found", err.Error()); match {
+		if err = pairStore.Update(bk); err != nil {
+			return nil, fmt.Errorf("Error re-fetching TagPairs: %v", err)
+		}
+		return fetcher(bk, pairStore.Get(bk), plaintags)
+	}
+
+	return nil, err
 }
