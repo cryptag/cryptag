@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -190,9 +191,14 @@ func main() {
 			return
 		}
 
-		rows, err := backend.ListRowsFromPlainTags(db, pairs.Get(db), plaintags)
+		rows, err := fetchRowsFromPlainTags(backend.ListRowsFromPlainTags, db, pairs, plaintags)
 		if err != nil {
-			api.WriteError(w, err.Error())
+			errStr := err.Error()
+			if strings.Contains(errStr, "found") {
+				api.WriteErrorStatus(w, errStr, http.StatusNotFound)
+				return
+			}
+			api.WriteError(w, errStr)
 			return
 		}
 
@@ -211,7 +217,7 @@ func main() {
 			return
 		}
 
-		rows, err := backend.RowsFromPlainTags(db, pairs.Get(db), plaintags)
+		rows, err := fetchRowsFromPlainTags(backend.RowsFromPlainTags, db, pairs, plaintags)
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "found") {
@@ -370,4 +376,25 @@ func (store *TagPairStore) Set(bk backend.Backend, newPairs types.TagPairs) {
 	defer store.mu.Unlock()
 
 	store.pairs[bk.Name()] = newPairs
+}
+
+//
+// If Row-fetching error was caused by out-of-date TagPairs, fetch
+// them and retry
+//
+
+func fetchRowsFromPlainTags(fetcher func(backend.Backend, types.TagPairs, cryptag.PlainTags) (types.Rows, error), bk backend.Backend, pairStore *TagPairStore, plaintags []string) (types.Rows, error) {
+	rows, err := fetcher(bk, pairStore.Get(bk), plaintags)
+	if err == nil {
+		return rows, nil
+	}
+
+	if match, _ := regexp.MatchString("(?:Random|Plain)Tag `[a-z0-9]+?` not found", err.Error()); match {
+		if err = pairStore.Update(bk); err != nil {
+			return nil, fmt.Errorf("Error re-fetching TagPairs: %v", err)
+		}
+		return fetcher(bk, pairStore.Get(bk), plaintags)
+	}
+
+	return nil, err
 }
