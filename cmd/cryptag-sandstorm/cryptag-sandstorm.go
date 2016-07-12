@@ -242,6 +242,11 @@ var (
 	createAnyUsage  = prefix + "createany  <data>     <tag1> [<type:...> <tag2> ...]"
 	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage, createAnyUsage}, "\n")
 
+	listTextUsage  = prefix + "listtext  <tag1> [<tag2> ...]"
+	listFilesUsage = prefix + "listfiles <tag1> [<tag2> ...]"
+	listAnyUsage   = prefix + "listany   <tag1> [<tag2> ...]"
+	allListUsage   = strings.Join([]string{listTextUsage, listFilesUsage, listAnyUsage}, "\n")
+
 	getTextUsage  = prefix + "gettext  <tag1> [<tag2> ...]"
 	getFilesUsage = prefix + "getfiles <tag1> [<tag2> ...]"
 	getAnyUsage   = prefix + "getany   <tag1> [<tag2> ...]"
@@ -258,6 +263,7 @@ var (
 	allUsages = []string{
 		initUsage, "",
 		createTextUsage, createFileUsage, createAnyUsage, "",
+		listTextUsage, listFilesUsage, listAnyUsage, "",
 		getTextUsage, getFilesUsage, getAnyUsage, "",
 		deleteTextUsage, deleteFilesUsage, deleteAnyUsage, "",
 		getkeyUsage, setkeyUsage,
