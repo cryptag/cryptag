@@ -133,6 +133,10 @@ func main() {
 		color.Println(color.TextRow(row))
 
 	case "viewroom":
+		if len(os.Args) < 3 {
+			cli.ArgFatal(viewroomUsage)
+		}
+
 		// 0:cryptmessage 1:viewroom 2:<roomname> 3:[<tag1> ...]
 		roomName := os.Args[2]
 		plaintags := append(os.Args[3:], "type:chatroom", "name:"+roomName)
