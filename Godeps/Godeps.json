@@ -1,11 +1,16 @@
 {
 	"ImportPath": "github.com/elimisteve/cryptag",
-	"GoVersion": "go1.5",
+	"GoVersion": "go1.6",
 	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.0-117-g0f053fa",
+			"Rev": "0f053fabc06119583d61937a0a06ef0ba0f1b301"
+		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
@@ -32,8 +37,18 @@
 			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
+			"ImportPath": "github.com/gorilla/handlers",
+			"Comment": "v1.1-6-g66e6c6f",
+			"Rev": "66e6c6f01d8da976ee113437745ca029c2b585a6"
+		},
+		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Rev": "ffb3f683aad4dcbc2bb65177799563252585dd22"
+		},
+		{
+			"ImportPath": "github.com/justinas/alice",
+			"Comment": "1.0.0-4-g8f06f31",
+			"Rev": "8f06f3153579369bb91f084f39f86f5d5030d4dc"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",
@@ -70,15 +85,15 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
-			"Rev": "2f3083f6163ef51179ad42ed523a18c9a1141467"
+			"Rev": "811831de4c4dd03a0b8737233af3b36852386373"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/poly1305",
-			"Rev": "2f3083f6163ef51179ad42ed523a18c9a1141467"
+			"Rev": "811831de4c4dd03a0b8737233af3b36852386373"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/salsa20/salsa",
-			"Rev": "2f3083f6163ef51179ad42ed523a18c9a1141467"
+			"Rev": "811831de4c4dd03a0b8737233af3b36852386373"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
@@ -98,7 +113,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "076b546753157f758b316e59bcb51e6807c04057"
+			"Rev": "62bee037599929a6e9146f29d10dd5208c43507d"
 		}
 	]
 }
