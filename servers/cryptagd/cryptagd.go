@@ -299,7 +299,13 @@ func main() {
 	}
 	middleware := alice.New(logIncomingReq, logger)
 
-	listenAddr := "localhost:7878"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "7878"
+	}
+
+	listenAddr := "localhost:" + port
+
 	log.Printf("Listening on %v\n", listenAddr)
 	log.Fatal(http.ListenAndServe(listenAddr, middleware.Then(r)))
 }
