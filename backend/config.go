@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/elimisteve/cryptag"
@@ -127,6 +128,48 @@ func (conf *Config) Canonicalize() error {
 	conf.DataPath = strings.TrimRight(conf.DataPath, "/\\")
 
 	return nil
+}
+
+func (conf *Config) GetType() string {
+	if conf.Type != "" {
+		return conf.Type
+	}
+
+	if conf.Local && conf.DataPath != "" {
+		return TypeFileSystem
+	}
+
+	_, ok := conf.Custom["AuthToken"]
+	_, ok2 := conf.Custom["BaseURL"]
+
+	if ok && ok2 {
+		return TypeWebserver
+	}
+
+	_, ok = conf.Custom["AppKey"]
+	_, ok2 = conf.Custom["AppSecret"]
+	_, ok3 := conf.Custom["AccessToken"]
+	_, ok4 := conf.Custom["BasePath"]
+	if ok && ok2 && ok3 && ok4 {
+		return TypeDropboxRemote
+	}
+
+	return ""
+}
+
+func (conf *Config) GetPath() string {
+	typ := conf.GetType()
+
+	switch typ {
+	case TypeDropboxRemote:
+		return fmt.Sprintf("%s", conf.Custom["BasePath"])
+	case TypeFileSystem:
+		return conf.DataPath
+	case TypeWebserver:
+		return fmt.Sprintf("%s", conf.Custom["BaseURL"])
+	}
+
+	return ""
 }
 
 //
