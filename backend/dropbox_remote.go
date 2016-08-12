@@ -89,33 +89,20 @@ func (db *DropboxRemote) UseTor() error {
 }
 
 func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) {
-	if backendPath == "" {
-		backendPath = cryptag.BackendPath
-	}
 	if backendName == "" {
 		host, _ := os.Hostname()
 		backendName = "dropbox-" + host
 	}
-	backendName = strings.TrimSuffix(backendName, ".json")
 
-	configFile := path.Join(backendPath, backendName+".json")
-
-	if types.Debug {
-		log.Printf("Reading backend config file `%v`\n", configFile)
-	}
-
-	b, err := ioutil.ReadFile(configFile)
+	conf, err := ReadConfig(backendPath, backendName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Config exists
+	return DropboxRemoteFromConfig(conf)
+}
 
-	var conf Config
-	if err := json.Unmarshal(b, &conf); err != nil {
-		return nil, err
-	}
-
+func DropboxRemoteFromConfig(conf *Config) (*DropboxRemote, error) {
 	if conf.Key == nil {
 		return nil, fmt.Errorf("Key cannot be empty!")
 	}

@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/elimisteve/cryptag"
+	"github.com/elimisteve/cryptag/types"
 	"github.com/elimisteve/fun"
 )
 
@@ -125,4 +126,34 @@ func (conf *Config) Canonicalize() error {
 	conf.DataPath = strings.TrimRight(conf.DataPath, "/\\")
 
 	return nil
+}
+
+//
+// Convenience Functions
+//
+
+func ReadConfig(backendPath, backendName string) (*Config, error) {
+	if backendPath == "" {
+		backendPath = cryptag.BackendPath
+	}
+	if backendName == "" {
+		return nil, errors.New("backendName cannot be empty")
+	}
+	backendName = strings.TrimSuffix(backendName, ".json")
+
+	configFile := path.Join(backendPath, backendName+".json")
+
+	if types.Debug {
+		log.Printf("Loading backend config file `%v`\n", configFile)
+	}
+
+	b, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var conf Config
+	err = json.Unmarshal(b, &conf)
+
+	return &conf, err
 }
