@@ -174,8 +174,8 @@ func (fs *FileSystem) AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, erro
 	}
 
 	if types.Debug {
-		log.Printf("AllTagPairs: returning %d pairs (%d new)\n", len(pairs),
-			len(pairs)-len(oldPairs))
+		log.Printf("AllTagPairs: returning %d pairs (%d just fetched)\n",
+			len(pairs), len(pairs)-len(oldPairs))
 	}
 
 	return pairs, nil

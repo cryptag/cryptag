@@ -12,7 +12,7 @@ type WebserverConfig struct {
 
 func (wc *WebserverConfig) Valid() error {
 	if wc.AuthToken == "" {
-		return fmt.Errorf("Invalid AuthToken '%v'", wc.AuthToken)
+		return fmt.Errorf("AuthToken can't be empty")
 	}
 	if wc.BaseURL == "" {
 		return fmt.Errorf("BaseURL can't be empty")

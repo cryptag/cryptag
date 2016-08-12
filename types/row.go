@@ -30,9 +30,13 @@ var (
 )
 
 // NewRow returns a *Row containing the passed-in values in addition
-// to a unique ID tag ("id:new-uuid-goes-here"), the "all" tag, and a
+// to a unique ID tag ("id:..."), the "all" tag, and a
 // new cryptographic nonce.
 func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
+	// TODO: Ensure len(decrypted) < 2GB
+
+	// TODO: Ensure that len(decrypted) < 2GB(?)
+
 	id, err := uuid.NewV4()
 	if err != nil {
 		return nil, fmt.Errorf("Error generating new UUID for Row: %v", err)
@@ -41,6 +45,11 @@ func NewRow(decrypted []byte, plainTags []string) (*Row, error) {
 	uuidTag := "id:" + id.String()
 
 	created := "created:" + cryptag.TimeStr(cryptag.Now())
+
+	// TODO(elimisteve): Use these:
+	//
+	// size := "size:" + fmt.Sprintf("%d", len(decrypted))
+	// approxsize := "approxsize:" + RowSizeCategory(len(decrypted))
 
 	// For future queryability-related reasons, UUID must come first!
 	plainTags = append([]string{uuidTag}, append(plainTags, created, "all")...)
