@@ -161,6 +161,7 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 	if saveToDisk {
 		config := &Config{
 			Key:    goodKey,
+			Type:   TypeDropboxRemote,
 			Name:   name,
 			New:    true, // TODO(elimisteve): Make unnecessary; see filesystem.go
 			Custom: DropboxConfigToMap(cfg),
@@ -207,6 +208,7 @@ func (db *DropboxRemote) ToConfig() (*Config, error) {
 	config := Config{
 		Key:    db.key,
 		Name:   name,
+		Type:   TypeDropboxRemote,
 		Custom: DropboxConfigToMap(db.dboxConf),
 	}
 	return &config, nil

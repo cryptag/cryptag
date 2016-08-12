@@ -129,6 +129,7 @@ func (wb *WebserverBackend) ToConfig() (*Config, error) {
 	}
 	c := Config{
 		Name: wb.serverName,
+		Type: TypeWebserver,
 		Key:  wb.key,
 		Custom: map[string]interface{}{
 			"AuthToken": wb.authToken,

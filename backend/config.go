@@ -24,7 +24,8 @@ var (
 
 type Config struct {
 	Name     string
-	New      bool `json:"-"`
+	Type     string // Should be one of: backend.Type*
+	New      bool   `json:"-"`
 	Key      *[32]byte
 	Local    bool
 	DataPath string // Used by backend.FileSystem, other local backends

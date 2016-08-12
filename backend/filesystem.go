@@ -114,6 +114,7 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 		if os.IsNotExist(err) {
 			conf = &Config{
 				Name:  backendName,
+				Type:  TypeFileSystem,
 				New:   true,
 				Local: true,
 			}
@@ -142,6 +143,7 @@ func (fs *FileSystem) ToConfig() (*Config, error) {
 
 	config := Config{
 		Name:     name,
+		Type:     TypeFileSystem,
 		Key:      fs.key,
 		DataPath: fs.dataPath,
 	}
