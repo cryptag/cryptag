@@ -208,3 +208,76 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 
 	return &conf, nil
 }
+
+func ReadConfigs(backendPath, bkPattern string) ([]*Config, error) {
+	if backendPath == "" {
+		backendPath = cryptag.BackendPath
+	}
+
+	bkFile := filepath.Join(backendPath, bkPattern+".json")
+
+	backendNames, err := filepath.Glob(bkFile)
+	if err != nil {
+		return nil, fmt.Errorf("Error globbing Configs with pattern `%s`: %v",
+			bkPattern, err)
+	}
+
+	configs := make([]*Config, 0, len(backendNames))
+
+	var errs []string
+
+	for _, fname := range backendNames {
+		bkName := ConfigNameFromPath(fname)
+		conf, err := ReadConfig(backendPath, bkName)
+		if err != nil {
+			errs = append(errs, err.Error())
+			continue
+		}
+		configs = append(configs, conf)
+	}
+
+	if errs != nil {
+		return configs, fmt.Errorf("%d errors reading configs: %#v", len(errs),
+			errs)
+	}
+
+	return configs, nil
+}
+
+func ReadBackends(backendPath, bkPattern string) ([]Backend, error) {
+	configs, err := ReadConfigs(backendPath, bkPattern)
+	if err != nil {
+		return nil, err
+	}
+
+	backends := make([]Backend, 0, len(configs))
+
+	for _, conf := range configs {
+		var bk Backend
+
+		typ := conf.GetType()
+
+		switch typ {
+		case TypeDropboxRemote:
+			bk, err = DropboxRemoteFromConfig(conf)
+		case TypeFileSystem:
+			bk, err = NewFileSystem(conf)
+		case TypeWebserver:
+			bk, err = WebserverFromConfig(conf)
+		}
+
+		if err != nil {
+			log.Printf("Error creating Backend from Config %s: %v\n", typ, err)
+			continue
+		}
+
+		backends = append(backends, bk)
+	}
+
+	if len(configs) > 0 && len(backends) == 0 {
+		// TODO: Abuse of scoping of err; consider making less subtle
+		return nil, fmt.Errorf("Error reading config: %v", err)
+	}
+
+	return backends, nil
+}
