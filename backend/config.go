@@ -281,3 +281,14 @@ func ReadBackends(backendPath, bkPattern string) ([]Backend, error) {
 
 	return backends, nil
 }
+
+func ConfigPathFromName(backendPath, backendName string) string {
+	if backendPath == "" {
+		backendPath = cryptag.BackendPath
+	}
+	return filepath.Join(backendPath, backendName+".json")
+}
+
+func ConfigNameFromPath(fullpath string) string {
+	return strings.TrimSuffix(filepath.Base(fullpath), ".json")
+}
