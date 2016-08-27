@@ -35,14 +35,11 @@ func init() {
 }
 
 func main() {
-	var db backend.Backend
-
-	db, err := backend.LoadWebserverBackend("", backendName)
+	_, err := backend.LoadBackend("", backendName)
 	if err != nil {
-		// TODO: Generically parse all Backend Configs
-		log.Printf("Error from LoadWebserverBackend: %v", err)
+		log.Printf("Error from LoadBackend: %v", err)
 
-		db, err = backend.LoadOrCreateFileSystem(
+		_, err = backend.LoadOrCreateFileSystem(
 			os.Getenv("BACKEND_PATH"),
 			os.Getenv("BACKEND"),
 		)
@@ -52,23 +49,38 @@ func main() {
 		log.Println("...but a FileSystem Backend loaded successfully")
 	}
 
-	if bk, ok := db.(cryptag.CanUseTor); ok && cryptag.UseTor {
-		if err = bk.UseTor(); err != nil {
-			log.Fatalf("Error trying to use Tor: %v\n", err)
+	backends, err := backend.ReadBackends("", "*")
+	if err != nil {
+		log.Printf("Error reading Backends: %v\n", err)
+
+		if len(backends) == 0 {
+			log.Fatalf("No Backends successfully read!")
 		}
 	}
 
+	for _, bk := range backends {
+		if tbk, ok := bk.(cryptag.CanUseTor); ok && cryptag.UseTor {
+			if err = tbk.UseTor(); err != nil {
+				log.Fatalf("Error telling %s to use Tor: %v\n", bk.Name(), err)
+			}
+			if types.Debug {
+				log.Printf("Backend %s successfully told to use Tor\n", bk.Name())
+			}
+		}
+	}
+
+	// map[bk.Name()]bk
+	bkStore := NewBackendStore(backends)
+
 	// Fetch and maintain up-to-date list of TagPairs
 	pairs := NewTagPairStore()
-	go func() {
-		if err := pairs.Update(db); err != nil {
-			log.Printf("Initial TagPair fetching failed! %v\n", err)
-		}
-	}()
+	pairs.AsyncUpdateAll(backends)
 
 	jsonNoError := map[string]string{"error": ""}
 
 	Init := func(w http.ResponseWriter, req *http.Request) {
+		bkName := mux.Vars(req)["X-Backend"]
+
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			api.WriteError(w, err.Error())
@@ -84,7 +96,8 @@ func main() {
 			return
 		}
 
-		if err = cli.InitSandstorm(backendName, m["webkey"]); err != nil {
+		// TODO: Create generic init
+		if err = cli.InitSandstorm(bkName, m["webkey"]); err != nil {
 			api.WriteError(w, err.Error())
 			return
 		}
@@ -93,6 +106,11 @@ func main() {
 	}
 
 	CreateRow := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		// TODO: Do streaming reads
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -126,6 +144,11 @@ func main() {
 	}
 
 	CreateFileRow := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		// TODO: Do streaming reads
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -159,10 +182,20 @@ func main() {
 	}
 
 	GetKey := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		fmt.Fprintf(w, `{"key":[%s]}`, keyutil.Format(db.Key()))
 	}
 
 	SetKey := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		keyB, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			api.WriteError(w, err.Error())
@@ -186,6 +219,11 @@ func main() {
 	}
 
 	ListRows := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		plaintags, handledReq := parsePlaintags(w, req)
 		if handledReq {
 			return
@@ -212,6 +250,11 @@ func main() {
 	}
 
 	GetRows := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		plaintags, handledReq := parsePlaintags(w, req)
 		if handledReq {
 			return
@@ -238,6 +281,11 @@ func main() {
 	}
 
 	GetTags := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		newPairs, err := db.AllTagPairs(pairs.Get(db))
 		if err != nil {
 			api.WriteError(w, "Error fetching tag pairs: "+err.Error())
@@ -256,6 +304,11 @@ func main() {
 	}
 
 	DeleteRows := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
 		plaintags, handledReq := parsePlaintags(w, req)
 		if handledReq {
 			return
@@ -317,6 +370,17 @@ func logIncomingReq(h http.Handler) http.Handler {
 	})
 }
 
+func getBackend(bkStore *BackendStore, w http.ResponseWriter, req *http.Request) (bk backend.Backend, handledReq bool) {
+	bkName := mux.Vars(req)["X-Backend"]
+	bk, err := bkStore.Get(bkName, backendName, "sandstorm-webserver", "default")
+	if err != nil {
+		api.WriteError(w, "Error fetching Backend: "+err.Error())
+		return nil, true
+	}
+
+	return bk, false
+}
+
 func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []string, handledReq bool) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -335,6 +399,55 @@ func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []strin
 
 	return plaintags, false
 }
+
+//
+// BackendStore
+//
+
+type BackendStore struct {
+	mu sync.RWMutex
+
+	// map[backendName]Backend
+	bks map[string]backend.Backend
+}
+
+func NewBackendStore(bks []backend.Backend) *BackendStore {
+	bkMap := map[string]backend.Backend{}
+
+	for _, bk := range bks {
+		bkMap[bk.Name()] = bk
+	}
+
+	store := &BackendStore{bks: bkMap}
+	return store
+}
+
+func (store *BackendStore) Get(bkPrimary string, bkNames ...string) (backend.Backend, error) {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+
+	bkNames = append([]string{bkPrimary}, bkNames...)
+
+	for _, name := range bkNames {
+		bk := store.bks[name]
+		if bk != nil {
+			if types.Debug {
+				log.Printf("BackendStore.Get: returning backend `%s`\n", bk.Name())
+			}
+			return bk, nil
+		}
+		if types.Debug {
+			log.Printf("Backend `%s` not found\n", name)
+		}
+	}
+
+	return nil, fmt.Errorf("No Backend with any of these names: %s",
+		strings.Join(bkNames, ", "))
+}
+
+//
+// TagPairStore
+//
 
 func NewTagPairStore() *TagPairStore {
 	store := &TagPairStore{pairs: map[string]types.TagPairs{}}
@@ -367,6 +480,12 @@ func (store *TagPairStore) Update(bk backend.Backend) error {
 func (store *TagPairStore) AsyncUpdate(bk backend.Backend) {
 	if err := store.Update(bk); err != nil {
 		log.Println(err)
+	}
+}
+
+func (store *TagPairStore) AsyncUpdateAll(bks []backend.Backend) {
+	for _, bk := range bks {
+		go store.AsyncUpdate(bk)
 	}
 }
 
