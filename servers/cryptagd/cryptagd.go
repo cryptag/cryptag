@@ -463,17 +463,19 @@ type TagPairStore struct {
 }
 
 func (store *TagPairStore) Update(bk backend.Backend) error {
-	store.mu.Lock()
-	defer store.mu.Unlock()
-
+	store.mu.RLock()
 	oldPairs := store.pairs[bk.Name()]
+	store.mu.RUnlock()
 
 	newPairs, err := bk.AllTagPairs(oldPairs)
 	if err != nil {
 		return fmt.Errorf("Error updating %s's TagPairs: %v", bk.Name(), err)
 	}
 
+	store.mu.Lock()
 	store.pairs[bk.Name()] = newPairs
+	store.mu.Unlock()
+
 	return nil
 }
 
