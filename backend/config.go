@@ -198,7 +198,13 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 	}
 
 	var conf Config
-	err = json.Unmarshal(b, &conf)
 
-	return &conf, err
+	if err = json.Unmarshal(b, &conf); err != nil {
+		return nil, err
+	}
+
+	// Ignore 'Name' field in .json file, use filename
+	conf.Name = backendName
+
+	return &conf, nil
 }
