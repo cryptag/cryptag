@@ -21,7 +21,7 @@ func InitWebserver(backendName, baseURL, authToken string) error {
 func InitSandstorm(backendName, webkey string) error {
 	info := strings.SplitN(webkey, "#", 2)
 	if len(info) < 2 {
-		fmt.Errorf("Error parsing invalid Sandstorm web key `%s`\n", webkey)
+		return fmt.Errorf("Error parsing invalid Sandstorm web key `%s`\n", webkey)
 	}
 	baseURL, authToken := info[0], info[1]
 

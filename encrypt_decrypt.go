@@ -99,3 +99,11 @@ func RandomKey() (*[32]byte, error) {
 	}
 	return &b, nil
 }
+
+func RandomKeySlice() ([]byte, error) {
+	k, err := RandomKey()
+	if err != nil {
+		return nil, err
+	}
+	return (*k)[:], nil
+}

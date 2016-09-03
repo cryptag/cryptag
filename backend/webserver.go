@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -97,32 +96,19 @@ func CreateWebserver(key []byte, backendName, baseURL, authToken string) (*Webse
 }
 
 func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, error) {
-	if backendPath == "" {
-		backendPath = cryptag.BackendPath
-	}
 	if backendName == "" {
 		backendName = "webserver"
 	}
-	backendName = strings.TrimSuffix(backendName, ".json")
 
-	configFile := path.Join(backendPath, backendName+".json")
-
-	if types.Debug {
-		log.Printf("Reading backend config file `%v`\n", configFile)
-	}
-
-	b, err := ioutil.ReadFile(configFile)
+	conf, err := ReadConfig(backendPath, backendName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Config exists
+	return WebserverFromConfig(conf)
+}
 
-	var conf Config
-	if err := json.Unmarshal(b, &conf); err != nil {
-		return nil, err
-	}
-
+func WebserverFromConfig(conf *Config) (*WebserverBackend, error) {
 	if conf.Key == nil {
 		return nil, fmt.Errorf("Key cannot be empty!")
 	}
@@ -132,7 +118,7 @@ func LoadWebserverBackend(backendPath, backendName string) (*WebserverBackend, e
 		return nil, err
 	}
 
-	return NewWebserverBackend((*conf.Key)[:], backendName, webConf.BaseURL,
+	return NewWebserverBackend((*conf.Key)[:], conf.Name, webConf.BaseURL,
 		webConf.AuthToken)
 }
 
@@ -142,6 +128,7 @@ func (wb *WebserverBackend) ToConfig() (*Config, error) {
 	}
 	c := Config{
 		Name: wb.serverName,
+		Type: TypeWebserver,
 		Key:  wb.key,
 		Custom: map[string]interface{}{
 			"AuthToken": wb.authToken,
@@ -379,7 +366,7 @@ func (wb *WebserverBackend) getInto(url string, strct interface{}) error {
 
 	if 400 <= resp.StatusCode && resp.StatusCode <= 599 {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("HTTP %d from %s; response: %s", resp.StatusCode,
+		return fmt.Errorf("HTTP %d from %s; response: `%s`", resp.StatusCode,
 			url, body)
 	}
 

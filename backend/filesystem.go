@@ -103,40 +103,27 @@ func (fs *FileSystem) init() error {
 }
 
 func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error) {
-	if backendPath == "" {
-		backendPath = cryptag.BackendPath
-	}
 	if backendName == "" {
 		backendName, _ = os.Hostname()
 	}
-	backendName = strings.TrimSuffix(backendName, ".json")
 
-	configFile := path.Join(backendPath, backendName+".json")
-
-	if types.Debug {
-		log.Printf("Reading backend config file `%v`\n", configFile)
-	}
-
-	b, err := ioutil.ReadFile(configFile)
+	conf, err := ReadConfig(backendPath, backendName)
 	if err != nil {
 		// If config doesn't exist, create new one
 
 		if os.IsNotExist(err) {
-			conf := Config{
+			conf = &Config{
 				Name:  backendName,
+				Type:  TypeFileSystem,
 				New:   true,
 				Local: true,
 			}
-			return NewFileSystem(&conf)
+			return NewFileSystem(conf)
 		}
 		return nil, err
 	}
 
-	var conf Config
-	if err := json.Unmarshal(b, &conf); err != nil {
-		return nil, err
-	}
-	return NewFileSystem(&conf)
+	return NewFileSystem(conf)
 }
 
 func (fs *FileSystem) Name() string {
@@ -156,6 +143,7 @@ func (fs *FileSystem) ToConfig() (*Config, error) {
 
 	config := Config{
 		Name:     name,
+		Type:     TypeFileSystem,
 		Key:      fs.key,
 		DataPath: fs.dataPath,
 	}
@@ -186,8 +174,8 @@ func (fs *FileSystem) AllTagPairs(oldPairs types.TagPairs) (types.TagPairs, erro
 	}
 
 	if types.Debug {
-		log.Printf("AllTagPairs: returning %d pairs (%d new)\n", len(pairs),
-			len(pairs)-len(oldPairs))
+		log.Printf("AllTagPairs: returning %d pairs (%d just fetched)\n",
+			len(pairs), len(pairs)-len(oldPairs))
 	}
 
 	return pairs, nil

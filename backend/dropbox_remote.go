@@ -89,33 +89,20 @@ func (db *DropboxRemote) UseTor() error {
 }
 
 func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) {
-	if backendPath == "" {
-		backendPath = cryptag.BackendPath
-	}
 	if backendName == "" {
 		host, _ := os.Hostname()
 		backendName = "dropbox-" + host
 	}
-	backendName = strings.TrimSuffix(backendName, ".json")
 
-	configFile := path.Join(backendPath, backendName+".json")
-
-	if types.Debug {
-		log.Printf("Reading backend config file `%v`\n", configFile)
-	}
-
-	b, err := ioutil.ReadFile(configFile)
+	conf, err := ReadConfig(backendPath, backendName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Config exists
+	return DropboxRemoteFromConfig(conf)
+}
 
-	var conf Config
-	if err := json.Unmarshal(b, &conf); err != nil {
-		return nil, err
-	}
-
+func DropboxRemoteFromConfig(conf *Config) (*DropboxRemote, error) {
 	if conf.Key == nil {
 		return nil, fmt.Errorf("Key cannot be empty!")
 	}
@@ -174,6 +161,7 @@ func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemot
 	if saveToDisk {
 		config := &Config{
 			Key:    goodKey,
+			Type:   TypeDropboxRemote,
 			Name:   name,
 			New:    true, // TODO(elimisteve): Make unnecessary; see filesystem.go
 			Custom: DropboxConfigToMap(cfg),
@@ -220,6 +208,7 @@ func (db *DropboxRemote) ToConfig() (*Config, error) {
 	config := Config{
 		Key:    db.key,
 		Name:   name,
+		Type:   TypeDropboxRemote,
 		Custom: DropboxConfigToMap(db.dboxConf),
 	}
 	return &config, nil

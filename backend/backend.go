@@ -144,7 +144,6 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs
 
 	// Set row.Encrypted
 
-	// Could also do something like `row.Encrypt(wb.Encrypt)`
 	encData, err := cryptag.Encrypt(row.Decrypted(), row.Nonce, backend.Key())
 	if err != nil {
 		return newPairs, fmt.Errorf("Error encrypting data: %v", err)

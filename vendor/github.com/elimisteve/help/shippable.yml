@@ -1,0 +1,27 @@
+build_image: shippableimages/ubuntu1404_go
+
+language: go
+
+go:
+  - 1.3
+
+env:
+  global:
+    - SLACK_ORG=222labs PROJECT=help
+    - secure: A8gws6jB3gPtqciKoII57Q1jVTfSO1oLNBKCLO4O2ihTiBcLCjzXTNI5WakFeVm9BTKD5VXVZ603LTlReDSAf1LJ2DSQ5tlNi3xIf1FsIG+SEyZhbymtQ+Tp99Mz+J8IFEDH4xQXhr851bOfO82cSKZG2ac0lMe3UkOhgFyiZPOhrXQeIFYO77Ng9ISDcGB4BpM5dPuSN9cm4LiuxuDS0KeRFcqMM15fynome7uwQJYwNkt4wRgb+6C/Xhq948waJm5Km+ClRFg9icWJJGdah4SwAIrMaQAG3Xvn5n48bXwtVu6PAVSFaj7+Q3qFotNPOSPguKDpvhm0KbuigcW6JQ==
+
+before_install:
+  - export GOPATH=$SHIPPABLE_GOPATH
+  - source $HOME/.gvm/scripts/gvm
+  - gvm install go$SHIPPABLE_GO_VERSION
+  - gvm use go$SHIPPABLE_GO_VERSION
+  - go get golang.org/x/tools/cmd/cover  # Not yet used
+
+install:
+  - go test -v
+
+after_failure:
+  - python slack_notifier.py --project $PROJECT --org $SLACK_ORG --token $SLACK_TOKEN
+
+after_success:
+  - python slack_notifier.py --project $PROJECT --org $SLACK_ORG --token $SLACK_TOKEN -s
