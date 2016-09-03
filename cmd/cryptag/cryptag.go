@@ -67,13 +67,19 @@ func main() {
 
 	switch osArgs[1] {
 	case "init":
-		if len(osArgs) < 3 {
-			cli.ArgFatal(initUsage)
+		if len(osArgs) < 5 {
+			cli.ArgFatal(allInitUsage)
 		}
 
-		webkey := osArgs[2]
+		backendType := osArgs[2]
+		backendName := osArgs[3]
+		args := osArgs[4:]
 
-		if err := cli.InitSandstorm(backendName, webkey); err != nil {
+		if backendType == "sandstorm" {
+			backendType = backend.TypeWebserver
+		}
+
+		if _, err := backend.Create(backendType, backendName, args); err != nil {
 			log.Fatal(err)
 		}
 
@@ -306,7 +312,12 @@ func containsAny(in string, strs ...string) bool {
 var (
 	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
 
-	initUsage = prefix + "init <sandstorm_webkey>"
+	initFilesystemUsage = prefix + "init filesystem <backend name> <data base path>"
+	initSandstormUsage  = prefix + "init sandstorm  <backend name> <sandstorm web key>"
+	initWebserverUsage  = prefix + "init webserver  <backend name> <base url> <auth token>"
+	initDropboxUsage    = prefix + "init dropbox    <backend name> <app key> <app secret> <access token> <base path>"
+	allInitUsage        = strings.Join([]string{initFilesystemUsage,
+		initSandstormUsage, initWebserverUsage, initDropboxUsage}, "\n")
 
 	createTextUsage = prefix + "createtext <text>     <tag1> [<tag2> ...]"
 	createFileUsage = prefix + "createfile <filename> <tag1> [<tag2> ...]"
@@ -336,7 +347,7 @@ var (
 	setkeyUsage = prefix + "setkey <key>"
 
 	allUsages = []string{
-		initUsage, "",
+		allInitUsage, "",
 		createTextUsage, createFileUsage, createAnyUsage, "",
 		listTextUsage, listFilesUsage, listAnyUsage, "",
 		getTextUsage, getFilesUsage, getAnyUsage, "",
