@@ -39,6 +39,7 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 		conf := &Config{
 			Name:     bkName,
 			Type:     TypeFileSystem,
+			New:      true,
 			Local:    true,
 			DataPath: args[0],
 		}
