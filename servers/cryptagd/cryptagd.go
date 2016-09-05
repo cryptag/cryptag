@@ -389,15 +389,23 @@ func parsePlaintags(w http.ResponseWriter, req *http.Request) (plaintags []strin
 	}
 	defer req.Body.Close()
 
-	err = json.Unmarshal(body, &plaintags)
+	var creq Request
+
+	err = json.Unmarshal(body, &creq)
 	if err != nil {
-		errStr := fmt.Sprintf("Error parsing POSTed JSON array of tags `%s`: %s",
-			body, err)
+		errStr := fmt.Sprintf(`Error parsing POSTed JSON object with`+
+			` 'plaintags' key %s: %s`, body, err)
 		api.WriteErrorStatus(w, errStr, http.StatusBadRequest)
 		return nil, true
 	}
 
-	return plaintags, false
+	// TODO: Return error if len(req.PlainTags) == 0?
+
+	return creq.PlainTags, false
+}
+
+type Request struct {
+	PlainTags []string `json:"plaintags"`
 }
 
 //
