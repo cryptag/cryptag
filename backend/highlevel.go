@@ -33,6 +33,10 @@ func getRows(bk Backend, pairs types.TagPairs, plaintags cryptag.PlainTags, fetc
 		}
 	}
 
+	if len(pairs) == 0 {
+		return nil, types.ErrTagPairNotFound
+	}
+
 	matches, err := pairs.WithAllPlainTags(plaintags)
 	if err != nil {
 		return nil, err
