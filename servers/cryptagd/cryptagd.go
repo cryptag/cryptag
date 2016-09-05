@@ -35,27 +35,24 @@ func init() {
 }
 
 func main() {
-	_, err := backend.LoadBackend("", backendName)
-	if err != nil {
-		log.Printf("Error from LoadBackend: %v", err)
-
-		_, err = backend.LoadOrCreateFileSystem(
-			os.Getenv("BACKEND_PATH"),
-			os.Getenv("BACKEND"),
-		)
-		if err != nil {
-			log.Fatalf("Error from LoadOrCreateFileSystem: %s", err)
-		}
-		log.Println("...but a FileSystem Backend loaded successfully")
-	}
-
 	backends, err := backend.ReadBackends("", "*")
 	if err != nil {
 		log.Printf("Error reading Backends: %v\n", err)
 
-		if len(backends) == 0 {
-			log.Fatalf("No Backends successfully read!")
+		// Fall through
+	}
+
+	if len(backends) == 0 {
+		bk, err := backend.LoadOrCreateFileSystem(
+			os.Getenv("BACKEND_PATH"),
+			os.Getenv("BACKEND"),
+		)
+		if err != nil {
+			log.Fatalf("No Backends successfully read! Failed to create "+
+				"one: %v", err)
 		}
+		log.Printf("...but a new one was created: %v\n", bk.Name())
+		backends = []backend.Backend{bk}
 	}
 
 	for _, bk := range backends {
