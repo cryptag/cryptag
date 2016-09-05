@@ -431,7 +431,13 @@ func (store *BackendStore) Get(bkPrimary string, bkNames ...string) (backend.Bac
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 
-	bkNames = append([]string{bkPrimary}, bkNames...)
+	if bkPrimary != "" {
+		bk := store.bks[bkPrimary]
+		if bk == nil {
+			return nil, fmt.Errorf("Backend `%s` not found", bkPrimary)
+		}
+		return bk, nil
+	}
 
 	for _, name := range bkNames {
 		bk := store.bks[name]
