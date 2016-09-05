@@ -76,7 +76,7 @@ func main() {
 	jsonNoError := map[string]string{"error": ""}
 
 	Init := func(w http.ResponseWriter, req *http.Request) {
-		bkName := mux.Vars(req)["X-Backend"]
+		bkName := req.Header.Get("X-Backend")
 
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -368,8 +368,11 @@ func logIncomingReq(h http.Handler) http.Handler {
 }
 
 func getBackend(bkStore *BackendStore, w http.ResponseWriter, req *http.Request) (bk backend.Backend, handledReq bool) {
-	bkName := mux.Vars(req)["X-Backend"]
-	bk, err := bkStore.Get(bkName, backendName, "sandstorm-webserver", "default")
+	bkHeader := req.Header.Get("X-Backend")
+	if types.Debug {
+		log.Printf("X-Backend parsed as: `%v`\n", bkHeader)
+	}
+	bk, err := bkStore.Get(bkHeader, backendName, "sandstorm-webserver", "default")
 	if err != nil {
 		api.WriteError(w, "Error fetching Backend: "+err.Error())
 		return nil, true
