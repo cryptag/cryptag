@@ -59,7 +59,7 @@ I've been using cpass to store and fetch...
 For more on getting started, including how to safely and securely
 share passwords with others via a shared Dropbox folder, check out
 this section of the README:
-https://github.com/elimisteve/cryptag#getting-started-with-cryptpass
+https://github.com/cryptag/cryptag#getting-started-with-cryptpass
 
 It's still early days for CrypTag and CryptPass, so don't trust your
 life with cpass.  Eventually I will have the code professionally
@@ -80,7 +80,7 @@ added to your clipboard.
 Install + config:
 
 ```
-go get github.com/elimisteve/cryptag/cmd/cpass
+go get github.com/cryptag/cryptag/cmd/cpass
 cpass
 ```
 
@@ -100,7 +100,7 @@ shared Dropbox folders.
 
 Install Go ([instructions](https://golang.org/doc/install)), then run
 
-    go get github.com/elimisteve/cryptag/cmd/cpass
+    go get github.com/cryptag/cryptag/cmd/cpass
 
 That's it!  Now run
 
@@ -186,7 +186,7 @@ decrypt passwords saved by each other.
 
 ### More Convenient Multiple Storage Backends
 
-See [this issue](https://github.com/elimisteve/cryptag/issues/18) for
+See [this issue](https://github.com/cryptag/cryptag/issues/18) for
 discussion on how to make storing data in multiple places much better!
 I would love your input.
 
@@ -249,7 +249,7 @@ whatever else you've got.
 The graphical version of CryptPass (that uses Electron + React, that
 then talks to a local CrypTag daemon) once the command line version,
 cpass, is better, and once more complex [storage
-questions](https://github.com/elimisteve/cryptag/issues/18) are
+questions](https://github.com/cryptag/cryptag/issues/18) are
 answered, which I'd appreciate feedback on from those of you who may
 want to store different kinds of data in different places (e.g., all
 passwords in a local directory, all work passwords in a shared Dropbox
