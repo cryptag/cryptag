@@ -6,7 +6,7 @@ package color
 import (
 	"strings"
 
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 	"github.com/fatih/color"
 )
 

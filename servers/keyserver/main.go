@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/boltdb/bolt"
-	"github.com/elimisteve/cryptag/api"
+	"github.com/cryptag/cryptag/api"
 	"github.com/gorilla/mux"
 )
 

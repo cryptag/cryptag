@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elimisteve/cryptag/backend"
-	"github.com/elimisteve/cryptag/cli"
-	"github.com/elimisteve/cryptag/cli/color"
+	"github.com/cryptag/cryptag/backend"
+	"github.com/cryptag/cryptag/cli"
+	"github.com/cryptag/cryptag/cli/color"
 )
 
 var (

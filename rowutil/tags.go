@@ -3,7 +3,7 @@ package rowutil
 import (
 	"strings"
 
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 )
 
 // TagWithPrefixStripped does the same thing as TagWithPrefix except

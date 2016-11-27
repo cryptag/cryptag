@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/elimisteve/cryptag/backend"
-	"github.com/elimisteve/cryptag/mobile/cryptask"
-	"github.com/elimisteve/cryptag/rowutil"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/backend"
+	"github.com/cryptag/cryptag/mobile/cryptask"
+	"github.com/cryptag/cryptag/rowutil"
+	"github.com/cryptag/cryptag/types"
 )
 
 type Task cryptask.Task

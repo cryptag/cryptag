@@ -6,7 +6,7 @@ package rowutil
 import (
 	"testing"
 
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 	"github.com/stretchr/testify/assert"
 )
 
