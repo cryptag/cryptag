@@ -11,12 +11,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elimisteve/cryptag"
-	"github.com/elimisteve/cryptag/backend"
-	"github.com/elimisteve/cryptag/cli"
-	"github.com/elimisteve/cryptag/cli/color"
-	"github.com/elimisteve/cryptag/keyutil"
-	"github.com/elimisteve/cryptag/rowutil"
+	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/backend"
+	"github.com/cryptag/cryptag/cli"
+	"github.com/cryptag/cryptag/cli/color"
+	"github.com/cryptag/cryptag/keyutil"
+	"github.com/cryptag/cryptag/rowutil"
 )
 
 var backendName = "sandstorm-webserver"

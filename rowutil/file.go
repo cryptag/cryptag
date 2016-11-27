@@ -7,8 +7,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/elimisteve/cryptag"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/types"
 )
 
 // SaveAsFile saves the given *Row r to the given directory dir,

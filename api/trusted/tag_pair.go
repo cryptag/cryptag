@@ -4,7 +4,7 @@
 package trusted
 
 import (
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 )
 
 type TagPair struct {

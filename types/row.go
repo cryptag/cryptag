@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/elimisteve/cryptag"
+	"github.com/cryptag/cryptag"
 	"github.com/elimisteve/fun"
 	uuid "github.com/nu7hatch/gouuid"
 )

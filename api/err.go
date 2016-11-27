@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 )
 
 const contentTypeJSON = "application/json; charset=utf-8"

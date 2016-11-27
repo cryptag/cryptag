@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 )
 
 func KeePassCSV(filename string, plaintags []string) (types.Rows, error) {

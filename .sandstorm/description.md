@@ -71,7 +71,7 @@ Getting started
 
 Run this to download the cpass-sandstorm command line program:
 
-    $ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
+    $ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/cryptag/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
 
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm like so:
@@ -89,7 +89,7 @@ Enjoy!
 
 Run this in PowerShell:
 
-    (New-Object Net.WebClient).DownloadFile("https://github.com/elimisteve/cryptag/blob/v1-beta/bin/cpass-sandstorm$(If ([IntPtr]::size -eq 4) { '-32' }).exe?raw=true", "cpass-sandstorm.exe"); icacls.exe .\cpass-sandstorm.exe /grant everyone:rx
+    (New-Object Net.WebClient).DownloadFile("https://github.com/cryptag/cryptag/blob/v1-beta/bin/cpass-sandstorm$(If ([IntPtr]::size -eq 4) { '-32' }).exe?raw=true", "cpass-sandstorm.exe"); icacls.exe .\cpass-sandstorm.exe /grant everyone:rx
 
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm.exe like so:
@@ -111,7 +111,7 @@ free to send a message the CrypTag mailing list:
 <https://groups.google.com/forum/#!forum/cryptag>
 
 If you experience a bug, you can report it here:
-<https://github.com/elimisteve/cryptag/issues>
+<https://github.com/cryptag/cryptag/issues>
 
 
 Learn more
@@ -122,7 +122,7 @@ You'll find more details at:
 - Conceptual overview in these slides from my DEFCON talk introducing CrypTag:
 <https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/>
 
-- GitHub repo: <https://github.com/elimisteve/cryptag>
+- GitHub repo: <https://github.com/cryptag/cryptag>
 
 
 ### cget, cput
@@ -131,4 +131,4 @@ Interested in command line clients that let you save and retrieve
 files?  Contact me (@elimisteve on Twitter) so I can better understand
 your use case(s), and I'll happily build you one based on the
 [existing client
-code](https://github.com/elimisteve/cryptag/tree/master/cmd)!
+code](https://github.com/cryptag/cryptag/tree/master/cmd)!

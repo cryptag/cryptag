@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/backend"
+	"github.com/cryptag/cryptag/cli/color"
 	"github.com/elimisteve/clipboard"
-	"github.com/elimisteve/cryptag"
-	"github.com/elimisteve/cryptag/backend"
-	"github.com/elimisteve/cryptag/cli/color"
 )
 
 var (
