@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/elimisteve/cryptag/api"
+	"github.com/cryptag/cryptag/api"
 )
 
 func writeError(w http.ResponseWriter, errStr string, secretErr error) {

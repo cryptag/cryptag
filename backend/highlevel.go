@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elimisteve/cryptag"
-	"github.com/elimisteve/cryptag/keyutil"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/keyutil"
+	"github.com/cryptag/cryptag/types"
 )
 
 func RowsFromPlainTags(bk Backend, pairs types.TagPairs, plaintags cryptag.PlainTags) (types.Rows, error) {

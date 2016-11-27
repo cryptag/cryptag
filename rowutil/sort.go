@@ -1,6 +1,6 @@
 package rowutil
 
-import "github.com/elimisteve/cryptag/types"
+import "github.com/cryptag/cryptag/types"
 
 func ByTagPrefix(tagPrefix string, ascending bool) types.RowSorter {
 	return func(r1, r2 *types.Row) bool {

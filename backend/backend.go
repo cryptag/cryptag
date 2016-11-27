@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/elimisteve/cryptag"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/types"
 	"github.com/elimisteve/fun"
 )
 

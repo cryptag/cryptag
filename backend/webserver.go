@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elimisteve/cryptag"
-	"github.com/elimisteve/cryptag/tor"
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/tor"
+	"github.com/cryptag/cryptag/types"
 )
 
 var (

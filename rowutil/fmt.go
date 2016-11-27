@@ -4,7 +4,7 @@
 package rowutil
 
 import (
-	"github.com/elimisteve/cryptag/types"
+	"github.com/cryptag/cryptag/types"
 )
 
 // MapToStrings applies mapper to every *Row in rows

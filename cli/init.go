@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elimisteve/cryptag/backend"
+	"github.com/cryptag/cryptag/backend"
 )
 
 func InitWebserver(backendName, baseURL, authToken string) error {
