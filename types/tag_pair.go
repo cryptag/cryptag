@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/elimisteve/cryptag"
+	"github.com/cryptag/cryptag"
 )
 
 var (
