@@ -326,7 +326,7 @@ func main() {
 		api.WriteJSONStatus(w, jsonNoError, http.StatusCreated)
 	}
 
-	ListBackends := func(w http.ResponseWriter, req *http.Request) {
+	GetBackends := func(w http.ResponseWriter, req *http.Request) {
 		bkHeader := req.Header.Get("X-Backend")
 		if bkHeader == "" {
 			bkHeader = "*"
@@ -345,7 +345,7 @@ func main() {
 		api.WriteJSON(w, tconfigs)
 	}
 
-	ListBackendNames := func(w http.ResponseWriter, req *http.Request) {
+	GetBackendNames := func(w http.ResponseWriter, req *http.Request) {
 		bkPattern := req.Header.Get("X-Backend")
 		if bkPattern == "" {
 			bkPattern = "*"
@@ -387,8 +387,8 @@ func main() {
 	r.HandleFunc("/trusted/key", GetKey).Methods("GET")
 	r.HandleFunc("/trusted/key", SetKey).Methods("POST")
 
-	r.HandleFunc("/trusted/backends/list", ListBackends).Methods("GET")
-	r.HandleFunc("/trusted/backends/list/names", ListBackendNames).Methods("GET")
+	r.HandleFunc("/trusted/backends", GetBackends).Methods("GET")
+	r.HandleFunc("/trusted/backends/names", GetBackendNames).Methods("GET")
 
 	http.Handle("/", r)
 
