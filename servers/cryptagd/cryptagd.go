@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -325,6 +326,50 @@ func main() {
 		api.WriteJSONStatus(w, jsonNoError, http.StatusCreated)
 	}
 
+	ListBackends := func(w http.ResponseWriter, req *http.Request) {
+		bkHeader := req.Header.Get("X-Backend")
+		if bkHeader == "" {
+			bkHeader = "*"
+		}
+
+		// TODO: Once there are .json.minilock files there, parse
+		// bkPattern+"*.json.minilock" then decrypt
+		configs, err := backend.ReadConfigs("", bkHeader)
+		if err != nil {
+			api.WriteError(w, "Error reading Backend Configs: "+err.Error())
+			return
+		}
+
+		tconfigs := trusted.FromConfigs(configs)
+
+		api.WriteJSON(w, tconfigs)
+	}
+
+	ListBackendNames := func(w http.ResponseWriter, req *http.Request) {
+		bkPattern := req.Header.Get("X-Backend")
+		if bkPattern == "" {
+			bkPattern = "*"
+		}
+
+		bkFile := filepath.Join(cryptag.BackendPath, bkPattern+".json")
+
+		bkFilenames, err := filepath.Glob(bkFile)
+		if err != nil {
+			errStr := fmt.Sprintf("Error globbing Configs with pattern `%s`: %v",
+				bkPattern, err)
+			api.WriteError(w, errStr)
+			return
+		}
+
+		bkNames := make([]string, 0, len(bkFilenames))
+
+		for _, fname := range bkFilenames {
+			bkNames = append(bkNames, backend.ConfigNameFromPath(fname))
+		}
+
+		api.WriteJSON(w, bkNames)
+	}
+
 	// Mount handlers to router
 
 	r := mux.NewRouter()
@@ -341,6 +386,9 @@ func main() {
 
 	r.HandleFunc("/trusted/key", GetKey).Methods("GET")
 	r.HandleFunc("/trusted/key", SetKey).Methods("POST")
+
+	r.HandleFunc("/trusted/backends/list", ListBackends).Methods("GET")
+	r.HandleFunc("/trusted/backends/list/names", ListBackendNames).Methods("GET")
 
 	http.Handle("/", r)
 
