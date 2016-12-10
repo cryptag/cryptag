@@ -27,7 +27,7 @@ import (
 	"github.com/justinas/alice"
 )
 
-var backendName = "sandstorm-webserver"
+var backendName = ""
 
 func init() {
 	if bn := os.Getenv("BACKEND"); bn != "" {
@@ -503,7 +503,7 @@ func getBackend(bkStore *BackendStore, w http.ResponseWriter, req *http.Request)
 	if types.Debug {
 		log.Printf("X-Backend parsed as: `%v`\n", bkHeader)
 	}
-	bk, err := bkStore.Get(bkHeader, backendName, "sandstorm-webserver", "default")
+	bk, err := bkStore.Get(bkHeader, backendName, "default")
 	if err != nil {
 		api.WriteError(w, "Error fetching Backend: "+err.Error())
 		return nil, true
