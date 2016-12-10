@@ -133,12 +133,12 @@ func main() {
 
 		// Note: updatetext and updateany work the same
 
-		prevID := osArgs[3]
+		prevID := osArgs[2]
 		// newTags := osArgs[4:]
 
 		// Update file row
 		if updateFile {
-			newFilename := osArgs[2]
+			newFilename := osArgs[3]
 
 			row, err := backend.UpdateFileRow(db, nil, prevID, newFilename)
 			if err != nil {
@@ -155,7 +155,7 @@ func main() {
 		// Update text Row _or_ custom Row
 		//
 
-		newData := osArgs[2]
+		newData := osArgs[3]
 
 		row, err := backend.UpdateRow(db, nil, prevID, []byte(newData))
 		if err != nil {
@@ -364,9 +364,9 @@ var (
 	createAnyUsage  = prefix + "createany  <data>     <tag1> [<tag2> <type:...> ...]"
 	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage, createAnyUsage}, "\n")
 
-	updateTextUsage = prefix + "updatetext <new_text> <id_tag_of_any_previous_version>"
-	updateFileUsage = prefix + "updatefile <filename> <id_tag_of_any_previous_version>"
-	updateAnyUsage  = prefix + "updateany  <new_data> <id_tag_of_any_previous_version>"
+	updateTextUsage = prefix + "updatetext <id_tag_of_any_previous_version> <new_text>"
+	updateFileUsage = prefix + "updatefile <id_tag_of_any_previous_version> <filename>"
+	updateAnyUsage  = prefix + "updateany  <id_tag_of_any_previous_version> <new_data>"
 	allUpdateUsage  = strings.Join([]string{updateTextUsage, updateFileUsage, updateAnyUsage}, "\n")
 
 	listBackendsUsage = prefix + "listbackends [ <name-matching regex> | type:(dropbox|filesystem|webserver) ]"
