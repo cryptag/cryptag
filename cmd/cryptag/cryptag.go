@@ -124,6 +124,46 @@ func main() {
 
 		color.Println(color.TextRow(row))
 
+	case "updatetext", "ut", "updatefile", "uf", "updateany", "ua":
+		if len(osArgs) < 4 {
+			cli.ArgFatal(allUpdateUsage)
+		}
+
+		updateFile := (osArgs[1] == "updatefile" || osArgs[1] == "uf")
+
+		// Note: updatetext and updateany work the same
+
+		prevID := osArgs[3]
+		// newTags := osArgs[4:]
+
+		// Update file row
+		if updateFile {
+			newFilename := osArgs[2]
+
+			row, err := backend.UpdateFileRow(db, nil, prevID, newFilename)
+			if err != nil {
+				log.Fatalf("Error creating then saving file: %v", err)
+			}
+
+			color.Printf("%s successfully updated; new version has these tags:\n%v\n",
+				color.BlackOnCyan(filepath.Base(newFilename)),
+				color.Tags(row.PlainTags()))
+			return
+		}
+
+		//
+		// Update text Row _or_ custom Row
+		//
+
+		newData := osArgs[2]
+
+		row, err := backend.UpdateRow(db, nil, prevID, []byte(newData))
+		if err != nil {
+			log.Fatalf("Error creating text: %v\n", err)
+		}
+
+		color.Println(color.TextRow(row))
+
 	case "getkey":
 		fmt.Println(keyutil.Format(db.Key()))
 
@@ -324,6 +364,11 @@ var (
 	createAnyUsage  = prefix + "createany  <data>     <tag1> [<tag2> <type:...> ...]"
 	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage, createAnyUsage}, "\n")
 
+	updateTextUsage = prefix + "updatetext <new_text> <id_tag_of_previous_version>"
+	updateFileUsage = prefix + "updatefile <filename> <id_tag_of_previous_version>"
+	updateAnyUsage  = prefix + "updateany  <new_data> <id_tag_of_previous_version>"
+	allUpdateUsage  = strings.Join([]string{updateTextUsage, updateFileUsage, updateAnyUsage}, "\n")
+
 	listBackendsUsage = prefix + "listbackends [ <name-matching regex> | type:(dropbox|filesystem|webserver) ]"
 
 	setDefaultBackendUsage = prefix + "setdefaultbackend <backend name>"
@@ -349,6 +394,7 @@ var (
 	allUsages = []string{
 		allInitUsage, "",
 		createTextUsage, createFileUsage, createAnyUsage, "",
+		updateTextUsage, updateFileUsage, updateAnyUsage, "",
 		listTextUsage, listFilesUsage, listAnyUsage, "",
 		getTextUsage, getFilesUsage, getAnyUsage, "",
 		deleteTextUsage, deleteFilesUsage, deleteAnyUsage, "",
