@@ -586,6 +586,13 @@ func (store *BackendStore) Get(bkPrimary string, bkNames ...string) (backend.Bac
 		}
 	}
 
+	// If there's only 1 Backend, use it
+	if len(store.bks) == 1 {
+		for _, bk := range store.bks {
+			return bk, nil
+		}
+	}
+
 	return nil, fmt.Errorf("No Backend with any of these names: %s",
 		strings.Join(bkNames, ", "))
 }
