@@ -179,6 +179,86 @@ func main() {
 		api.WriteJSONBStatus(w, trowB, http.StatusCreated)
 	}
 
+	UpdateRow := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
+		// TODO: Do streaming reads
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+		defer req.Body.Close()
+
+		var trowu trusted.RowUpdate
+		err = json.Unmarshal(body, &trowu)
+		if err != nil {
+			api.WriteErrorStatus(w, `Error parsing POST of the form`+
+				` {"unencrypted": "(base64-encoded string)", "old_version_id_tag":`+
+				` "id:..."}`+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		row, err := backend.UpdateRow(db, pairs.Get(db), trowu.OldVersionID,
+			trowu.Unencrypted)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+
+		go pairs.AsyncUpdate(db)
+
+		// Return Row with null data, populated tags
+		newTrow := trusted.Row{PlainTags: row.PlainTags()}
+		trowB, _ := json.Marshal(&newTrow)
+
+		api.WriteJSONBStatus(w, trowB, http.StatusCreated)
+	}
+
+	UpdateFileRow := func(w http.ResponseWriter, req *http.Request) {
+		db, handledReq := getBackend(bkStore, w, req)
+		if handledReq {
+			return
+		}
+
+		// TODO: Do streaming reads
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+		defer req.Body.Close()
+
+		var trowu trusted.FileRowUpdate
+		err = json.Unmarshal(body, &trowu)
+		if err != nil {
+			api.WriteErrorStatus(w, `Error parsing POST of the form`+
+				` {"file_path": "/full/path/to/file", "old_version_id_tag":`+
+				` "id:..."}`+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// OldVersionID can be the ID of _any_ previous version of this file
+
+		row, err := backend.UpdateFileRow(db, pairs.Get(db), trowu.OldVersionID,
+			trowu.FilePath)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+
+		go pairs.AsyncUpdate(db)
+
+		// Return Row with null data, populated tags
+		newTrow := trusted.Row{PlainTags: row.PlainTags()}
+		trowB, _ := json.Marshal(&newTrow)
+
+		api.WriteJSONBStatus(w, trowB, http.StatusCreated)
+	}
+
 	GetKey := func(w http.ResponseWriter, req *http.Request) {
 		db, handledReq := getBackend(bkStore, w, req)
 		if handledReq {
@@ -381,6 +461,9 @@ func main() {
 	r.HandleFunc("/trusted/rows/file", CreateFileRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/list", ListRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/delete", DeleteRows).Methods("POST")
+
+	r.HandleFunc("/trusted/rows", UpdateRow).Methods("PUT")
+	r.HandleFunc("/trusted/rows/file", UpdateFileRow).Methods("PUT")
 
 	r.HandleFunc("/trusted/tags", GetTags).Methods("GET")
 

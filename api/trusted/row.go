@@ -25,3 +25,8 @@ func FromRows(rows types.Rows) Rows {
 func FromRow(row *types.Row) *Row {
 	return &Row{Unencrypted: row.Decrypted(), PlainTags: row.PlainTags()}
 }
+
+type RowUpdate struct {
+	Unencrypted  []byte `json:"unencrypted"` // types.Row.Decrypted()
+	OldVersionID string `json:"old_version_id_tag"`
+}
