@@ -364,9 +364,9 @@ var (
 	createAnyUsage  = prefix + "createany  <data>     <tag1> [<tag2> <type:...> ...]"
 	allCreateUsage  = strings.Join([]string{createTextUsage, createFileUsage, createAnyUsage}, "\n")
 
-	updateTextUsage = prefix + "updatetext <new_text> <id_tag_of_previous_version>"
-	updateFileUsage = prefix + "updatefile <filename> <id_tag_of_previous_version>"
-	updateAnyUsage  = prefix + "updateany  <new_data> <id_tag_of_previous_version>"
+	updateTextUsage = prefix + "updatetext <new_text> <id_tag_of_any_previous_version>"
+	updateFileUsage = prefix + "updatefile <filename> <id_tag_of_any_previous_version>"
+	updateAnyUsage  = prefix + "updateany  <new_data> <id_tag_of_any_previous_version>"
 	allUpdateUsage  = strings.Join([]string{updateTextUsage, updateFileUsage, updateAnyUsage}, "\n")
 
 	listBackendsUsage = prefix + "listbackends [ <name-matching regex> | type:(dropbox|filesystem|webserver) ]"
