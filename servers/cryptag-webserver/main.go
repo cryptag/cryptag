@@ -330,7 +330,7 @@ func DeleteRows(w http.ResponseWriter, req *http.Request) {
 			// mv rows/tag1-tag2-tag3 -> rows_deleted/tag1-tag2-tag3
 			err = os.Rename(rowFile, dest)
 			if err != nil {
-				log.Printf("Error moving %s to %s\n", fname,
+				log.Printf("Error moving %s to %s: %v\n", fname,
 					filesystem.rowsDeletedPath, err)
 				continue
 			}

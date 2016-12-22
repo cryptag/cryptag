@@ -51,7 +51,7 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 		if len(args) == 1 {
 			info := strings.SplitN(args[0], "#", 2)
 			if len(info) != 2 {
-				fmt.Errorf("Error parsing invalid Sandstorm web key `%s`",
+				return nil, fmt.Errorf("Error parsing invalid Sandstorm web key `%s`",
 					args[0])
 			}
 			args = info
@@ -68,5 +68,5 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 		return CreateWebserver(nil, bkName, baseURL, authToken)
 	}
 
-	return nil, fmt.Errorf("Backend of type `%v` not recognized: %v", bkType)
+	return nil, fmt.Errorf("Backend type `%v` not recognized", bkType)
 }
