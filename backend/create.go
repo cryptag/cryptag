@@ -4,10 +4,62 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/cryptag/cryptag"
 )
 
+var (
+	ErrNilConfig = errors.New("Backend Config is nil")
+)
+
+// CreateFromConfig persists a new Backend Config to disk using cfg,
+// then returns a new Backend based on cfg.
+func CreateFromConfig(bkPath string, cfg *Config) (Backend, error) {
+	if cfg == nil {
+		return nil, ErrNilConfig
+	}
+	if bkPath == "" {
+		bkPath = cryptag.BackendPath
+	}
+
+	if err := cfg.Canonicalize(); err != nil {
+		return nil, err
+	}
+
+	// Make new in-memory Backend based on the *Config
+	bk, err := New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Config is OK; persist to disk
+	if err := cfg.Save(bkPath); err != nil {
+		return nil, err
+	}
+
+	return bk, nil
+}
+
+// New makes a Backend based on cfg. Does not persist new *Config to
+// disk.
+func New(cfg *Config) (Backend, error) {
+	if cfg == nil {
+		return nil, ErrNilConfig
+	}
+
+	bkMaker, err := GetMaker(cfg.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	return bkMaker(cfg)
+}
+
+// Create persists a new Backend Config to disk. DEPRECATED; use
+// CreateFromConfig instead.
 func Create(bkType, bkName string, args []string) (Backend, error) {
 	if bkName == "" {
 		return nil, fmt.Errorf("Invalid Backend name `%v`", bkName)
