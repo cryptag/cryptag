@@ -12,3 +12,8 @@ env:
 
 script:
 - go test -v ./...
+
+notifications:
+  slack:
+    rooms:
+      - cryptag:Uji3JM6jhFeUxkH3cyIRnbIS#code
