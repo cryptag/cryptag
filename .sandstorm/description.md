@@ -71,7 +71,7 @@ Getting started
 
 Run this to download the cpass-sandstorm command line program:
 
-    $ mkdir ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/cryptag/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
+    $ mkdir --parents ~/bin; cd ~/bin && C="cpass-sandstorm" && curl -SL https://github.com/cryptag/cryptag/blob/v1-beta/bin/cpass-sandstorm$(if [ "$(uname)" != "Linux" ]; then echo -n "-osx"; fi)?raw=true -o ./$C && chmod +x ./$C
 
 Then click the key icon above this web page (on Sandstorm) and
 generate a Sandstorm API key to give to cpass-sandstorm like so:
