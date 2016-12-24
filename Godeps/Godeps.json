@@ -1,6 +1,6 @@
 {
-	"ImportPath": "github.com/elimisteve/cryptag",
-	"GoVersion": "go1.6",
+	"ImportPath": "github.com/cryptag/cryptag",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
