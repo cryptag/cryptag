@@ -27,6 +27,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// DropboxRemote represents a Dropbox folder that is being used to
+// store data in.  Implements backend.Backend.
 type DropboxRemote struct {
 	dboxPath string
 	rowsURL  string
@@ -88,6 +90,9 @@ func (db *DropboxRemote) UseTor() error {
 	return nil
 }
 
+// LoadDropboxRemote tries to load a DropboxRemote Backend named
+// backendName.  For legacy reasons, if backendName is empty, uses
+// "dropbox"-$(hostname).
 func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) {
 	if backendName == "" {
 		host, _ := os.Hostname()
@@ -102,6 +107,7 @@ func LoadDropboxRemote(backendPath, backendName string) (*DropboxRemote, error) 
 	return DropboxRemoteFromConfig(conf)
 }
 
+// DropboxRemoteFromConfig turns conf into a DropboxRemote Backend.
 func DropboxRemoteFromConfig(conf *Config) (*DropboxRemote, error) {
 	if conf.Key == nil {
 		return nil, fmt.Errorf("Key cannot be empty!")
@@ -115,8 +121,11 @@ func DropboxRemoteFromConfig(conf *Config) (*DropboxRemote, error) {
 	return NewDropboxRemote((*conf.Key)[:], conf.Name, dboxConf)
 }
 
-// NewDropboxRemote will save this backend to disk if len(key) == 0 or
-// name == "".
+// NewDropboxRemote creates a new DropboxRemote using the given
+// attributes and returns it.
+//
+// For legacy reasons, will save this backend to disk if len(key) == 0
+// or name == "".
 func NewDropboxRemote(key []byte, name string, cfg DropboxConfig) (*DropboxRemote, error) {
 	if cfg.BasePath != "/" {
 		cfg.BasePath = strings.TrimRight(cfg.BasePath, "/")
@@ -194,6 +203,8 @@ func (db *DropboxRemote) Name() string {
 	return cfg.Name
 }
 
+// ToConfig converts db to a Backend Config.  If db.key is nil,
+// returns error.
 func (db *DropboxRemote) ToConfig() (*Config, error) {
 	if db.key == nil {
 		return nil, cryptag.ErrNilKey

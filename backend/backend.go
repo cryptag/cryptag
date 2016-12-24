@@ -20,6 +20,8 @@ var (
 	ErrBackendExists = errors.New("Backend already exists")
 )
 
+// Backend is an interface that represents a type of storage location
+// for data, such as a filesystem or remote API.
 type Backend interface {
 	Name() string
 	Key() *[32]byte
@@ -36,7 +38,11 @@ type Backend interface {
 	ToConfig() (*Config, error)
 }
 
-func CreateTagsFromPlain(backend Backend, plaintags []string, pairs types.TagPairs) (newPairs types.TagPairs, err error) {
+// CreateTagsFromPlain concurrently creates new TagPairs for each
+// plaintag that doesn't already have a corresponding PlainTag in
+// pairs.  (Be sure that pairs contains the latest TagPairs contained
+// in backend.)
+func CreateTagsFromPlain(bk Backend, plaintags []string, pairs types.TagPairs) (newPairs types.TagPairs, err error) {
 	// Find out which members of plaintags don't have an existing,
 	// corresponding TagPair
 
@@ -54,7 +60,7 @@ func CreateTagsFromPlain(backend Backend, plaintags []string, pairs types.TagPai
 			chs = append(chs, ch)
 
 			go func(plain string, ch chan *types.TagPair) {
-				pair, err := CreateTag(backend, plain)
+				pair, err := CreateTag(bk, plain)
 				if err != nil {
 					log.Printf("Error calling CreateTag(%q): %v\n", plain, err)
 					ch <- nil
@@ -82,6 +88,9 @@ func CreateTagsFromPlain(backend Backend, plaintags []string, pairs types.TagPai
 	return newPairs, nil
 }
 
+// NewTagPair creates a RandomTag that corresponds to the given
+// PlainTag, generates a new nonce, encrypts the PlainTag, then
+// creates and returns the newly allocated TagPair.
 func NewTagPair(key *[32]byte, plaintag string) (*types.TagPair, error) {
 	rand := fun.RandomString(RANDOM_TAG_ALPHABET, RANDOM_TAG_LENGTH)
 
@@ -100,27 +109,33 @@ func NewTagPair(key *[32]byte, plaintag string) (*types.TagPair, error) {
 	return pair, nil
 }
 
-func CreateTag(backend Backend, plaintag string) (*types.TagPair, error) {
-	pair, err := NewTagPair(backend.Key(), plaintag)
+// CreateTag uses NewTagPair to create a new TagPair, then saves said
+// TagPair in backend.
+func CreateTag(bk Backend, plaintag string) (*types.TagPair, error) {
+	pair, err := NewTagPair(bk.Key(), plaintag)
 	if err != nil {
 		return nil, err
 	}
 
-	err = backend.SaveTagPair(pair)
+	err = bk.SaveTagPair(pair)
 	if err != nil {
-		return nil, fmt.Errorf("Error saving tag pair: %v", err)
+		return nil, fmt.Errorf("Error saving tag pair to backend %v: %v",
+			bk.Name(), err)
 	}
 
 	return pair, nil
 }
 
-func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs) (newPairs types.TagPairs, err error) {
+// PopulateRowBeforeSave creates a new TagPair for each plaintag
+// unique to row, sets row.RandomTags, and sets row.Encrypted.  row is
+// now ready to be saved to a Backend.
+func PopulateRowBeforeSave(bk Backend, row *types.Row, pairs types.TagPairs) (newPairs types.TagPairs, err error) {
 	// For each element of row.plainTags that doesn't match an
 	// existing tag, call CreateTag().  Encrypt row.decrypted and
 	// store it in row.Encrypted.  POST to server.
 
 	// TODO: Call this in parallel with encryption below
-	newPairs, err = CreateTagsFromPlain(backend, row.PlainTags(), pairs)
+	newPairs, err = CreateTagsFromPlain(bk, row.PlainTags(), pairs)
 	if err != nil {
 		return newPairs, fmt.Errorf("Error from CreateNewTagsFromPlain: %v", err)
 	}
@@ -147,7 +162,7 @@ func PopulateRowBeforeSave(backend Backend, row *types.Row, pairs types.TagPairs
 
 	// Set row.Encrypted
 
-	encData, err := cryptag.Encrypt(row.Decrypted(), row.Nonce, backend.Key())
+	encData, err := cryptag.Encrypt(row.Decrypted(), row.Nonce, bk.Key())
 	if err != nil {
 		return newPairs, fmt.Errorf("Error encrypting data: %v", err)
 	}

@@ -23,6 +23,10 @@ var (
 	ErrConfigExists = errors.New("Backend config already exists")
 )
 
+// Config represents the configuration info for a Backend.  Configs
+// store things like which type of Backend this is the config for
+// (e.g., filesystem or webserver), the base URL of the Backend (if
+// it's remote), API tokens, etc.
 type Config struct {
 	Name     string
 	Type     string // Should be one of: backend.Type*
@@ -34,11 +38,15 @@ type Config struct {
 	Custom map[string]interface{} `json:",omitempty"` // Used by Dropbox, Webserver, other backends
 }
 
+// Save persists this config to disk.  Returns error if a Config
+// already exists with the same name.
 func (conf *Config) Save(backendsDir string) error {
 	overwrite := false
 	return conf.save(backendsDir, overwrite)
 }
 
+// Update persists this config to disk.  Returns error if there is no
+// existing Config with the same name to update.
 func (conf *Config) Update(backendsDir string) error {
 	overwrite := true
 	return conf.save(backendsDir, overwrite)
@@ -81,6 +89,8 @@ func (conf *Config) save(backendsDir string, overwrite bool) error {
 	return nil
 }
 
+// Backup creates a backup of this Config to
+// (backendsDir)/(conf.Name).json-$timestamp
 func (conf *Config) Backup(backendsDir string) error {
 	filename := path.Join(backendsDir, conf.Name+".json")
 
@@ -101,6 +111,11 @@ func (conf *Config) Backup(backendsDir string) error {
 	return nil
 }
 
+// Canonicalize makes changes to this Config to ensure that it is
+// valid and returns an error when this cannot be ensured and no
+// correction can be safely made (e.g., if conf.Name is empty).
+// Useful while ensuring correctness of a new-created Config and right
+// before saving one.
 func (conf *Config) Canonicalize() error {
 	if conf.Name == "" {
 		return errors.New("Storage backend name cannot be empty")
@@ -130,6 +145,9 @@ func (conf *Config) Canonicalize() error {
 	return nil
 }
 
+// GetType returns the type of conf.  Preferable to using .Type
+// directly because this detects legacy Backend Configs with type
+// TypeFileSystem, TypeWebserver, and TypeDropboxRemote.
 func (conf *Config) GetType() string {
 	if conf.Type != "" {
 		return conf.Type
@@ -177,6 +195,8 @@ func (conf *Config) GetPath() string {
 // Convenience Functions
 //
 
+// ReadConfig reads, parses, and unmarshals the Backend Config file
+// with the name backendName and returns it.
 func ReadConfig(backendPath, backendName string) (*Config, error) {
 	if backendPath == "" {
 		backendPath = cryptag.BackendPath
@@ -209,6 +229,9 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 	return &conf, nil
 }
 
+// ReadConfigs reads, parses, and unmarshals the Backend Config files
+// located in backendPath (defaults to cryptag.BackendPath) and that
+// matches the pattern bkPattern.
 func ReadConfigs(backendPath, bkPattern string) ([]*Config, error) {
 	if backendPath == "" {
 		backendPath = cryptag.BackendPath
@@ -244,6 +267,9 @@ func ReadConfigs(backendPath, bkPattern string) ([]*Config, error) {
 	return configs, nil
 }
 
+// ReadBackends reads all the Backend Configs at backendPath whose
+// names match the pattern bkPattern, turns them into Backends, then
+// returns all the successfully created Backends.
 func ReadBackends(backendPath, bkPattern string) ([]Backend, error) {
 	configs, err := ReadConfigs(backendPath, bkPattern)
 	if err != nil {
