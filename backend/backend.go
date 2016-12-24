@@ -4,6 +4,7 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -15,6 +16,8 @@ import (
 var (
 	RANDOM_TAG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
 	RANDOM_TAG_LENGTH   = 9
+
+	ErrBackendExists = errors.New("Backend already exists")
 )
 
 type Backend interface {

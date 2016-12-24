@@ -19,7 +19,6 @@ import (
 	"github.com/cryptag/cryptag/api"
 	"github.com/cryptag/cryptag/api/trusted"
 	"github.com/cryptag/cryptag/backend"
-	"github.com/cryptag/cryptag/cli"
 	"github.com/cryptag/cryptag/keyutil"
 	"github.com/cryptag/cryptag/types"
 	"github.com/gorilla/handlers"
@@ -77,8 +76,6 @@ func main() {
 	jsonNoError := map[string]string{"error": ""}
 
 	Init := func(w http.ResponseWriter, req *http.Request) {
-		bkName := req.Header.Get("X-Backend")
-
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			api.WriteError(w, err.Error())
@@ -86,17 +83,30 @@ func main() {
 		}
 		defer req.Body.Close()
 
-		m := map[string]string{}
-		err = json.Unmarshal(body, &m)
+		var tcfg trusted.Config
+		err = json.Unmarshal(body, &tcfg)
 		if err != nil {
 			api.WriteErrorStatus(w, `Error parsing POST of the form`+
-				` {"webkey": "..."}: `+err.Error(), http.StatusBadRequest)
+				` {"Name": "...", "Type": "..."}: `+err.Error(),
+				http.StatusBadRequest)
 			return
 		}
 
-		// TODO: Create generic init
-		if err = cli.InitSandstorm(bkName, m["webkey"]); err != nil {
-			api.WriteError(w, err.Error())
+		cfg := trusted.ToConfig(&tcfg)
+
+		bk, err := backend.CreateFromConfig("", cfg)
+		if err != nil {
+			api.WriteError(w, "Error creating new Backend Config: "+err.Error())
+			return
+		}
+
+		if err := bkStore.Add(bk); err != nil {
+			statusCode := http.StatusInternalServerError
+			if err == backend.ErrBackendExists {
+				statusCode = http.StatusConflict
+			}
+			api.WriteErrorStatus(w, "Error adding new Backend after creation`"+
+				bk.Name()+"`: "+err.Error(), statusCode)
 			return
 		}
 
@@ -595,6 +605,18 @@ func (store *BackendStore) Get(bkPrimary string, bkNames ...string) (backend.Bac
 
 	return nil, fmt.Errorf("No Backend with any of these names: %s",
 		strings.Join(bkNames, ", "))
+}
+
+func (store *BackendStore) Add(bk backend.Backend) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	if _, exists := store.bks[bk.Name()]; exists {
+		return backend.ErrBackendExists
+	}
+
+	store.bks[bk.Name()] = bk
+	return nil
 }
 
 //
