@@ -170,7 +170,7 @@ func parseKey(cliDigits string) (*[32]byte, error) {
 		n, err := strconv.ParseUint(nums[i], 10, 8)
 		if err != nil {
 			return nil, fmt.Errorf("Number #%d '%v' was invalid: %v\n", i+1,
-				nums[i])
+				nums[i], err)
 		}
 		newKey[i] = byte(n)
 	}

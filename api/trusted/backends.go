@@ -36,3 +36,14 @@ func FromConfig(config *backend.Config) *Config {
 		Path:     config.GetPath(),
 	}
 }
+
+func ToConfig(tcfg *Config) *backend.Config {
+	return &backend.Config{
+		Name:     tcfg.Name,
+		Type:     tcfg.Type,
+		Local:    tcfg.Local,
+		DataPath: tcfg.DataPath,
+		Custom:   tcfg.Custom,
+	}
+
+}

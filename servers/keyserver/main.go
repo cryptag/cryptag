@@ -100,8 +100,8 @@ func PostMinilockID(db *bolt.DB) func(w http.ResponseWriter, req *http.Request) 
 }
 
 type Identity struct {
-	Email      string `json:"email",omitempty`
-	MinilockID string `json:"minilock_id",omitempty`
+	Email      string `json:"email,omitempty"`
+	MinilockID string `json:"minilock_id,omitempty"`
 }
 
 func (id *Identity) Valid() bool {
