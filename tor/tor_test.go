@@ -6,6 +6,7 @@ package tor
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"sync"
 	"testing"
 )
@@ -21,6 +22,10 @@ var tests = []urlTextTest{
 }
 
 func TestDoRequest(t *testing.T) {
+	if os.Getenv("RUN_TOR_TESTS") == "0" {
+		t.Skip()
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(tests))
 
