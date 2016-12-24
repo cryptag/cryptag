@@ -257,15 +257,13 @@ func ReadBackends(backendPath, bkPattern string) ([]Backend, error) {
 
 		typ := conf.GetType()
 
-		switch typ {
-		case TypeDropboxRemote:
-			bk, err = DropboxRemoteFromConfig(conf)
-		case TypeFileSystem:
-			bk, err = NewFileSystem(conf)
-		case TypeWebserver:
-			bk, err = WebserverFromConfig(conf)
+		maker, err := GetMaker(typ)
+		if err != nil {
+			log.Printf("Error getting Backend maker for type `%s`\n", typ)
+			continue
 		}
 
+		bk, err = maker(conf)
 		if err != nil {
 			log.Printf("Error creating Backend from Config %s: %v\n", typ, err)
 			continue
