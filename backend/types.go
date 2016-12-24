@@ -23,15 +23,11 @@ func LoadBackend(backendPath, backendName string) (Backend, error) {
 
 	typ := conf.GetType()
 
-	switch typ {
-	case TypeDropboxRemote:
-		return DropboxRemoteFromConfig(conf)
-	case TypeFileSystem:
-		return NewFileSystem(conf)
-	case TypeWebserver:
-		return WebserverFromConfig(conf)
+	maker, err := GetMaker(typ)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting Backend maker of type `%v`: %v",
+			typ, err)
 	}
 
-	return nil, fmt.Errorf("Unrecognized config `%v` of type `%v`",
-		conf.Name, typ)
+	return maker(conf)
 }
