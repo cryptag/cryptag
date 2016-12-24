@@ -11,6 +11,7 @@ go:
 
 env:
 - RUN_TOR_TESTS=0
+- GO15VENDOREXPERIMENT=1
 
 script:
 - go test -v ./...
