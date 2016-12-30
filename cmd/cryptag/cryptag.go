@@ -222,7 +222,7 @@ func main() {
 			cli.ArgFatal(setDefaultBackendUsage)
 		}
 
-		if err := backend.SetDefaultBackend(db, "", osArgs[2]); err != nil {
+		if err := backend.SetDefaultBackend("", osArgs[2]); err != nil {
 			log.Fatal(err)
 		}
 

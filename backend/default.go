@@ -8,7 +8,9 @@ import (
 	"os"
 )
 
-func SetDefaultBackend(bk Backend, backendPath, newDefault string) error {
+// SetDefaultBackend sets the default Backend to newDefault by
+// creating a symlink from (newDefault).json to default.json
+func SetDefaultBackend(backendPath, newDefault string) error {
 	conf := ConfigPathFromName(backendPath, newDefault)
 	defaultConf := ConfigPathFromName(backendPath, "default")
 

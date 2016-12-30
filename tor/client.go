@@ -15,12 +15,12 @@ import (
 var (
 	// TorBrowserBundleProxyURL is the URL to the local SOCKS5 proxy
 	// started by the Tor Browser Bundle. Set 'ProxyURL' to this if
-	// you're using the have Tor _installed_ on your machine.
+	// you're using -- you guessed it -- the Tor Browser Bundle.
 	TorBrowserBundleProxyURL = "socks5://127.0.0.1:9150"
 
 	// TorServiceProxyURL is the URL to the local SOCKS5 proxy started
 	// by the Tor service/daemon. Set 'ProxyURL' to this if you have
-	// Tor _installed_ on your machine.
+	// the Tor service installed on your machine.
 	TorServiceProxyURL = "socks5://127.0.0.1:9050"
 
 	// ProxyURL is the URL of the local SOCKS5 proxy used to make
