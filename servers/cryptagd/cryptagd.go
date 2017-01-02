@@ -71,7 +71,7 @@ func main() {
 
 	// Fetch and maintain up-to-date list of TagPairs
 	pairs := NewTagPairStore()
-	pairs.AsyncUpdateAll(backends)
+	// pairs.AsyncUpdateAll(backends)
 
 	jsonNoError := map[string]string{"error": ""}
 
