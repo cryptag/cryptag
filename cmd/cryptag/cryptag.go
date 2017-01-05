@@ -258,6 +258,7 @@ func main() {
 		color.Println(strings.Join(rowStrs, "\n\n"))
 
 	case "gettext", "gt", "getfiles", "gf", "getany", "ga":
+		getText := (osArgs[1] == "gettext" || osArgs[1] == "gt")
 		getFiles := (osArgs[1] == "getfiles" || osArgs[1] == "gf")
 		getAny := (osArgs[1] == "getany" || osArgs[1] == "ga")
 
@@ -280,6 +281,10 @@ func main() {
 		rows.Sort(rowutil.ByTagPrefix("created:", true))
 
 		dir := path.Join(cryptag.TrustedBasePath, "decrypted", backendName)
+
+		// Print contents of non-files to stdout. Save files to
+		// disk. If Row is text _and_ a file, print contents then save
+		// to disk.
 		for i, row := range rows {
 			if i != 0 {
 				fmt.Println("")
@@ -288,6 +293,20 @@ func main() {
 			// Print bodies of non-file rows as text (includes Tasks, etc)
 			if !row.HasPlainTag("type:file") {
 				color.Println(color.TextRow(row))
+				continue
+			}
+
+			// row is a file
+
+			// If row is a _text_ file, and the user doesn't just want
+			// files (to download), print it out
+			if !getFiles && row.HasPlainTag("type:text") {
+				color.Println(color.TextRow(row))
+			}
+
+			// User just wants to view the text representation of this
+			// text file, not download it to disk
+			if getText {
 				continue
 			}
 
