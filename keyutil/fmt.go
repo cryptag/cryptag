@@ -7,6 +7,8 @@ import (
 	"fmt"
 )
 
+// Format formats the given key in the format a,b,c,...,z which is
+// human-readable and suitable to be read by backend.UpdateKey().
 func Format(key *[32]byte) string {
 	if key == nil {
 		return "<nil>"
@@ -16,6 +18,9 @@ func Format(key *[32]byte) string {
 	return FormatSlice(k[:])
 }
 
+// Format formats the given byte slice (probably a nonce slice-ified
+// key) in the format a,b,c,...,z which is human-readable and suitable
+// to be read by backend.UpdateKey().
 func FormatSlice(b []byte) string {
 	if b == nil {
 		return "<nil>"
