@@ -286,7 +286,7 @@ func main() {
 			}
 
 			// Print bodies of non-file rows as text (includes Tasks, etc)
-			if !getFiles {
+			if !row.HasPlainTag("type:file") {
 				color.Println(color.TextRow(row))
 				continue
 			}
