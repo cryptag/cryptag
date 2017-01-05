@@ -39,3 +39,27 @@ func SetDefaultBackend(backendPath, newDefault string) error {
 
 	return os.Symlink(conf, defaultConf)
 }
+
+// Checks if a default backend is set.  Returns true if so, false
+// otherwise.
+func IsDefaultBackendSet(backendPath string) (bool, error) {
+	defaultConf := ConfigPathFromName(backendPath, "default")
+
+	defaultInfo, err := os.Lstat(defaultConf)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	// default.json exists. If it's not a symlink, error out.
+
+	if defaultInfo.Mode()&os.ModeSymlink != os.ModeSymlink {
+		return false, fmt.Errorf("%s is not a symlink. Don't name"+
+			" your backends 'default'!", defaultConf)
+	}
+
+	// default.json exists and is a symlink
+	return true, nil
+}

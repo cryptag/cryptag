@@ -299,7 +299,7 @@ func main() {
 			// row is a file
 
 			// If row is a _text_ file, and the user doesn't just want
-			// files (to download), print it out
+			// files (to download), print row
 			if !getFiles && row.HasPlainTag("type:text") {
 				color.Println(color.TextRow(row))
 			}
