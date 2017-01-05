@@ -19,11 +19,12 @@ func Scrape(url string) ([]byte, error) {
 	}
 	defer req.Body.Close()
 
-	body, err := ioutil.ReadAll(req.Body)
+	// Save contents of page to `html` variable
+	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading from req.Body: %s\n", err)
 	}
-	return body, nil
+	return data, nil
 }
 
 func SimpleHTTPServer(handler http.Handler, listenAddr string) *http.Server {

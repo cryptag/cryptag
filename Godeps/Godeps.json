@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/elimisteve/fun",
-			"Rev": "7830c77715269920b64483cf3f86c05fc11edbd1"
+			"Rev": "ed81da85bfef1433147892bf0419d32042445cf3"
 		},
 		{
 			"ImportPath": "github.com/elimisteve/help",
@@ -114,6 +114,10 @@
 		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "62bee037599929a6e9146f29d10dd5208c43507d"
+		},
+		{
+			"ImportPath": "github.com/dchest/uniuri",
+			"Rev": "8902c56451e9b58ff940bbe5fec35d5f9c04584a"
 		}
 	]
 }
