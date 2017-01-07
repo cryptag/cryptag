@@ -214,13 +214,15 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error reading config file `%v`: %v",
+			configFile, err)
 	}
 
 	var conf Config
 
 	if err = json.Unmarshal(b, &conf); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error unmarshaling config file `%v`: %v",
+			configFile, err)
 	}
 
 	// Ignore 'Name' field in .json file, use filename
