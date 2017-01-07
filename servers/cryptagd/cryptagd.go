@@ -43,6 +43,7 @@ func main() {
 	}
 
 	if len(backends) == 0 {
+		log.Println("No backends found")
 		bk, err := backend.LoadOrCreateFileSystem(
 			os.Getenv("BACKEND_PATH"),
 			os.Getenv("BACKEND"),
@@ -51,7 +52,7 @@ func main() {
 			log.Fatalf("No Backends successfully read! Failed to create "+
 				"one: %v", err)
 		}
-		log.Printf("...but a new one was created: %v\n", bk.Name())
+		log.Printf("...but this one was loaded or created: %v\n", bk.Name())
 		backends = []backend.Backend{bk}
 	}
 
@@ -426,8 +427,14 @@ func main() {
 		// bkPattern+"*.json.minilock" then decrypt
 		configs, err := backend.ReadConfigs("", bkHeader)
 		if err != nil {
-			api.WriteError(w, "Error reading Backend Configs: "+err.Error())
-			return
+			if len(configs) == 0 {
+				api.WriteError(w, "Error reading Backend Configs: "+err.Error())
+				return
+			}
+
+			log.Printf("Error reading some Backend configs: %v\n", err)
+
+			// FALL THROUGH
 		}
 
 		tconfigs := trusted.FromConfigs(configs)
