@@ -18,8 +18,8 @@ func ToVersionedRows(origRows types.Rows, rowLess func(r1, r2 *types.Row) bool) 
 	rows := make(types.Rows, len(origRows))
 	copy(rows, origRows)
 
-	// Sort ~original
-	rows.Sort(rowLess)
+	// Every inner slice will remain in chronological order (ascending)
+	rows.Sort(ByTagPrefix("created:", true))
 
 	// 2D return value
 	var rrows []types.Rows
@@ -46,21 +46,23 @@ func ToVersionedRows(origRows types.Rows, rowLess func(r1, r2 *types.Row) bool) 
 
 	// Each version slice is now individually ordered, but we need to
 	// return them in a [][]*Row. What should the ordering of this
-	// slice of slices be? Answer: ordered by the first member of each
-	// version slice.
+	// slice of slices be? Answer: ordered by the last member of each
+	// version slice (in either ascending or descending order, as
+	// determined by rowLess).
 
-	firsts := make(types.Rows, 0, len(mRows))
-	firstToRows := make(map[*types.Row]types.Rows, len(firsts))
+	lasts := make(types.Rows, 0, len(mRows))
+	lastToRows := make(map[*types.Row]types.Rows, len(lasts))
 
 	for _, rowGroup := range mRows {
-		firsts = append(firsts, rowGroup[0])
-		// Map the first element of each slice to its containing slice
-		firstToRows[rowGroup[0]] = rowGroup
+		last := rowGroup[len(rowGroup)-1]
+		lasts = append(lasts, last)
+		// Map the last element of each slice to its containing slice
+		lastToRows[last] = rowGroup
 	}
-	firsts.Sort(rowLess)
+	lasts.Sort(rowLess)
 
-	for _, fr := range firsts {
-		rrows = append(rrows, firstToRows[fr])
+	for _, fr := range lasts {
+		rrows = append(rrows, lastToRows[fr])
 	}
 
 	return rrows

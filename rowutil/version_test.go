@@ -30,8 +30,8 @@ func TestToVersionedRows(t *testing.T) {
 
 	orig0 := types.Rows{r0, r1, r2, r3, r4, r5, r6, r7}
 	want0 := []types.Rows{
-		types.Rows{r0, r1, r3, r4},
 		types.Rows{r2},
+		types.Rows{r0, r1, r3, r4},
 		types.Rows{r5},
 		types.Rows{r6, r7},
 	}
@@ -53,9 +53,9 @@ func TestToVersionedRows(t *testing.T) {
 	// Descending
 
 	want0 = []types.Rows{
-		types.Rows{r7, r6},
+		types.Rows{r6, r7},
 		types.Rows{r5},
-		types.Rows{r4, r3, r1, r0},
+		types.Rows{r0, r1, r3, r4},
 		types.Rows{r2},
 	}
 	want1 = want0
