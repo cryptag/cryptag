@@ -26,9 +26,6 @@ func ToVersionedRows(origRows types.Rows, rowLess func(r1, r2 *types.Row) bool) 
 
 	ORIG_VERSION_ROW_PREFIX := "origversionrow:"
 
-	var firsts types.Rows
-	firstToRows := map[*types.Row]types.Rows{}
-
 	// Create map[groupTag]Rows to group the rows together by the
 	// ID-tag of the original Row that has since been versioned
 	mRows := make(map[string]types.Rows, len(rows))
@@ -42,24 +39,25 @@ func ToVersionedRows(origRows types.Rows, rowLess func(r1, r2 *types.Row) bool) 
 			// origversionrow:id:... -> id:...
 			tag = tag[len(ORIG_VERSION_ROW_PREFIX):]
 		}
-
 		// assert: tag is of the form id:..., where this tag is the
 		// ID-tag of the original version of every Row in rows
-
-		// Record the first member of each version slice so we can
-		// order the outer slice by them
-		if len(mRows[tag]) == 0 {
-			firsts = append(firsts, r)
-		}
-
-		// Each version slice itself is implicitly ordered, but we
-		// need to return a slice of slices -- a [][]*Row. What should
-		// the ordering of this slice of slices be? Answer: ordered by
-		// the first member of each version slice.
-
 		mRows[tag] = append(mRows[tag], r)
-		firstToRows[mRows[tag][0]] = mRows[tag]
 	}
+
+	// Each version slice is now individually ordered, but we need to
+	// return them in a [][]*Row. What should the ordering of this
+	// slice of slices be? Answer: ordered by the first member of each
+	// version slice.
+
+	firsts := make(types.Rows, 0, len(mRows))
+	firstToRows := make(map[*types.Row]types.Rows, len(firsts))
+
+	for _, rowGroup := range mRows {
+		firsts = append(firsts, rowGroup[0])
+		// Map the first element of each slice to its containing slice
+		firstToRows[rowGroup[0]] = rowGroup
+	}
+	firsts.Sort(rowLess)
 
 	for _, fr := range firsts {
 		rrows = append(rrows, firstToRows[fr])
