@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	validKeyLength = 32
+	validKeyLength   = 32
+	validNonceLength = 24
 )
 
 var (
@@ -42,12 +43,12 @@ func Decrypt(cipher []byte, nonce *[24]byte, key *[32]byte) ([]byte, error) {
 	if key == nil {
 		return nil, ErrNilKey
 	}
+	if len(cipher) == 0 {
+		return nil, ErrDecryptEmpty
+	}
 
 	plain, ok := secretbox.Open(nil, cipher, nonce, key)
 	if !ok {
-		if len(cipher) == 0 {
-			return nil, ErrDecryptEmpty
-		}
 		return nil, ErrDecrypt
 	}
 	return plain, nil
@@ -74,7 +75,7 @@ func UnconvertKey(goodKey *[32]byte) ([]byte, error) {
 }
 
 func ConvertNonce(nonce []byte) (goodNonce *[24]byte, err error) {
-	if len(nonce) != 24 {
+	if len(nonce) != validNonceLength {
 		return nil, ErrInvalidNonce
 	}
 	var b [24]byte

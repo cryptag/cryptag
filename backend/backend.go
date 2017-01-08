@@ -88,9 +88,10 @@ func CreateTagsFromPlain(bk Backend, plaintags []string, pairs types.TagPairs) (
 	return newPairs, nil
 }
 
-// NewTagPair creates a RandomTag that corresponds to the given
-// PlainTag, generates a new nonce, encrypts the PlainTag, then
-// creates and returns the newly allocated TagPair.
+// NewTagPair creates a (cryptographically secure pseudorandom)
+// RandomTag that corresponds to the given PlainTag, generates a new
+// nonce, encrypts the PlainTag, then creates and returns the newly
+// allocated TagPair.
 func NewTagPair(key *[32]byte, plaintag string) (*types.TagPair, error) {
 	rand := fun.RandomString(RANDOM_TAG_ALPHABET, RANDOM_TAG_LENGTH)
 

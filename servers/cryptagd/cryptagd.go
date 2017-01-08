@@ -20,6 +20,7 @@ import (
 	"github.com/cryptag/cryptag/api/trusted"
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/keyutil"
+	"github.com/cryptag/cryptag/rowutil"
 	"github.com/cryptag/cryptag/types"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -43,6 +44,7 @@ func main() {
 	}
 
 	if len(backends) == 0 {
+		log.Println("No backends found")
 		bk, err := backend.LoadOrCreateFileSystem(
 			os.Getenv("BACKEND_PATH"),
 			os.Getenv("BACKEND"),
@@ -51,7 +53,7 @@ func main() {
 			log.Fatalf("No Backends successfully read! Failed to create "+
 				"one: %v", err)
 		}
-		log.Printf("...but a new one was created: %v\n", bk.Name())
+		log.Printf("...but this one was loaded or created: %v\n", bk.Name())
 		backends = []backend.Backend{bk}
 	}
 
@@ -328,7 +330,9 @@ func main() {
 			return
 		}
 
-		rowsB, err := json.Marshal(trusted.FromRows(rows))
+		trows := getTrustedRowsByPath(req.URL.Path, rows)
+
+		rowsB, err := json.Marshal(trows)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
@@ -359,7 +363,9 @@ func main() {
 			return
 		}
 
-		rowsB, err := json.Marshal(trusted.FromRows(rows))
+		trows := getTrustedRowsByPath(req.URL.Path, rows)
+
+		rowsB, err := json.Marshal(trows)
 		if err != nil {
 			api.WriteErrorStatus(w, err.Error(), http.StatusBadRequest)
 			return
@@ -426,8 +432,14 @@ func main() {
 		// bkPattern+"*.json.minilock" then decrypt
 		configs, err := backend.ReadConfigs("", bkHeader)
 		if err != nil {
-			api.WriteError(w, "Error reading Backend Configs: "+err.Error())
-			return
+			if len(configs) == 0 {
+				api.WriteError(w, "Error reading Backend Configs: "+err.Error())
+				return
+			}
+
+			log.Printf("Error reading some Backend configs: %v\n", err)
+
+			// FALL THROUGH
 		}
 
 		tconfigs := trusted.FromConfigs(configs)
@@ -467,9 +479,13 @@ func main() {
 	r.HandleFunc("/trusted/init", Init).Methods("POST")
 
 	r.HandleFunc("/trusted/rows/get", GetRows).Methods("POST")
+	r.HandleFunc("/trusted/rows/get/versioned", GetRows).Methods("POST")
+	r.HandleFunc("/trusted/rows/get/versioned/latest", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows", CreateRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/file", CreateFileRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/list", ListRows).Methods("POST")
+	r.HandleFunc("/trusted/rows/list/versioned", ListRows).Methods("POST")
+	r.HandleFunc("/trusted/rows/list/versioned/latest", ListRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/delete", DeleteRows).Methods("POST")
 
 	r.HandleFunc("/trusted/rows", UpdateRow).Methods("PUT")
@@ -698,4 +714,28 @@ func fetchRowsFromPlainTags(fetcher func(backend.Backend, types.TagPairs, crypta
 	}
 
 	return nil, err
+}
+
+// TODO: For efficiency, don't fetch every version of every Row when
+// we only care about the most recent version of each
+func getTrustedRowsByPath(urlPath string, rows types.Rows) (trows interface{}) {
+	if !strings.Contains(urlPath, "/versioned") {
+		return trusted.FromRows(rows)
+	}
+
+	// Segment rows into versioned rows
+
+	vrows := rowutil.ToVersionedRows(rows, rowutil.ByTagPrefix("created:", false))
+	tvrows := trusted.FromRows2D(vrows)
+
+	if !strings.Contains(urlPath, "/latest") {
+		return tvrows
+	}
+
+	latests := make(trusted.Rows, 0, len(tvrows))
+	for _, rows := range tvrows {
+		latests = append(latests, rows[len(rows)-1])
+	}
+
+	return latests
 }

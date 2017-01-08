@@ -209,18 +209,20 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 	configFile := path.Join(backendPath, backendName+".json")
 
 	if types.Debug {
-		log.Printf("Loading backend config file `%v`\n", configFile)
+		log.Printf("Trying to load backend config file `%v`\n", configFile)
 	}
 
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error reading config file `%v`: %v",
+			configFile, err)
 	}
 
 	var conf Config
 
 	if err = json.Unmarshal(b, &conf); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error unmarshaling config file `%v`: %v",
+			configFile, err)
 	}
 
 	// Ignore 'Name' field in .json file, use filename
@@ -273,7 +275,13 @@ func ReadConfigs(backendPath, bkPattern string) ([]*Config, error) {
 func ReadBackends(backendPath, bkPattern string) ([]Backend, error) {
 	configs, err := ReadConfigs(backendPath, bkPattern)
 	if err != nil {
-		return nil, err
+		if len(configs) == 0 {
+			return nil, err
+		}
+
+		log.Printf("Error reading some configs: %v\n", err)
+
+		// FALL THROUGH
 	}
 
 	backends := make([]Backend, 0, len(configs))
