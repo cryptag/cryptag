@@ -30,3 +30,11 @@ type RowUpdate struct {
 	Unencrypted  []byte `json:"unencrypted"` // types.Row.Decrypted()
 	OldVersionID string `json:"old_version_id_tag"`
 }
+
+func FromRows2D(rrows []types.Rows) []Rows {
+	vrrows := make([]Rows, 0, len(rrows))
+	for _, rows := range rrows {
+		vrrows = append(vrrows, FromRows(rows))
+	}
+	return vrrows
+}
