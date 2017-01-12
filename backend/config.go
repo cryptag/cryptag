@@ -138,7 +138,8 @@ func (conf *Config) Canonicalize() error {
 	}
 
 	if conf.Local && conf.DataPath == "" {
-		conf.DataPath = cryptag.LocalDataPath
+		// Save data to ~/.cryptag/backends/${conf.Name}/{rows,tags}
+		conf.DataPath = path.Join(cryptag.LocalDataPath, "backends", conf.Name)
 	}
 	conf.DataPath = strings.TrimRight(conf.DataPath, "/\\")
 
