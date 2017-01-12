@@ -5,6 +5,10 @@ package trusted
 
 import "github.com/cryptag/cryptag/backend"
 
+// Config represents a trusted backend.Config file. Trivial other
+// differences aside (namely the New and Path fields), it contains all
+// the same fields as a backend.Config, except the 'Key' field is
+// excluded here.
 type Config struct {
 	Name     string
 	Type     string // Should be one of: backend.Type*
