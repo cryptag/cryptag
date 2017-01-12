@@ -85,8 +85,8 @@ func main() {
 		}
 		defer req.Body.Close()
 
-		var tcfg trusted.Config
-		err = json.Unmarshal(body, &tcfg)
+		var cfg backend.Config
+		err = json.Unmarshal(body, &cfg)
 		if err != nil {
 			api.WriteErrorStatus(w, `Error parsing POST of the form`+
 				` {"Name": "...", "Type": "..."}: `+err.Error(),
@@ -94,9 +94,7 @@ func main() {
 			return
 		}
 
-		cfg := trusted.ToConfig(&tcfg)
-
-		bk, err := backend.CreateFromConfig("", cfg)
+		bk, err := backend.CreateFromConfig("", &cfg)
 		if err != nil {
 			api.WriteError(w, "Error creating new Backend Config: "+err.Error())
 			return
@@ -107,7 +105,7 @@ func main() {
 			if err == backend.ErrBackendExists {
 				statusCode = http.StatusConflict
 			}
-			api.WriteErrorStatus(w, "Error adding new Backend after creation`"+
+			api.WriteErrorStatus(w, "Error adding new Backend after creation `"+
 				bk.Name()+"`: "+err.Error(), statusCode)
 			return
 		}
