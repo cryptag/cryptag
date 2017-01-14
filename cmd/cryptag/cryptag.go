@@ -353,6 +353,19 @@ func main() {
 
 		log.Println("Row(s) successfully deleted")
 
+	case "invite":
+		cfg, err := db.ToConfig()
+		if err != nil {
+			log.Fatalf("Error turning Backend %v into config: %v", db.Name, err)
+		}
+		pwd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err = cfg.Save(pwd); err != nil {
+			log.Fatal(err)
+		}
+
 	default:
 		log.Printf("Subcommand `%s` not valid\n", osArgs[1])
 		cli.Fatal(allUsage)
@@ -407,6 +420,9 @@ var (
 	deleteAnyUsage   = prefix + "deleteany   <tag1> [<tag2> ...]"
 	allDeleteUsage   = strings.Join([]string{deleteTextUsage, deleteFilesUsage, deleteAnyUsage}, "\n")
 
+	createInviteUsage = prefix + "invite"
+	allInviteUsage    = strings.Join([]string{createInviteUsage}, "\n")
+
 	getkeyUsage = prefix + "getkey"
 	setkeyUsage = prefix + "setkey <key>"
 
@@ -419,6 +435,7 @@ var (
 		deleteTextUsage, deleteFilesUsage, deleteAnyUsage, "",
 		listBackendsUsage, "",
 		setDefaultBackendUsage, "",
+		createInviteUsage, "",
 		getkeyUsage, setkeyUsage,
 	}
 	allUsage = strings.Join(allUsages, "\n")
