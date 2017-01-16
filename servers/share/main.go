@@ -225,6 +225,10 @@ func Login(cli *clientv3.Client) func(w http.ResponseWriter, req *http.Request) 
 
 		encAuthToken, err := minilock.EncryptFileContents(filename, contents,
 			sender, recipient)
+		if err != nil {
+			writeError(w, "Error encrypting auth token to you; sorry!", err)
+			return
+		}
 
 		w.Write(encAuthToken)
 	})
