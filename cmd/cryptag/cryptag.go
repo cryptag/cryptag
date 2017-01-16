@@ -17,6 +17,7 @@ import (
 	"github.com/cryptag/cryptag/cli/color"
 	"github.com/cryptag/cryptag/keyutil"
 	"github.com/cryptag/cryptag/rowutil"
+	"github.com/cryptag/cryptag/share"
 )
 
 var (
@@ -354,10 +355,61 @@ func main() {
 		log.Println("Row(s) successfully deleted")
 
 	case "invite":
+		if len(osArgs) == 2 {
+			cli.ArgFatal(allInviteUsage)
+		}
+
+		createLocally := false
+		serverBaseURL := share.DefaultServerURL
+		getURL := ""
+
+		if osArgs[2] == "-c" {
+			createLocally = true
+		} else if osArgs[2] == "-s" {
+			if len(osArgs) > 3 {
+				serverBaseURL = osArgs[3]
+			}
+		} else if osArgs[2] == "-g" {
+			if len(osArgs) == 3 {
+				cli.ArgFatal(allInviteUsage)
+			}
+			getURL = osArgs[3]
+		}
+
+		if getURL != "" {
+			configs, err := share.GetConfigsByInviteURL(getURL)
+			if err != nil {
+				log.Fatalf("Error fetching configs: %v", err)
+			}
+
+			for _, cfg := range configs {
+				if err = cfg.Save(cryptag.BackendPath); err != nil {
+					log.Printf("Error saving config %v: %v\n", cfg.Name, err)
+
+					// FALL THROUGH
+				}
+			}
+
+			return
+		}
+
 		cfg, err := db.ToConfig()
 		if err != nil {
 			log.Fatalf("Error turning Backend %v into config: %v", db.Name, err)
 		}
+
+		if !createLocally {
+			inviteURL, err := share.CreateEphemeral(serverBaseURL, cfg)
+			if err != nil {
+				log.Fatalf("Error creating invite on server %v: %v\n",
+					serverBaseURL, err)
+			}
+			fmt.Println(inviteURL)
+			return
+		}
+
+		// Put invite in current working directory
+
 		pwd, err := os.Getwd()
 		if err != nil {
 			log.Fatal(err)
@@ -420,8 +472,11 @@ var (
 	deleteAnyUsage   = prefix + "deleteany   <tag1> [<tag2> ...]"
 	allDeleteUsage   = strings.Join([]string{deleteTextUsage, deleteFilesUsage, deleteAnyUsage}, "\n")
 
-	createInviteUsage = prefix + "invite"
-	allInviteUsage    = strings.Join([]string{createInviteUsage}, "\n")
+	createInviteUsage         = prefix + "invite -c"
+	createInviteOnServerUsage = prefix + "invite -s [<share server base url>]"
+	getInviteOnServerUsage    = prefix + "invite -g <share url>"
+	allInviteUsage            = strings.Join([]string{createInviteUsage,
+		createInviteOnServerUsage, getInviteOnServerUsage}, "\n")
 
 	getkeyUsage = prefix + "getkey"
 	setkeyUsage = prefix + "setkey <key>"
@@ -435,7 +490,7 @@ var (
 		deleteTextUsage, deleteFilesUsage, deleteAnyUsage, "",
 		listBackendsUsage, "",
 		setDefaultBackendUsage, "",
-		createInviteUsage, "",
+		createInviteUsage, createInviteOnServerUsage, getInviteOnServerUsage, "",
 		getkeyUsage, setkeyUsage,
 	}
 	allUsage = strings.Join(allUsages, "\n")
