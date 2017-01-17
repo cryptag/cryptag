@@ -56,7 +56,7 @@ func ParseInviteURL(url string) (serverBaseURL, passphrase string, err error) {
 		return "", "", ErrInvalidInviteURL
 	}
 	// TODO: Consider doing more validity checks
-	serverBaseURL = strings.TrimSuffix(strs[0], "/")
+	serverBaseURL = strings.TrimRight(strs[0], "/")
 	passphrase = strs[1]
 	return serverBaseURL, passphrase, nil
 }
@@ -69,7 +69,7 @@ func GetShares(serverBaseURL string, authToken, recipEmail, recipPassphrase stri
 		return nil, err
 	}
 
-	serverBaseURL = strings.TrimSuffix(serverBaseURL, "/")
+	serverBaseURL = strings.TrimRight(serverBaseURL, "/")
 
 	return GetSharesByKeypair(serverBaseURL, authToken, keypair)
 }

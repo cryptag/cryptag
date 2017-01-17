@@ -58,7 +58,7 @@ func CreateEphemeral(serverBaseURL string, cfg *backend.Config) (shareURL string
 		return "", err
 	}
 
-	serverBaseURL = strings.TrimSuffix(serverBaseURL, "/")
+	serverBaseURL = strings.TrimRight(serverBaseURL, "/")
 
 	if serverBaseURL == "" {
 		serverBaseURL = DefaultServerURL
@@ -119,6 +119,6 @@ func Post(url string, filebr io.Reader, headers http.Header) error {
 // server at serverBaseURL is hosting Shares for the user whose
 // keypair can be generated with passphrase.
 func BuildShareURL(serverBaseURL string, passphrase string) string {
-	serverBaseURL = strings.TrimSuffix(serverBaseURL, "/")
+	serverBaseURL = strings.TrimRight(serverBaseURL, "/")
 	return serverBaseURL + "/#" + passphrase
 }
