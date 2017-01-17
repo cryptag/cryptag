@@ -31,7 +31,16 @@ func init() {
 		dashB = true
 	}
 	if backendName == "" {
-		backendName = "default"
+		defaultExists, err := backend.IsDefaultBackendSet(cryptag.BackendPath)
+		if err != nil {
+			log.Printf("Error checking for default Backend: %v\n", err)
+
+			// FALL THROUGH
+		}
+
+		if defaultExists {
+			backendName = "default"
+		}
 	}
 }
 
