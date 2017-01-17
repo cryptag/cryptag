@@ -112,5 +112,6 @@ func Post(url string, filebr io.Reader, headers http.Header) error {
 // server at serverBaseURL is hosting Shares for the user whose
 // keypair can be generated with passphrase.
 func BuildShareURL(serverBaseURL string, passphrase string) string {
+	serverBaseURL = strings.TrimSuffix(serverBaseURL, "/")
 	return serverBaseURL + "/#" + passphrase
 }
