@@ -379,7 +379,11 @@ func main() {
 		if getURL != "" {
 			configs, err := share.GetConfigsByInviteURL(getURL)
 			if err != nil {
-				log.Fatalf("Error fetching configs: %v", err)
+				if len(configs) == 0 {
+					log.Fatalf("Error fetching configs: %v", err)
+				}
+
+				// FALL THROUGH if len(configs) > 0
 			}
 
 			for _, cfg := range configs {
