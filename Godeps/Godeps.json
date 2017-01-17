@@ -85,23 +85,23 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
-			"Rev": "811831de4c4dd03a0b8737233af3b36852386373"
+			"Rev": "f6b343c37ca80bfa8ea539da67a0b621f84fab1d"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/poly1305",
-			"Rev": "811831de4c4dd03a0b8737233af3b36852386373"
+			"Rev": "f6b343c37ca80bfa8ea539da67a0b621f84fab1d"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/salsa20/salsa",
-			"Rev": "811831de4c4dd03a0b8737233af3b36852386373"
+			"Rev": "f6b343c37ca80bfa8ea539da67a0b621f84fab1d"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "fb93926129b8ec0056f2f458b1f519654814edf0"
+			"Rev": "f2499483f923065a842d38eb4c7f1927e6fc6e6d"
 		},
 		{
 			"ImportPath": "golang.org/x/net/proxy",
-			"Rev": "fb93926129b8ec0056f2f458b1f519654814edf0"
+			"Rev": "f2499483f923065a842d38eb4c7f1927e6fc6e6d"
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
