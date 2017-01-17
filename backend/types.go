@@ -3,7 +3,10 @@
 
 package backend
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	TypeDropboxRemote = "dropbox"
@@ -11,8 +14,17 @@ const (
 	TypeWebserver     = "webserver"
 )
 
+var (
+	ErrNoDefaultBackend = errors.New("backend: no default backend set;" +
+		" specify a backend explicitly or set a default to use")
+)
+
 func LoadBackend(backendPath, backendName string) (Backend, error) {
 	if backendName == "" {
+		defaultExists, _ := IsDefaultBackendSet(backendPath)
+		if !defaultExists {
+			return nil, ErrNoDefaultBackend
+		}
 		backendName = "default"
 	}
 
