@@ -13,11 +13,13 @@ import (
 	"strings"
 
 	minilock "github.com/cathalgarvey/go-minilock"
+	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/backend"
 )
 
 const (
 	DefaultServerURL         = "https://minishare.cryptag.org"
+	DefaultServerTorURL      = "http://ptga662wjtg2cie3.onion"
 	DefaultWordsInPassphrase = 12
 )
 
@@ -56,12 +58,18 @@ func CreateEphemeral(serverBaseURL string, cfg *backend.Config) (shareURL string
 		return "", err
 	}
 
+	serverBaseURL = strings.TrimSuffix(serverBaseURL, "/")
+
 	if serverBaseURL == "" {
 		serverBaseURL = DefaultServerURL
 	} else if !strings.HasPrefix(serverBaseURL, "http") {
-		serverBaseURL = "https://" + serverBaseURL
+		if strings.HasSuffix(serverBaseURL, ".onion") {
+			serverBaseURL = "http://" + serverBaseURL
+			cryptag.UseTor = true
+		} else {
+			serverBaseURL = "https://" + serverBaseURL
+		}
 	}
-	serverBaseURL = strings.TrimSuffix(serverBaseURL, "/")
 
 	recipientID, err := recipient.EncodeID()
 	if err != nil {
@@ -92,8 +100,7 @@ func Post(url string, filebr io.Reader, headers http.Header) error {
 		req.Header[k] = v
 	}
 
-	// TODO: Use client that eventually times out
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		return err
 	}

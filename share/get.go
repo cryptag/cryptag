@@ -14,6 +14,7 @@ import (
 
 	minilock "github.com/cathalgarvey/go-minilock"
 	"github.com/cathalgarvey/go-minilock/taber"
+	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/types"
 )
@@ -38,6 +39,10 @@ func GetSharesByInviteURL(inviteURL string) ([]*Share, error) {
 	serverBaseURL, passphrase, err := ParseInviteURL(inviteURL)
 	if err != nil {
 		return nil, err
+	}
+
+	if strings.HasSuffix(serverBaseURL, ".onion") {
+		cryptag.UseTor = true
 	}
 
 	authToken := ""
@@ -149,8 +154,7 @@ func Get(serverBaseURL, path, authToken string, keypair *taber.Keys) (*http.Resp
 
 	req.Header.Add("Authorization", "Bearer "+authToken)
 
-	// TODO: Use client that times out
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +171,7 @@ func Get(serverBaseURL, path, authToken string, keypair *taber.Keys) (*http.Resp
 
 		req.Header["Authorization"] = []string{"Bearer " + newAuthToken}
 
-		// TODO: Use client that eventually times out
-		return getErrChecks(http.DefaultClient.Do(req))
+		return getErrChecks(getClient().Do(req))
 	}
 
 	return getErrChecks(resp, err)
@@ -211,8 +214,7 @@ func Login(serverBaseURL string, keypair *taber.Keys) (authToken string, err err
 
 	req.Header.Add("X-Minilock-Id", mID)
 
-	// TODO: Use client that eventually times out
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		return "", err
 	}
