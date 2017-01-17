@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,6 +25,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	uuid "github.com/nu7hatch/gouuid"
+	"golang.org/x/net/context"
 )
 
 const (
