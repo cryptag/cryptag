@@ -46,7 +46,7 @@ func init() {
 	// Change LocalDataPath if apparently on Android
 	if runtime.GOOS == "linux" && runtime.GOARCH == "arm" {
 		androidStorage := "/storage/sdcard0"
-		if _, err := os.Stat(androidStorage); os.IsNotExist(err) {
+		if _, err := os.Stat(androidStorage); !os.IsNotExist(err) {
 			LocalDataPath = androidStorage + "/.cryptag"
 		}
 	}
