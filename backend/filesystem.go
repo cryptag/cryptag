@@ -24,6 +24,7 @@ type FileSystem struct {
 	dataPath string
 	tagsPath string // subdirectory of dataPath
 	rowsPath string // subdirectory of dataPath
+	new      bool
 	key      *[32]byte
 }
 
@@ -37,6 +38,7 @@ func NewFileSystem(conf *Config) (*FileSystem, error) {
 		dataPath: conf.DataPath,
 		tagsPath: path.Join(conf.DataPath, "tags"),
 		rowsPath: path.Join(conf.DataPath, "rows"),
+		new:      conf.New,
 		key:      conf.Key,
 	}
 	if err := fs.init(); err != nil {
@@ -126,6 +128,23 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 	return NewFileSystem(conf)
 }
 
+// LoadOrCreateDefaultFileSystemBackend calls LoadOrCreateFileSystem
+// then, if the returned FileSystem was just created anew, makes it
+// the default Backend.
+func LoadOrCreateDefaultFileSystemBackend(backendPath, backendName string) (*FileSystem, error) {
+	fs, err := LoadOrCreateFileSystem(backendPath, backendName)
+	if err != nil {
+		return nil, err
+	}
+	if fs.new {
+		err = SetDefaultBackend(backendPath, fs.name)
+		if err != nil {
+			return fs, err
+		}
+	}
+	return fs, nil
+}
+
 func (fs *FileSystem) Name() string {
 	return fs.name
 }
@@ -144,6 +163,7 @@ func (fs *FileSystem) ToConfig() (*Config, error) {
 	config := Config{
 		Name:     name,
 		Type:     TypeFileSystem,
+		New:      fs.new,
 		Key:      fs.key,
 		DataPath: fs.dataPath,
 	}
