@@ -45,7 +45,7 @@ func main() {
 
 	if len(backends) == 0 {
 		log.Println("No backends found")
-		bk, err := backend.LoadOrCreateFileSystem(
+		bk, err := backend.LoadOrCreateDefaultFileSystemBackend(
 			os.Getenv("BACKEND_PATH"),
 			os.Getenv("BACKEND"),
 		)
