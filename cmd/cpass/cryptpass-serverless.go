@@ -22,7 +22,7 @@ var (
 )
 
 func init() {
-	fs, err := backend.LoadOrCreateFileSystem(
+	fs, err := backend.LoadOrCreateDefaultFileSystemBackend(
 		os.Getenv("BACKEND_PATH"),
 		os.Getenv("BACKEND"),
 	)

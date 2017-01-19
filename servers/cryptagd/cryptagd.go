@@ -45,7 +45,7 @@ func main() {
 
 	if len(backends) == 0 {
 		log.Println("No backends found")
-		bk, err := backend.LoadOrCreateFileSystem(
+		bk, err := backend.LoadOrCreateDefaultFileSystemBackend(
 			os.Getenv("BACKEND_PATH"),
 			os.Getenv("BACKEND"),
 		)
@@ -132,7 +132,7 @@ func main() {
 		if err != nil {
 			api.WriteErrorStatus(w, `Error parsing POST of the form`+
 				` {"unencrypted": "(base64-encoded string)", "plaintags":`+
-				` ["tag1", "tag2"]}`+err.Error(), http.StatusBadRequest)
+				` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
 			return
 		}
 
