@@ -215,8 +215,7 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading config file `%v`: %v",
-			configFile, err)
+		return nil, err
 	}
 
 	var conf Config
