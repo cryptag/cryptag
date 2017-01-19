@@ -111,7 +111,7 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 	if err != nil {
 		// If config doesn't exist, create new one
 
-		if os.IsNotExist(err) {
+		if strings.Contains(err.Error(), "no such file or directory") {
 			conf = &Config{
 				Name:  backendName,
 				Type:  TypeFileSystem,
