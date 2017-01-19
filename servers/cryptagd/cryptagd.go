@@ -127,16 +127,38 @@ func main() {
 		}
 		defer req.Body.Close()
 
-		var trow trusted.Row
-		err = json.Unmarshal(body, &trow)
-		if err != nil {
-			api.WriteErrorStatus(w, `Error parsing POST of the form`+
-				` {"unencrypted": "(base64-encoded string)", "plaintags":`+
-				` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
-			return
+		// Populate these two vars depending on whether the input POST
+		// data is a string or []byte.
+		var rowData []byte
+		var plaintags []string
+
+		if strings.Contains(req.URL.Path, "/string") {
+			var tsrow trusted.StringRow
+			err = json.Unmarshal(body, &tsrow)
+			if err != nil {
+				api.WriteErrorStatus(w, `Error parsing POST of the form`+
+					` {"string": "String/text content", "plaintags":`+
+					` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			rowData = []byte(tsrow.String)
+			plaintags = tsrow.PlainTags
+		} else {
+			var trow trusted.Row
+			err = json.Unmarshal(body, &trow)
+			if err != nil {
+				api.WriteErrorStatus(w, `Error parsing POST of the form`+
+					` {"unencrypted": "(base64-encoded string)", "plaintags":`+
+					` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			rowData = trow.Unencrypted
+			plaintags = trow.PlainTags
 		}
 
-		row, err := backend.CreateRow(db, pairs.Get(db), trow.Unencrypted, trow.PlainTags)
+		row, err := backend.CreateRow(db, pairs.Get(db), rowData, plaintags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
@@ -480,6 +502,7 @@ func main() {
 	r.HandleFunc("/trusted/rows/get/versioned", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/get/versioned/latest", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows", CreateRow).Methods("POST")
+	r.HandleFunc("/trusted/rows/string", CreateRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/file", CreateFileRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/list", ListRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/list/versioned", ListRows).Methods("POST")
