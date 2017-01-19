@@ -124,7 +124,7 @@ func main() {
 		// Add first row's contents to clipboard
 		dec := rows[0].Decrypted()
 		if err = clipboard.WriteAll(dec); err != nil {
-			log.Printf("Error writing first result to clipboard: %v\n", err)
+			log.Printf("WARNING: Error writing first result to clipboard: %v\n", err)
 		} else {
 			log.Printf("Added first result `%s` to clipboard\n", dec)
 		}
