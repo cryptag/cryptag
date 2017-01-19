@@ -77,7 +77,7 @@ func main() {
 
 	switch osArgs[1] {
 	case "init":
-		if len(osArgs) < 5 {
+		if len(osArgs) < 4 {
 			cli.ArgFatal(allInitUsage)
 		}
 
@@ -449,7 +449,7 @@ func containsAny(in string, strs ...string) bool {
 var (
 	prefix = "Usage: " + filepath.Base(os.Args[0]) + " "
 
-	initFilesystemUsage = prefix + "init filesystem <backend name> <data base path>"
+	initFilesystemUsage = prefix + "init filesystem <backend name> [<data base path>]"
 	initSandstormUsage  = prefix + "init sandstorm  <backend name> <sandstorm web key>"
 	initWebserverUsage  = prefix + "init webserver  <backend name> <base url> <auth token>"
 	initDropboxUsage    = prefix + "init dropbox    <backend name> <app key> <app secret> <access token> <base path>"

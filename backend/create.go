@@ -6,6 +6,7 @@ package backend
 import (
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/cryptag/cryptag"
@@ -64,9 +65,6 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 	if bkName == "" {
 		return nil, fmt.Errorf("Invalid Backend name `%v`", bkName)
 	}
-	if len(args) < 1 {
-		return nil, fmt.Errorf("Need > %v additional arguments", len(args))
-	}
 
 	switch bkType {
 	case TypeDropboxRemote:
@@ -83,9 +81,16 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 		return NewDropboxRemote(nil, bkName, cfg)
 
 	case TypeFileSystem:
-		if len(args) != 1 {
-			return nil, fmt.Errorf("Filesystem Backend needs 1 arg, not %v",
+		if len(args) > 1 {
+			return nil, fmt.Errorf("Filesystem Backend needs 0 or 1 args, not %v",
 				len(args))
+		}
+
+		var dataPath string
+		if len(args) == 1 {
+			dataPath = args[0]
+		} else {
+			dataPath = path.Join(cryptag.LocalDataPath, "backends", bkName)
 		}
 
 		conf := &Config{
@@ -93,7 +98,7 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 			Type:     TypeFileSystem,
 			New:      true,
 			Local:    true,
-			DataPath: args[0],
+			DataPath: dataPath,
 		}
 
 		return NewFileSystem(conf)
