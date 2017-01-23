@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/api"
@@ -535,7 +536,7 @@ func main() {
 	listenAddr := "localhost:" + port
 
 	log.Printf("Listening on %v\n", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, middleware.Then(r)))
+	log.Fatal(server(listenAddr, middleware.Then(r)).ListenAndServe())
 }
 
 func logIncomingReq(h http.Handler) http.Handler {
@@ -543,6 +544,16 @@ func logIncomingReq(h http.Handler) http.Handler {
 		log.Printf("INCOMING: %v %v\n", req.Method, req.URL.Path)
 		h.ServeHTTP(w, req)
 	})
+}
+
+func server(listenAddr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:           listenAddr,
+		Handler:        handler,
+		ReadTimeout:    30 * time.Second,
+		WriteTimeout:   30 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
 }
 
 func getBackend(bkStore *BackendStore, w http.ResponseWriter, req *http.Request) (bk backend.Backend, handledReq bool) {
