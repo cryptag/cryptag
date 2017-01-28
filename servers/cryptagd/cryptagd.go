@@ -22,6 +22,7 @@ import (
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/keyutil"
 	"github.com/cryptag/cryptag/rowutil"
+	"github.com/cryptag/cryptag/share"
 	"github.com/cryptag/cryptag/types"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -329,6 +330,76 @@ func main() {
 		api.WriteJSONStatus(w, jsonNoError, http.StatusCreated)
 	}
 
+	GetInvitesByURL := func(w http.ResponseWriter, req *http.Request) {
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+		defer req.Body.Close()
+
+		invite := map[string]string{}
+
+		err = json.Unmarshal(body, &invite)
+		if err != nil {
+			api.WriteError(w, "Error parsing JSON POST: "+err.Error())
+			return
+		}
+
+		inviteURL := invite["url"]
+
+		configs, err := share.GetConfigsByInviteURL(inviteURL)
+		if err != nil {
+			if len(configs) == 0 {
+				api.WriteError(w, "Error fetching configs: "+err.Error())
+				return
+			}
+
+			// FALL THROUGH if len(configs) > 0
+		}
+
+		var newBks []string
+		var firsterr error
+
+		for _, cfg := range configs {
+			newBk, err := backend.CreateFromConfig(cryptag.BackendPath, cfg)
+			if err != nil {
+				log.Printf("Error saving config %v: %v\n", cfg.Name, err)
+
+				if firsterr == nil {
+					firsterr = fmt.Errorf("Error saving config `%s`: %v",
+						cfg.Name, err)
+				}
+
+				// FALL THROUGH
+				continue
+			}
+
+			newBks = append(newBks, cfg.Name)
+
+			err = bkStore.Add(newBk)
+			if err != nil {
+				log.Printf("Error adding new Backend `%s`: %s\n", err)
+
+				if firsterr == nil {
+					firsterr = fmt.Errorf("Error adding new Backend `%s`: %v",
+						cfg.Name, err)
+				}
+
+				// FALL THROUGH
+				continue
+			}
+		}
+
+		if len(newBks) == 0 {
+			api.WriteError(w, firsterr.Error())
+			return
+		}
+
+		resp := map[string][]string{"new_backends": newBks}
+		api.WriteJSONStatus(w, resp, http.StatusCreated)
+	}
+
 	ListRows := func(w http.ResponseWriter, req *http.Request) {
 		db, handledReq := getBackend(bkStore, w, req)
 		if handledReq {
@@ -517,6 +588,8 @@ func main() {
 
 	r.HandleFunc("/trusted/key", GetKey).Methods("GET")
 	r.HandleFunc("/trusted/key", SetKey).Methods("POST")
+
+	r.HandleFunc("/trusted/invites/get/url", GetInvitesByURL).Methods("POST")
 
 	r.HandleFunc("/trusted/backends", GetBackends).Methods("GET")
 	r.HandleFunc("/trusted/backends/names", GetBackendNames).Methods("GET")
