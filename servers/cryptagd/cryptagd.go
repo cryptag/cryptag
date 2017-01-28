@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/api"
@@ -21,6 +22,7 @@ import (
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/keyutil"
 	"github.com/cryptag/cryptag/rowutil"
+	"github.com/cryptag/cryptag/share"
 	"github.com/cryptag/cryptag/types"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -127,16 +129,38 @@ func main() {
 		}
 		defer req.Body.Close()
 
-		var trow trusted.Row
-		err = json.Unmarshal(body, &trow)
-		if err != nil {
-			api.WriteErrorStatus(w, `Error parsing POST of the form`+
-				` {"unencrypted": "(base64-encoded string)", "plaintags":`+
-				` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
-			return
+		// Populate these two vars depending on whether the input POST
+		// data is a string or []byte.
+		var rowData []byte
+		var plaintags []string
+
+		if strings.Contains(req.URL.Path, "/string") {
+			var tsrow trusted.StringRow
+			err = json.Unmarshal(body, &tsrow)
+			if err != nil {
+				api.WriteErrorStatus(w, `Error parsing POST of the form`+
+					` {"string": "String/text content", "plaintags":`+
+					` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			rowData = []byte(tsrow.String)
+			plaintags = tsrow.PlainTags
+		} else {
+			var trow trusted.Row
+			err = json.Unmarshal(body, &trow)
+			if err != nil {
+				api.WriteErrorStatus(w, `Error parsing POST of the form`+
+					` {"unencrypted": "(base64-encoded string)", "plaintags":`+
+					` ["tag1", "tag2"]} -- `+err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			rowData = trow.Unencrypted
+			plaintags = trow.PlainTags
 		}
 
-		row, err := backend.CreateRow(db, pairs.Get(db), trow.Unencrypted, trow.PlainTags)
+		row, err := backend.CreateRow(db, pairs.Get(db), rowData, plaintags)
 		if err != nil {
 			api.WriteError(w, err.Error())
 			return
@@ -304,6 +328,76 @@ func main() {
 		}
 
 		api.WriteJSONStatus(w, jsonNoError, http.StatusCreated)
+	}
+
+	GetInvitesByURL := func(w http.ResponseWriter, req *http.Request) {
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			api.WriteError(w, err.Error())
+			return
+		}
+		defer req.Body.Close()
+
+		invite := map[string]string{}
+
+		err = json.Unmarshal(body, &invite)
+		if err != nil {
+			api.WriteError(w, "Error parsing JSON POST: "+err.Error())
+			return
+		}
+
+		inviteURL := invite["url"]
+
+		configs, err := share.GetConfigsByInviteURL(inviteURL)
+		if err != nil {
+			if len(configs) == 0 {
+				api.WriteError(w, "Error fetching configs: "+err.Error())
+				return
+			}
+
+			// FALL THROUGH if len(configs) > 0
+		}
+
+		var newBks []string
+		var firsterr error
+
+		for _, cfg := range configs {
+			newBk, err := backend.CreateFromConfig(cryptag.BackendPath, cfg)
+			if err != nil {
+				log.Printf("Error saving config %v: %v\n", cfg.Name, err)
+
+				if firsterr == nil {
+					firsterr = fmt.Errorf("Error saving config `%s`: %v",
+						cfg.Name, err)
+				}
+
+				// FALL THROUGH
+				continue
+			}
+
+			newBks = append(newBks, cfg.Name)
+
+			err = bkStore.Add(newBk)
+			if err != nil {
+				log.Printf("Error adding new Backend `%s`: %s\n", err)
+
+				if firsterr == nil {
+					firsterr = fmt.Errorf("Error adding new Backend `%s`: %v",
+						cfg.Name, err)
+				}
+
+				// FALL THROUGH
+				continue
+			}
+		}
+
+		if len(newBks) == 0 {
+			api.WriteError(w, firsterr.Error())
+			return
+		}
+
+		resp := map[string][]string{"new_backends": newBks}
+		api.WriteJSONStatus(w, resp, http.StatusCreated)
 	}
 
 	ListRows := func(w http.ResponseWriter, req *http.Request) {
@@ -480,6 +574,7 @@ func main() {
 	r.HandleFunc("/trusted/rows/get/versioned", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/get/versioned/latest", GetRows).Methods("POST")
 	r.HandleFunc("/trusted/rows", CreateRow).Methods("POST")
+	r.HandleFunc("/trusted/rows/string", CreateRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/file", CreateFileRow).Methods("POST")
 	r.HandleFunc("/trusted/rows/list", ListRows).Methods("POST")
 	r.HandleFunc("/trusted/rows/list/versioned", ListRows).Methods("POST")
@@ -493,6 +588,8 @@ func main() {
 
 	r.HandleFunc("/trusted/key", GetKey).Methods("GET")
 	r.HandleFunc("/trusted/key", SetKey).Methods("POST")
+
+	r.HandleFunc("/trusted/invites/get/url", GetInvitesByURL).Methods("POST")
 
 	r.HandleFunc("/trusted/backends", GetBackends).Methods("GET")
 	r.HandleFunc("/trusted/backends/names", GetBackendNames).Methods("GET")
@@ -512,7 +609,7 @@ func main() {
 	listenAddr := "localhost:" + port
 
 	log.Printf("Listening on %v\n", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, middleware.Then(r)))
+	log.Fatal(server(listenAddr, middleware.Then(r)).ListenAndServe())
 }
 
 func logIncomingReq(h http.Handler) http.Handler {
@@ -520,6 +617,16 @@ func logIncomingReq(h http.Handler) http.Handler {
 		log.Printf("INCOMING: %v %v\n", req.Method, req.URL.Path)
 		h.ServeHTTP(w, req)
 	})
+}
+
+func server(listenAddr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:           listenAddr,
+		Handler:        handler,
+		ReadTimeout:    30 * time.Second,
+		WriteTimeout:   30 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
 }
 
 func getBackend(bkStore *BackendStore, w http.ResponseWriter, req *http.Request) (bk backend.Backend, handledReq bool) {
