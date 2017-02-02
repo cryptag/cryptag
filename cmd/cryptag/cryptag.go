@@ -58,7 +58,7 @@ func main() {
 	}
 
 	if !containsAny(osArgs[1], "init", "listbackends", "lb",
-		"setdefaultbackend", "sdb") {
+		"setdefaultbackend", "sdb", "invite") {
 
 		var err error
 		db, err = backend.LoadBackend("", backendName)
@@ -374,6 +374,9 @@ func main() {
 
 		if osArgs[2] == "-c" {
 			createLocally = true
+			if db == nil {
+				cli.ArgFatal("Usage: cryptag -b <backend> invite -c")
+			}
 		} else if osArgs[2] == "-s" {
 			if len(osArgs) > 3 {
 				serverBaseURL = osArgs[3]
