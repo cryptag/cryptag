@@ -374,9 +374,6 @@ func main() {
 
 		if osArgs[2] == "-c" {
 			createLocally = true
-			if db == nil {
-				cli.ArgFatal("Usage: cryptag -b <backend> invite -c")
-			}
 		} else if osArgs[2] == "-s" {
 			if len(osArgs) > 3 {
 				serverBaseURL = osArgs[3]
@@ -388,6 +385,7 @@ func main() {
 			getURL = osArgs[3]
 		}
 
+		// Getting invite
 		if getURL != "" {
 			configs, err := share.GetConfigsByInviteURL(getURL)
 			if err != nil {
@@ -407,6 +405,14 @@ func main() {
 			}
 
 			return
+		}
+
+		// Creating invite, either on server or locally
+
+		db, err := backend.LoadBackend("", backendName)
+		if err != nil {
+			log.Printf("Error loading Backend `%s`: %v\n", backendName, err)
+			cli.ArgFatal(allInviteUsage)
 		}
 
 		cfg, err := db.ToConfig()
