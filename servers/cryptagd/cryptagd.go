@@ -52,10 +52,16 @@ func main() {
 			os.Getenv("BACKEND"),
 		)
 		if err != nil {
-			log.Fatalf("No Backends successfully read! Failed to create "+
-				"one: %v", err)
+			if bk == nil {
+				log.Fatalf("No Backends successfully read! Failed to create "+
+					"one: %v", err)
+			}
+			log.Printf("Error setting Backend `%s` as default; continuing anyway; err: %s",
+				bk.Name(), err)
+
+			// FALL THROUGH
 		}
-		log.Printf("...but this one was loaded or created: %v\n", bk.Name())
+		log.Printf("...but this Backend was loaded or created: %v\n", bk.Name())
 		backends = []backend.Backend{bk}
 	}
 
@@ -379,7 +385,7 @@ func main() {
 
 			err = bkStore.Add(newBk)
 			if err != nil {
-				log.Printf("Error adding new Backend `%s`: %s\n", err)
+				log.Printf("Error adding new Backend `%s`: %s\n", newBk.Name(), err)
 
 				if firsterr == nil {
 					firsterr = fmt.Errorf("Error adding new Backend `%s`: %v",
