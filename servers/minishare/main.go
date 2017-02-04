@@ -411,7 +411,7 @@ func DeleteFirstNSharesByMinilockID(mc *memcache.Client, mID string, nShares int
 
 	if nShares > len(shares) {
 		return fmt.Errorf("Cannot delete first %d of a total of %d existing"+
-			" shares: %v", nShares, len(shares))
+			" shares", nShares, len(shares))
 	}
 
 	remaining := shares[nShares:]

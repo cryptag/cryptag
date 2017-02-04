@@ -385,7 +385,7 @@ func main() {
 
 			err = bkStore.Add(newBk)
 			if err != nil {
-				log.Printf("Error adding new Backend `%s`: %s\n", err)
+				log.Printf("Error adding new Backend `%s`: %s\n", newBk.Name(), err)
 
 				if firsterr == nil {
 					firsterr = fmt.Errorf("Error adding new Backend `%s`: %v",

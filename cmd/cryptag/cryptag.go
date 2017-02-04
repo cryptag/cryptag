@@ -417,7 +417,7 @@ func main() {
 
 		cfg, err := db.ToConfig()
 		if err != nil {
-			log.Fatalf("Error turning Backend %v into config: %v", db.Name, err)
+			log.Fatalf("Error turning Backend %v into config: %v", db.Name(), err)
 		}
 
 		if !createLocally {
