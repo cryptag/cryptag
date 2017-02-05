@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	minilock "github.com/cathalgarvey/go-minilock"
-	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/backend"
 )
 
@@ -58,49 +57,36 @@ func CreateEphemeral(serverBaseURL string, cfg *backend.Config) (shareURL string
 		return "", err
 	}
 
-	serverBaseURL = strings.TrimRight(serverBaseURL, "/")
-
-	if serverBaseURL == "" {
-		serverBaseURL = DefaultServerURL
-	} else if !strings.HasPrefix(serverBaseURL, "http") {
-		if strings.HasSuffix(serverBaseURL, ".onion") {
-			serverBaseURL = "http://" + serverBaseURL
-			cryptag.UseTor = true
-		} else {
-			serverBaseURL = "https://" + serverBaseURL
-		}
-	}
-
 	recipientID, err := recipient.EncodeID()
 	if err != nil {
 		return "", err
 	}
 
-	err = Post(serverBaseURL+"/shares/once", bytes.NewReader(fileb),
+	cl := NewClient(serverBaseURL)
+
+	err = Post(cl, "/shares/once", bytes.NewReader(fileb),
 		recipientHeaders([]string{recipientID}))
 	if err != nil {
 		return "", err
 	}
 
-	return BuildShareURL(serverBaseURL, passphrase), nil
+	return BuildShareURL(cl.ServerBaseURL, passphrase), nil
 }
 
 func recipientHeaders(recips []string) http.Header {
 	return http.Header{"X-Minilock-Recipient-Ids": recips}
 }
 
-// Posts reads filebr and POSTs it to the Share server at url.
-func Post(url string, filebr io.Reader, headers http.Header) error {
-	req, err := http.NewRequest("POST", url, filebr)
+// Posts reads filebr and POSTs it to the Share server at
+// cl.ServerBaseURL + urlPath.
+func Post(cl *Client, urlPath string, filebr io.Reader, headers http.Header) error {
+	req, err := http.NewRequest("POST", cl.ServerBaseURL+urlPath, filebr)
 	if err != nil {
 		return err
 	}
+	req.Header = headers
 
-	for k, v := range headers {
-		req.Header[k] = v
-	}
-
-	resp, err := getClient().Do(req)
+	resp, err := cl.Client.Do(req)
 	if err != nil {
 		return err
 	}
