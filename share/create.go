@@ -27,8 +27,7 @@ const (
 // serverBaseURL, returning the location at which the Backend Config
 // (aka invite) can be retrieved.
 //
-// If serverBaseURL is not specified, DefaultServerURL is used
-// instead.
+// If serverBaseURL is empty, DefaultServerURL is used.
 func CreateEphemeral(serverBaseURL string, cfg *backend.Config) (shareURL string, err error) {
 	cfgb, err := json.Marshal(cfg)
 	if err != nil {

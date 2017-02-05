@@ -58,7 +58,7 @@ func getClient(useTor bool) *http.Client {
 	if useTor {
 		client, err := tor.NewClient()
 		if err != nil {
-			log.Printf("Error creating Tor-capable client %v\n", err)
+			log.Printf("Error creating Tor-capable client: %v\n", err)
 			return http.DefaultClient
 		}
 		if types.Debug {
