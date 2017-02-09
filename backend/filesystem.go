@@ -19,6 +19,10 @@ import (
 	"github.com/elimisteve/fun"
 )
 
+var (
+	ErrWrongBackendType = errors.New("backend: wrong Backend type")
+)
+
 type FileSystem struct {
 	name     string
 	dataPath string
@@ -123,6 +127,10 @@ func LoadOrCreateFileSystem(backendPath, backendName string) (*FileSystem, error
 			return NewFileSystem(conf)
 		}
 		return nil, err
+	}
+
+	if conf.GetType() != TypeFileSystem {
+		return nil, ErrWrongBackendType
 	}
 
 	return NewFileSystem(conf)
