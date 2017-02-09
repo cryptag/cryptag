@@ -14,7 +14,6 @@ import (
 
 	minilock "github.com/cathalgarvey/go-minilock"
 	"github.com/cathalgarvey/go-minilock/taber"
-	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/types"
 )
@@ -41,13 +40,9 @@ func GetSharesByInviteURL(inviteURL string) ([]*Share, error) {
 		return nil, err
 	}
 
-	if strings.HasSuffix(serverBaseURL, ".onion") {
-		cryptag.UseTor = true
-	}
+	client := NewClient(serverBaseURL)
 
-	authToken := ""
-	return GetShares(serverBaseURL, authToken, EmailFromPassphrase(passphrase),
-		passphrase)
+	return GetShares(client, EmailFromPassphrase(passphrase), passphrase)
 }
 
 func ParseInviteURL(url string) (serverBaseURL, passphrase string, err error) {
@@ -63,24 +58,22 @@ func ParseInviteURL(url string) (serverBaseURL, passphrase string, err error) {
 
 // GetShares fetches all shares for the user with the given email and
 // passphrase.
-func GetShares(serverBaseURL string, authToken, recipEmail, recipPassphrase string) ([]*Share, error) {
+func GetShares(cl *Client, recipEmail, recipPassphrase string) ([]*Share, error) {
 	keypair, err := taber.FromEmailAndPassphrase(recipEmail, recipPassphrase)
 	if err != nil {
 		return nil, err
 	}
 
-	serverBaseURL = strings.TrimRight(serverBaseURL, "/")
-
-	return GetSharesByKeypair(serverBaseURL, authToken, keypair)
+	return GetSharesByKeypair(cl, keypair)
 }
 
-func GetConfigsByKeypair(serverBaseURL, authToken string, keypair *taber.Keys) ([]*backend.Config, error) {
-	return toConfigs(GetSharesByKeypair(serverBaseURL, authToken, keypair))
+func GetConfigsByKeypair(cl *Client, keypair *taber.Keys) ([]*backend.Config, error) {
+	return toConfigs(GetSharesByKeypair(cl, keypair))
 }
 
 // GetShares fetches all shares for the user with the given keypair.
-func GetSharesByKeypair(serverBaseURL, authToken string, keypair *taber.Keys) ([]*Share, error) {
-	resp, err := Get(serverBaseURL, "/shares/once", authToken, keypair)
+func GetSharesByKeypair(cl *Client, keypair *taber.Keys) ([]*Share, error) {
+	resp, err := Get(cl, "/shares/once", keypair)
 	if err != nil {
 		return nil, err
 	}
@@ -135,26 +128,26 @@ func GetSharesByKeypair(serverBaseURL, authToken string, keypair *taber.Keys) ([
 // Get does an authenticated GET request to serverBaseURL+path. If
 // authToken is empty or stale, this function will log into the server
 // to get a new auth token, and _then_ execute the GET.
-func Get(serverBaseURL, path, authToken string, keypair *taber.Keys) (*http.Response, error) {
-	if authToken == "" {
-		token, err := Login(serverBaseURL, keypair)
+func Get(cl *Client, path string, keypair *taber.Keys) (*http.Response, error) {
+	if cl.AuthToken == "" {
+		token, err := Login(cl, keypair)
 		if err != nil {
 			return nil, err
 		}
 		if types.Debug {
 			log.Printf("Get: logged in; decrypted auth token: `%v`\n", token)
 		}
-		authToken = token
+		cl.AuthToken = token
 	}
 
-	req, err := http.NewRequest("GET", serverBaseURL+path, nil)
+	req, err := http.NewRequest("GET", cl.ServerBaseURL+path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", "Bearer "+authToken)
+	req.Header.Add("Authorization", "Bearer "+cl.AuthToken)
 
-	resp, err := getClient().Do(req)
+	resp, err := cl.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -164,14 +157,16 @@ func Get(serverBaseURL, path, authToken string, keypair *taber.Keys) (*http.Resp
 			log.Println("Unauthorized GET; logging in again to get new auth token")
 		}
 
-		newAuthToken, err := Login(serverBaseURL, keypair)
+		newAuthToken, err := Login(cl, keypair)
 		if err != nil {
 			return nil, err
 		}
 
+		cl.AuthToken = newAuthToken
+
 		req.Header["Authorization"] = []string{"Bearer " + newAuthToken}
 
-		return getErrChecks(getClient().Do(req))
+		return getErrChecks(cl.Client.Do(req))
 	}
 
 	return getErrChecks(resp, err)
@@ -198,11 +193,11 @@ func getErrChecks(resp *http.Response, err error) (*http.Response, error) {
 	return resp, nil
 }
 
-func Login(serverBaseURL string, keypair *taber.Keys) (authToken string, err error) {
+func Login(cl *Client, keypair *taber.Keys) (authToken string, err error) {
 	if types.Debug {
-		log.Printf("Logging into server `%s`\n", serverBaseURL)
+		log.Printf("Logging into server `%s`\n", cl.ServerBaseURL)
 	}
-	req, err := http.NewRequest("GET", serverBaseURL+"/login", nil)
+	req, err := http.NewRequest("GET", cl.ServerBaseURL+"/login", nil)
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +209,7 @@ func Login(serverBaseURL string, keypair *taber.Keys) (authToken string, err err
 
 	req.Header.Add("X-Minilock-Id", mID)
 
-	resp, err := getClient().Do(req)
+	resp, err := cl.Client.Do(req)
 	if err != nil {
 		return "", err
 	}
