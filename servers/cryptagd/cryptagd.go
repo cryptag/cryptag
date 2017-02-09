@@ -540,6 +540,8 @@ func main() {
 			// FALL THROUGH
 		}
 
+		bkStore.AddByConfig(configs...)
+
 		tconfigs := trusted.FromConfigs(configs)
 
 		api.WriteJSON(w, tconfigs)
@@ -566,6 +568,8 @@ func main() {
 		for _, fname := range bkFilenames {
 			bkNames = append(bkNames, backend.ConfigNameFromPath(fname))
 		}
+
+		bkStore.AddByName(bkNames...)
 
 		api.WriteJSON(w, bkNames)
 	}
@@ -744,6 +748,63 @@ func (store *BackendStore) Add(bk backend.Backend) error {
 
 	store.bks[bk.Name()] = bk
 	return nil
+}
+
+func (store *BackendStore) AddByConfig(configs ...*backend.Config) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	for _, cfg := range configs {
+		if _, exists := store.bks[cfg.Name]; exists {
+			continue
+		}
+		bk, err := backend.New(cfg)
+		if err != nil {
+			log.Printf("Error turning config `%s` into Backend: %v\n", cfg.Name,
+				err)
+			continue
+		}
+
+		store.bks[cfg.Name] = bk
+
+		if types.Debug {
+			log.Printf("Added Backend `%s` to bkStore\n", bk.Name())
+		}
+	}
+}
+
+func (store *BackendStore) AddByName(bkNames ...string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	var toAdd []string
+
+	for _, name := range bkNames {
+		if _, exists := store.bks[name]; exists {
+			continue
+		}
+
+		toAdd = append(toAdd, name)
+	}
+
+	bks, err := backend.ReadBackends("", strings.Join(toAdd, "|"))
+	if err != nil {
+		log.Printf("Error reading Backends `%#v`: %s\n", toAdd, err)
+		if len(bks) == 0 {
+			return
+		}
+
+		// FALL THROUGH
+	}
+
+	// Add new
+	for _, bk := range bks {
+		store.bks[bk.Name()] = bk
+
+		if types.Debug {
+			log.Printf("Added Backend `%s` to bkStore\n", bk.Name())
+		}
+	}
 }
 
 //
