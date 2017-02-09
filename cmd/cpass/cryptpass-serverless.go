@@ -22,12 +22,24 @@ var (
 )
 
 func init() {
-	fs, err := backend.LoadOrCreateDefaultFileSystemBackend(
+	bkName := os.Getenv("BACKEND")
+
+	var fs backend.Backend
+	fs, err := backend.LoadOrCreateFileSystem(
 		os.Getenv("BACKEND_PATH"),
-		os.Getenv("BACKEND"),
+		bkName,
 	)
 	if err != nil {
-		log.Fatalf("LoadOrCreateFileSystem error: %v\n", err)
+		if err != backend.ErrWrongBackendType {
+			log.Fatalf("LoadOrCreateFileSystem error: %v\n", err)
+		}
+
+		// err == backend.ErrWrongBackendType
+
+		fs, err = backend.LoadBackend("", bkName)
+		if err != nil {
+			log.Fatalf("Error loading Backend `%s` using LoadBackend: %v\n", bkName, err)
+		}
 	}
 
 	db = fs
