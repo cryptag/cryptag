@@ -33,6 +33,9 @@ var makers = makerMap{
 		TypeWebserver: func(cfg *Config) (Backend, error) {
 			return WebserverFromConfig(cfg)
 		},
+		TypeSandstorm_Sythetic: func(cfg *Config) (Backend, error) {
+			return SandstormFromConfig(cfg)
+		},
 	},
 }
 

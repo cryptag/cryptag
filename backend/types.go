@@ -12,6 +12,8 @@ const (
 	TypeDropboxRemote = "dropbox"
 	TypeFileSystem    = "filesystem"
 	TypeWebserver     = "webserver"
+
+	TypeSandstorm_Sythetic = "sandstorm"
 )
 
 var (
