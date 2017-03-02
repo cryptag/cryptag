@@ -137,7 +137,7 @@ func (conf *Config) Canonicalize() error {
 		conf.Key = key
 	}
 
-	if conf.Local && conf.DataPath == "" {
+	if conf.GetType() == TypeFileSystem && conf.DataPath == "" {
 		// Save data to ~/.cryptag/backends/${conf.Name}/{rows,tags}
 		conf.DataPath = path.Join(cryptag.LocalDataPath, "backends", conf.Name)
 	}
