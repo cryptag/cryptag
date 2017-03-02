@@ -6,6 +6,9 @@ package backend
 import (
 	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/cryptag/cryptag"
 )
 
 var (
@@ -13,29 +16,20 @@ var (
 )
 
 func SandstormFromConfig(cfg *Config) (*WebserverBackend, error) {
+	if cfg.Key == nil {
+		return nil, cryptag.ErrNilKey
+	}
 	if cfg.Custom == nil {
 		return nil, ErrNilCustom
 	}
 
-	args := []string{str(cfg.Custom["WebKey"])}
-	if cfg.Custom["WebKey"] == "" {
-		args = []string{str(cfg.Custom["BaseURL"]), str(cfg.Custom["AuthToken"])}
-	}
+	webkey := fmt.Sprintf("%v", cfg.Custom["WebKey"])
 
-	bk, err := Create(TypeWebserver, cfg.Name, args)
-	if err != nil {
-		return nil, err
+	info := strings.SplitN(webkey, "#", 2)
+	if len(info) < 2 {
+		return nil, fmt.Errorf("Error parsing invalid Sandstorm web key `%s`\n", webkey)
 	}
-	wbk, ok := bk.(*WebserverBackend)
-	if !ok {
-		return nil, fmt.Errorf("Error turning Backend into *WebserverBackend! It's a %T", bk)
-	}
-	return wbk, nil
-}
+	baseURL, authToken := info[0], info[1]
 
-func str(obj interface{}) string {
-	if obj == nil {
-		return ""
-	}
-	return fmt.Sprintf("%s", obj)
+	return NewWebserverBackend((*cfg.Key)[:], cfg.Name, baseURL, authToken)
 }
