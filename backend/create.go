@@ -51,7 +51,7 @@ func New(cfg *Config) (Backend, error) {
 		return nil, ErrNilConfig
 	}
 
-	bkMaker, err := GetMaker(cfg.Type)
+	bkMaker, err := GetMaker(cfg.GetType())
 	if err != nil {
 		return nil, err
 	}
