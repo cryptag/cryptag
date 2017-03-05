@@ -4,8 +4,10 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/cryptag/cryptag/importer"
 	"github.com/cryptag/cryptag/rowutil"
 	"github.com/elimisteve/clipboard"
+	shellwords "github.com/mattn/go-shellwords"
 )
 
 var (
@@ -89,6 +92,49 @@ func main() {
 		}
 		log.Printf("Row(s) successfully deleted\n")
 
+	case "run":
+		if len(os.Args) < 3 {
+			cli.ArgFatal(runUsage)
+		}
+
+		plaintags := append(os.Args[2:], "type:text", "type:command")
+
+		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rows.Sort(rowutil.ByTagPrefix("created:", true))
+
+		dec := rows[0].Decrypted()
+
+		args, err := parse(string(dec))
+		if err != nil {
+			log.Fatalf("Error parsing command `%s`: %v\n", dec, err)
+		}
+
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Stdin = os.Stdin // Useful for `sudo ...` commands and the like
+		var out bytes.Buffer
+		cmd.Stdout = &out
+
+		err = cmd.Run()
+		if err != nil {
+			log.Fatalf("Error running command `%s`: %v\n", dec, err)
+		}
+
+		err = clipboard.WriteAll(out.Bytes())
+		if err != nil {
+			log.Printf("WARNING: Error writing command output `%s`"+
+				" to clipboard: %v\n", err)
+		} else {
+			log.Printf("Added output of first command\n\n"+
+				"    $ %s\n\nto clipboard:\n\n", dec)
+			color.Println(color.BlackOnCyan(string(out.Bytes())))
+		}
+
+		color.Println(color.TextRows(rows))
+
 	case "import":
 		if len(os.Args) < 3 {
 			cli.ArgFatal(importUsage)
@@ -151,7 +197,15 @@ var (
 	createUsage = prefix + "create <password or text> <tag1> [type:password <tag3> ...]"
 	tagsUsage   = prefix + "tags"
 	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
+	runUsage    = prefix + "run    <tag used to select command to run (commands are tagged with 'type:command')> [<tag1> ...]"
 	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
 
-	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, importUsage}, "\n")
+	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, runUsage, importUsage}, "\n")
 )
+
+func parse(cmd string) (args []string, err error) {
+	p := shellwords.NewParser()
+	p.ParseEnv = true
+	p.ParseBacktick = true
+	return p.Parse(cmd)
+}
