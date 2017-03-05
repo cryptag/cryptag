@@ -31,6 +31,8 @@ type WebserverBackend struct {
 	rowsUrl       string
 	tagsUrl       string
 
+	bkType string // TypeWebserver or TypeSandstorm
+
 	client *http.Client
 	useTor bool
 
@@ -65,6 +67,7 @@ func NewWebserverBackend(key []byte, serverName, serverBaseUrl, authToken string
 		serverBaseUrl: serverBaseUrl,
 		rowsUrl:       serverBaseUrl + "/rows",
 		tagsUrl:       serverBaseUrl + "/tags",
+		bkType:        TypeWebserver,
 		authToken:     authToken,
 		client:        &http.Client{},
 	}
@@ -81,15 +84,9 @@ func CreateWebserver(key []byte, backendName, baseURL, authToken string) (*Webse
 		return nil, fmt.Errorf("Error from NewWebserverBackend: %v", err)
 	}
 
-	cfg, err := db.ToConfig()
+	err = Save(db)
 	if err != nil {
-		return db, fmt.Errorf("Error converting WebserverBackend to Config: %v",
-			err)
-	}
-
-	err = cfg.Save(cryptag.BackendPath)
-	if err != nil {
-		return db, fmt.Errorf("Error saving backend config to disk: %v", err)
+		return db, err
 	}
 
 	return db, nil
@@ -128,13 +125,22 @@ func (wb *WebserverBackend) ToConfig() (*Config, error) {
 	}
 	c := Config{
 		Name: wb.serverName,
-		Type: TypeWebserver,
+		Type: wb.bkType,
 		Key:  wb.key,
-		Custom: map[string]interface{}{
+	}
+
+	if wb.bkType == TypeWebserver {
+		c.Custom = map[string]interface{}{
 			"AuthToken": wb.authToken,
 			"BaseURL":   wb.serverBaseUrl,
-		},
+		}
+	} else if wb.bkType == TypeSandstorm {
+		c.Custom = SandstormWebKeyToMap(wb.serverBaseUrl + "#" + wb.authToken)
+	} else {
+		return nil, fmt.Errorf("Error turning WebserverBackend of type "+
+			" %q into Config", wb.bkType)
 	}
+
 	return &c, nil
 }
 
