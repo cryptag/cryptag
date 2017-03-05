@@ -85,10 +85,6 @@ func main() {
 		backendName := osArgs[3]
 		args := osArgs[4:]
 
-		if backendType == "sandstorm" {
-			backendType = backend.TypeWebserver
-		}
-
 		if _, err := backend.Create(backendType, backendName, args); err != nil {
 			log.Fatal(err)
 		}

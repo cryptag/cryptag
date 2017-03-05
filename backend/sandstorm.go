@@ -33,3 +33,32 @@ func SandstormFromConfig(cfg *Config) (*WebserverBackend, error) {
 
 	return NewWebserverBackend((*cfg.Key)[:], cfg.Name, baseURL, authToken)
 }
+
+func CreateSandstormWebserver(key []byte, bkName, webkey string) (*WebserverBackend, error) {
+	var goodKey *[32]byte
+
+	if len(key) > 0 {
+		var err error
+		goodKey, err = cryptag.ConvertKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("Error converting key: %v", err)
+		}
+	}
+
+	cfg := &Config{
+		Name:   bkName,
+		Type:   TypeSandstorm,
+		Key:    goodKey,
+		Custom: SandstormWebKeyToMap(webkey),
+	}
+
+	if err := cfg.Canonicalize(); err != nil {
+		return nil, err
+	}
+
+	if err := cfg.Save(cryptag.BackendPath); err != nil {
+		return nil, err
+	}
+
+	return SandstormFromConfig(cfg)
+}

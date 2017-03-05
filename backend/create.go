@@ -123,6 +123,14 @@ func Create(bkType, bkName string, args []string) (Backend, error) {
 		authToken := args[1]
 
 		return CreateWebserver(nil, bkName, baseURL, authToken)
+
+	case TypeSandstorm:
+		if len(args) != 1 {
+			return nil, fmt.Errorf("Sandstorm Backends need 1 arg (webkey), got %d args: %s",
+				len(args), strings.Join(args, ", "))
+		}
+		webkey := args[0]
+		return CreateSandstormWebserver(nil, bkName, webkey)
 	}
 
 	return nil, fmt.Errorf("Backend type `%v` not recognized", bkType)

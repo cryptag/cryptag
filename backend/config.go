@@ -187,6 +187,9 @@ func (conf *Config) GetPath() string {
 		return conf.DataPath
 	case TypeWebserver:
 		return fmt.Sprintf("%s", conf.Custom["BaseURL"])
+	case TypeSandstorm:
+		webkey := fmt.Sprintf("%s", conf.Custom["WebKey"])
+		return strings.SplitN(webkey, "#", 2)[0]
 	}
 
 	return ""
