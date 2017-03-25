@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -80,6 +81,12 @@ func main() {
 	mc := memcache.New("localhost:11211")
 
 	r := mux.NewRouter()
+
+	r.HandleFunc("/", GetIndex).Methods("GET")
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/",
+		http.FileServer(http.Dir("./static")))).Methods("GET")
+	r.PathPrefix("/build/").Handler(http.StripPrefix("/build/",
+		http.FileServer(http.Dir("./build")))).Methods("GET")
 
 	// Client specifies claimed miniLock ID, gets back
 	// miniLock-encrypted UUID as a challenge, then includes UUID in
@@ -432,4 +439,10 @@ func SetSharesByMinilockID(mc *memcache.Client, mID string, shares [][]byte) err
 	}
 
 	return mc.Set(newItem)
+}
+
+var templates = template.Must(template.ParseFiles("index.html"))
+
+func GetIndex(w http.ResponseWriter, req *http.Request) {
+	_ = templates.ExecuteTemplate(w, "index.html", nil)
 }
