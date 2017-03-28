@@ -60,36 +60,7 @@ func NewFileSystem(conf *Config) (*FileSystem, error) {
 }
 
 func saveConfig(conf *Config) error {
-	cFile := path.Join(cryptag.BackendPath, conf.Name+".json")
-
-	// Does the config file already exist?
-	files, err := filepath.Glob(cFile)
-	if err != nil {
-		return err
-	}
-	if len(files) > 0 {
-		return fmt.Errorf("Error: config file `%v` already exists", cFile)
-	}
-
-	// Create new config file
-	f, err := os.Create(cFile)
-	if err != nil {
-		return err
-	}
-	confBytes, err := json.MarshalIndent(conf, "", "  ")
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(confBytes)
-	if err != nil {
-		return err
-	}
-
-	if types.Debug {
-		log.Printf("saveConfig: Saved config %s\n", cFile)
-	}
-
-	return nil
+	return conf.Save(cryptag.BackendPath)
 }
 
 // init creates the base CrypTag directories

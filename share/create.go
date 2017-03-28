@@ -14,6 +14,7 @@ import (
 
 	minilock "github.com/cathalgarvey/go-minilock"
 	"github.com/cryptag/cryptag/backend"
+	"github.com/cryptag/cryptag/homedir"
 )
 
 const (
@@ -29,6 +30,12 @@ const (
 //
 // If serverBaseURL is empty, DefaultServerURL is used.
 func CreateEphemeral(serverBaseURL string, cfg *backend.Config) (shareURL string, err error) {
+	collapsed, err := homedir.Collapse(cfg.DataPath)
+	if err != nil {
+		return "", err
+	}
+	cfg.DataPath = collapsed
+
 	cfgb, err := json.Marshal(cfg)
 	if err != nil {
 		return "", err
