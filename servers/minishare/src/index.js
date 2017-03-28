@@ -16,6 +16,16 @@ export default class App extends React.Component {
     this.loadUsername = this.loadUsername.bind(this);
   }
 
+  componentDidMount(){
+    decryptIfHash();
+  }
+
+  decryptIfHash(){
+    let passphrase = document.location.hash;
+    // let email = sha384(passphrase + '@cryptag.org')
+    // miniLock.crypto.getKeyPair()
+  }
+
   promptForUsername(){
     this.setState({
       showUsernameModal: true
@@ -32,8 +42,6 @@ export default class App extends React.Component {
 
   render(){
     let { username, showUsernameModal } = this.state;
-
-    let hash = document.location.hash;
 
     return (
       <div className="app">
