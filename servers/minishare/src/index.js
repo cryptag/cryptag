@@ -17,7 +17,7 @@ export default class App extends React.Component {
   }
 
   componentDidMount(){
-    decryptIfHash();
+    this.decryptIfHash();
   }
 
   decryptIfHash(){
