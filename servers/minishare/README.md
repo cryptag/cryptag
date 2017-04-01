@@ -42,7 +42,6 @@ HiddenServicePort 80 127.0.0.1:8000
 
 ```
 npm install
-mkdir src
 mkdir build
 browserify -t [ babelify --presets [ react es2015 ] ] src/index.js -o build/app.js
 go build
