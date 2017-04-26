@@ -15,8 +15,10 @@ import (
 	"strings"
 
 	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/homedir"
 	"github.com/cryptag/cryptag/types"
 	"github.com/elimisteve/fun"
+	gohomedir "github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -230,6 +232,32 @@ func ReadConfig(backendPath, backendName string) (*Config, error) {
 
 	// Ignore 'Name' field in .json file, use filename
 	conf.Name = backendName
+
+	// Update on-disk config to use collapsed DataPath, not explicit absolute
+	if len(conf.DataPath) > 0 && conf.DataPath[0] != '~' {
+		collapsed, err := homedir.Collapse(conf.DataPath)
+		if err != nil {
+			return &conf, err
+		}
+
+		conf.DataPath = collapsed
+
+		err = conf.Update(backendPath)
+		if err != nil {
+			return &conf, fmt.Errorf("Error updating Backend Config %s: %v",
+				backendName, err)
+		}
+	}
+
+	// If DataPath has prefix of '~', replace said prefix of
+	// in-memory conf's DataPath with something like '/home/steve'
+	expanded, err := gohomedir.Expand(conf.DataPath)
+	if err != nil {
+		return &conf, err
+	}
+
+	// We want to use the expanded path (except when we're sharing a Config)
+	conf.DataPath = expanded
 
 	return &conf, nil
 }
