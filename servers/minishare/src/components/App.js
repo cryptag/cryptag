@@ -8,22 +8,12 @@ class App extends Component {
     super();
 
     this.state = {
-      pasteTitle: '',
-      pasteBody: '',
     }
   }
 
-  onPasteChange = (fieldName, event) => {
+  onPasteSubmit = ({pasteType, pasteTitle, pasteBody}, event) => {
     event.preventDefault();
-    this.setState({
-      [fieldName]: event.target.value
-    })
-  }
-
-  onPasteSubmit = (event) => {
-    event.preventDefault();
-    const { pasteTitle, pasteBody } = this.state;
-    console.log(`TODO: encrypt and send pasteTitle '${pasteTitle}' with pasteBody '${pasteBody}'`);
+    console.log(`TODO: encrypt and send pasteTitle '${pasteTitle}' with pasteBody '${pasteBody}', not to mention pasteType ${pasteType}`);
   }
 
   render() {
@@ -36,7 +26,6 @@ class App extends Component {
         <h4>Securely share self-destructing data: text, URLs, and (soon!) files</h4>
 
         <PasteForm
-          onChange={this.onPasteChange}
           onSubmit={this.onPasteSubmit} />
 
         <div id="footer">
