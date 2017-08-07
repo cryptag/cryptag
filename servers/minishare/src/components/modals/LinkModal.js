@@ -4,7 +4,30 @@ import PropTypes from 'prop-types';
 import { Modal, Button } from 'react-bootstrap';
 
 class LinkModal extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      copied: false
+    }
+  }
+
+  copyURLToClipboard = (event) => {
+    event.preventDefault();
+
+    this.highlightURL();
+    document.execCommand("copy");
+
+    this.setState({
+      copied: true
+    })
+  }
+
   componentDidMount() {
+    this.highlightURL();
+  }
+
+  highlightURL = () => {
     this.input.focus();
 
     // TODO: Try to show beginning of URL, perhaps using something
@@ -17,12 +40,22 @@ class LinkModal extends Component {
     event.target.select();
   }
 
+  onCloseModal = () => {
+    const { onCloseModal } = this.props;
+    onCloseModal();
+
+    this.setState({
+      copied: false
+    });
+  }
+
   render() {
-    let { showModal, url, onCloseModal } = this.props;
+    const { showModal, url } = this.props;
+    const { copied } = this.state;
 
     return (
       <div>
-        <Modal show={showModal} onHide={onCloseModal}>
+        <Modal show={showModal} onHide={this.onCloseModal}>
           <Modal.Header closeButton>
             <Modal.Title>The Download URL</Modal.Title>
           </Modal.Header>
@@ -36,7 +69,13 @@ class LinkModal extends Component {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button onClick={onCloseModal}>Close</Button>
+            <Button bsStyle={!copied ? 'primary' : 'success'}
+                    ref={(btn) => { this.copyBtn = btn } }
+                    onClick={this.copyURLToClipboard}>
+              {!copied && 'Copy URL to Clipboard'}
+              {copied && 'Copied URL to Clipboard!'}
+            </Button>
+            <Button onClick={this.onCloseModal}>Close</Button>
           </Modal.Footer>
         </Modal>
       </div>
