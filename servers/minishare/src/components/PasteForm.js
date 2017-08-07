@@ -4,35 +4,27 @@ import './PasteForm.css'
 import { options } from './type_options';
 
 class PasteForm extends Component {
-  constructor() {
-    super();
-
-    this.state = {
-      pasteType: options[0][1],
-      pasteTitle: '',
-      pasteBody: '',
-    }
-  }
-
-  onChange = (fieldName, event) => {
-    event.preventDefault();
-    this.setState({
-      [fieldName]: event.target.value
-    })
+  componentDidMount() {
+    this.title.focus();
   }
 
   render() {
+    const { type, title, body, onChange, onSubmit } = this.props;
+
     return (
       <div>
-        <form className="paste-form" onSubmit={this.props.onSubmit.bind(this, this.state)} >
+        <form id="paste-form" onSubmit={onSubmit}>
           <div id="paste-form-nav">
             <input type="text"
+                   value={title}
+                   id={"paste-form-title-input"}
                    placeholder="Title (optional)"
-                   onChange={this.onChange.bind(this, "pasteTitle")} />
+                   maxLength={100}
+                   ref={(element) => { this.title = element }}
+                   onChange={onChange.bind(this, "title")} />
 
-            {" | "}
-
-            Type: <select>
+            Type: <select onChange={onChange.bind(this, "type")}
+                          value={type}>
               {options.map(opt => {
                   return (
                       <option key={"option-" + opt[0]} value={opt[1]}>
@@ -45,7 +37,8 @@ class PasteForm extends Component {
           <input id="paste-submit" type="submit" value="Encrypt and Save" />
           <br />
           <textarea id="paste-textarea"
-                    onChange={this.onChange.bind(this, "pasteBody")} />
+                    value={body}
+                    onChange={onChange.bind(this, "body")} />
         </form>
       </div>
     );

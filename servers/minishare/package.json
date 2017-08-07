@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "blake2s": "^1.1.0",
+    "bootstrap": "^3.3.7",
+    "bs58": "^4.0.1",
+    "jquery": "^3.2.1",
+    "js-sha512": "^0.4.0",
     "react": "^15.6.1",
+    "react-bootstrap": "^0.31.2",
     "react-dom": "^15.6.1"
   },
   "devDependencies": {
