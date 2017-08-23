@@ -319,50 +319,54 @@ class App extends Component {
     })
   }
 
+  redirect = () => {
+    this.setState({
+      redirecting: true
+    })
+
+    let { body } = this.state;
+
+    let secs_left = URL_REDIRECT_PAUSE_SECS + 1;
+
+    const interval = setInterval(() => {
+      let units = 'seconds';
+
+      --secs_left;
+      if (secs_left === 1) {
+        units = 'second';
+      }
+
+      this.setState({
+        alertMessage: `Redirecting you in ${secs_left} ${units}: ${body}`
+      })
+
+      if (secs_left === 0) {
+        if (!body.startsWith('http://') && !body.startsWith('https://')) {
+          body = 'http://' + body;
+        }
+
+        // TODO: Consider regex check to make sure this is actually a URL
+        window.location = body;
+
+        // Will only execute if a paste/share URL redirected to
+        // another share on this same domain; normally, setting
+        // `window.location` will send the user off elsewhere.
+        if (body.startsWith(window.location.origin)) {
+          window.location.reload();
+        }
+
+        clearInterval(interval);
+      }
+    }, 1000)
+  }
+
   render() {
     const { showLinkModal } = this.state;
     const { alertMessage, alertStyle } = this.state;
     const { type, title, body, isTypeURLRedirect, redirecting } = this.state;
 
     if (isTypeURLRedirect && !redirecting) {
-      this.setState({
-        redirecting: true
-      })
-
-      let { body } = this.state;
-
-      let secs_left = URL_REDIRECT_PAUSE_SECS + 1;
-
-      const interval = setInterval(() => {
-        let units = 'seconds';
-
-        --secs_left;
-        if (secs_left === 1) {
-          units = 'second';
-        }
-
-        this.setState({
-          alertMessage: `Redirecting you in ${secs_left} ${units}: ${body}`
-        })
-
-        if (secs_left === 0) {
-          if (!body.startsWith('http://') && !body.startsWith('https://')) {
-            body = 'http://' + body;
-          }
-
-          // TODO: Consider regex check to make sure this is actually a URL
-          window.location = body;
-
-          // Will only execute if a paste/share URL redirected to
-          // another share on this same domain; normally, setting
-          // `window.location` will send the user off elsewhere.
-          if (body.startsWith(window.location.origin)) {
-            window.location.reload();
-          }
-
-          clearInterval(interval);
-        }
-      }, 1000)
+      this.redirect();
     }
 
     const url = this.genPasteURL();
