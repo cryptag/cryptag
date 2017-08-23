@@ -329,10 +329,13 @@ class App extends Component {
         redirecting: true
       })
 
-      let secs_left = URL_REDIRECT_PAUSE_SECS + 1;
-      let units = 'seconds';
+      let { body } = this.state;
 
-      setInterval(() => {
+      let secs_left = URL_REDIRECT_PAUSE_SECS + 1;
+
+      const interval = setInterval(() => {
+        let units = 'seconds';
+
         --secs_left;
         if (secs_left === 1) {
           units = 'second';
@@ -343,6 +346,10 @@ class App extends Component {
         })
 
         if (secs_left === 0) {
+          if (!body.startsWith('http://') && !body.startsWith('https://')) {
+            body = 'http://' + body;
+          }
+
           // TODO: Consider regex check to make sure this is actually a URL
           window.location = body;
 
@@ -352,6 +359,8 @@ class App extends Component {
           if (body.startsWith(window.location.origin)) {
             window.location.reload();
           }
+
+          clearInterval(interval);
         }
       }, 1000)
     }

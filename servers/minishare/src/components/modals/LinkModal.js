@@ -41,8 +41,7 @@ class LinkModal extends Component {
   }
 
   onCloseModal = () => {
-    const { onCloseModal } = this.props;
-    onCloseModal();
+    this.props.onCloseModal();
 
     this.setState({
       copied: false
