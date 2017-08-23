@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 
 import { Modal, Button } from 'react-bootstrap';
 
+import './LinkModal.css';
+
 class LinkModal extends Component {
   constructor(props) {
     super(props);
@@ -59,6 +61,9 @@ class LinkModal extends Component {
             <Modal.Title>The Download URL</Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            <h5>
+              The data you're sharing via this link will be destroyed in 24 hours <strong><em>or</em></strong> when this link is first used -- whichever comes first.
+            </h5>
             <div className="form-group">
               <input type="text"
                      value={url}
@@ -66,6 +71,9 @@ class LinkModal extends Component {
                      onFocus={this.onFocus}
                      style={{width: "100%"}} />
             </div>
+            <h6>
+              (Happy sharing, and thanks for using miniShare!)
+            </h6>
           </Modal.Body>
           <Modal.Footer>
             <Button bsStyle={!copied ? 'primary' : 'success'}
