@@ -1,0 +1,19 @@
+#paste-form-nav {
+  float: left;
+  margin-left: 10%;
+}
+
+#paste-form-title-input {
+  margin-right: 10px;
+}
+
+#paste-textarea {
+  margin-top: 3px;
+  width: 80%;
+  height: 60vh;
+}
+
+#paste-submit {
+  float: right;
+  margin-right: 10%;
+}

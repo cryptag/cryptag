@@ -98,6 +98,8 @@ func main() {
 	// the same user)
 	r.HandleFunc("/logout", auther(cli, Logout(cli))).Methods("POST")
 
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./build"))).Methods("GET")
+
 	http.Handle("/", r)
 
 	listenAddr := getListenAddr()
