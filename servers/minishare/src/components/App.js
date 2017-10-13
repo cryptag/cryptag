@@ -86,8 +86,8 @@ class App extends Component {
     const tags = saveName.split('|||');
     console.log("Tags on received message:", tags);
 
-    let isTypeURLRedirect = tags.includes('type:urlredirect');
-    let isTypeText = tags.includes('type:text');
+    const isTypeURLRedirect = tags.indexOf('type:urlredirect') !== -1;
+    const isTypeText = tags.indexOf('type:text') !== -1;
     // let isTypeFile = tags.includes('type:file');
 
     if (isTypeText) {
