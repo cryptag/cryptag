@@ -169,16 +169,22 @@ func main() {
 		}
 
 	case "export":
-		if len(os.Args) < 4 {
+		if len(os.Args) < 5 {
 			cli.ArgFatal(exportUsage)
 		}
 
-		filename := os.Args[2]
-		plaintags := append(os.Args[3:], "type:text")
+		exportFmt := os.Args[2]
+		filename := os.Args[3]
+		plaintags := append(os.Args[4:], "type:text")
 
-		err := exporter.ToLastPassCSV(db, filename, plaintags)
-		if err != nil {
-			log.Fatalf("Error exporting to LastPass CSV: %v", err)
+		switch exportFmt {
+		case "lastpass":
+			err := exporter.ToLastPassCSV(db, filename, plaintags)
+			if err != nil {
+				log.Fatalf("Error exporting to LastPass CSV: %v", err)
+			}
+		default:
+			log.Fatalf("Unrecognized export format '%s'", exportFmt)
 		}
 
 		log.Printf("Successfully exported passwords with tags `%s` to %s\n",
@@ -216,7 +222,7 @@ var (
 	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
 	runUsage    = prefix + "run    <tag used to select command to run (commands are tagged with 'type:command')> [<tag1> ...]"
 	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
-	exportUsage = prefix + "export <lastpass.csv> <tag1> [<tag2> ...]"
+	exportUsage = prefix + "export lastpass <lastpass.csv> <tag1> [<tag2> ...]"
 
 	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, runUsage, importUsage, exportUsage}, "\n")
 )
