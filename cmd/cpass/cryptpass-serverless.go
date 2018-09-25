@@ -14,6 +14,7 @@ import (
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/cli"
 	"github.com/cryptag/cryptag/cli/color"
+	"github.com/cryptag/cryptag/exporter"
 	"github.com/cryptag/cryptag/importer"
 	"github.com/cryptag/cryptag/rowutil"
 	"github.com/elimisteve/clipboard"
@@ -167,6 +168,22 @@ func main() {
 				rowutil.TagWithPrefixStripped(row, "url:"))
 		}
 
+	case "export":
+		if len(os.Args) < 4 {
+			cli.ArgFatal(exportUsage)
+		}
+
+		filename := os.Args[2]
+		plaintags := append(os.Args[3:], "type:text")
+
+		err := exporter.ToLastPassCSV(db, filename, plaintags)
+		if err != nil {
+			log.Fatalf("Error exporting to LastPass CSV: %v", err)
+		}
+
+		log.Printf("Successfully exported passwords with tags `%s` to %s\n",
+			strings.Join(plaintags, ", "), filename)
+
 	default: // Search
 		// Empty clipboard
 		clipboard.WriteAll(nil)
@@ -199,8 +216,9 @@ var (
 	deleteUsage = prefix + "delete <tag1> [<tag2> ...]"
 	runUsage    = prefix + "run    <tag used to select command to run (commands are tagged with 'type:command')> [<tag1> ...]"
 	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
+	exportUsage = prefix + "export <lastpass.csv> <tag1> [<tag2> ...]"
 
-	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, runUsage, importUsage}, "\n")
+	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, runUsage, importUsage, exportUsage}, "\n")
 )
 
 func parse(cmd string) (args []string, err error) {
