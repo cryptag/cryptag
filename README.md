@@ -4,7 +4,7 @@
 
 CrypTag was announced at DEF CON 23 in August of 2015.  Presentation
 slides:
-<https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage>.
+<https://www.slideshare.net/elimisteve/cryptag-building-encrypted-taggable-searchable-zeroknowledge-systems-59707471>.
 
 
 ### What is CrypTag?
@@ -28,7 +28,7 @@ Started with CryptPass", below.
 
 It's not _fully_ searchable; you can query by tag.  See slide 7 of the
 presentation from DEF CON 23:
-<https://talks.stevendphillips.com/cryptag-defcon23-cryptovillage/#/7>
+<https://www.slideshare.net/elimisteve/cryptag-building-encrypted-taggable-searchable-zeroknowledge-systems-59707471/8>
 
 
 ### Then the server stores the tags in plaintext?
