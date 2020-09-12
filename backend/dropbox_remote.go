@@ -19,10 +19,10 @@ import (
 	"time"
 
 	"github.com/cryptag/cryptag"
+	"github.com/cryptag/cryptag/disappeared/github.com/stacktic/dropbox"
 	"github.com/cryptag/cryptag/tor"
 	"github.com/cryptag/cryptag/types"
 	"github.com/elimisteve/fun"
-	"github.com/stacktic/dropbox"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
