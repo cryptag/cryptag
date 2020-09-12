@@ -5,7 +5,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image/png"
 	"log"
 	"os"
@@ -227,8 +226,6 @@ func main() {
 		color.Println(color.TextRows(rows))
 
 		if displayQR {
-			fmt.Println("")
-
 			grid, err := qrencode.Encode(string(dec), qrencode.ECLevelQ)
 			if err != nil {
 				log.Fatalf("Error encoding row data to QR code: %s", err)
@@ -237,7 +234,8 @@ func main() {
 			// TODO(elimisteve): Un-hardcode image viewer name
 			cmd := exec.Command("feh", "-")
 
-			// Write PNG of QR code to stdin so we don't touch disk
+			// Write PNG of QR code to stdin so our decrypted data
+			// doesn't touch disk
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
 				log.Fatalf("Error creating stdin pipe for `feh`: %s", err)
