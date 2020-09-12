@@ -5,6 +5,8 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+	"image/png"
 	"log"
 	"os"
 	"os/exec"
@@ -19,6 +21,7 @@ import (
 	"github.com/cryptag/cryptag/rowutil"
 	"github.com/elimisteve/clipboard"
 	shellwords "github.com/mattn/go-shellwords"
+	"github.com/qpliu/qrencode-go/qrencode"
 )
 
 var (
@@ -190,11 +193,22 @@ func main() {
 		log.Printf("Successfully exported passwords with tags `%s` to %s\n",
 			strings.Join(plaintags, ", "), filename)
 
+	case "qr":
+		fallthrough
 	default: // Search
+		args := os.Args[1:]
+
+		// Handle qr case
+		displayQR := len(os.Args) >= 2 && os.Args[1] == "qr"
+		if displayQR {
+			// Chop off the first arg, "qr"
+			args = args[1:]
+		}
+
 		// Empty clipboard
 		clipboard.WriteAll(nil)
 
-		plaintags := append(os.Args[1:], "type:text")
+		plaintags := append(args, "type:text")
 		rows, err := backend.RowsFromPlainTags(db, nil, plaintags)
 		if err != nil {
 			log.Fatal(err)
@@ -211,6 +225,36 @@ func main() {
 		}
 
 		color.Println(color.TextRows(rows))
+
+		if displayQR {
+			fmt.Println("")
+
+			grid, err := qrencode.Encode(string(dec), qrencode.ECLevelQ)
+			if err != nil {
+				log.Fatalf("Error encoding row data to QR code: %s", err)
+			}
+
+			// TODO(elimisteve): Un-hardcode image viewer name
+			cmd := exec.Command("feh", "-")
+
+			// Write PNG of QR code to stdin so we don't touch disk
+			stdin, err := cmd.StdinPipe()
+			if err != nil {
+				log.Fatalf("Error creating stdin pipe for `feh`: %s", err)
+			}
+
+			go func() {
+				defer stdin.Close()
+
+				if err := png.Encode(stdin, grid.Image(14)); err != nil {
+					log.Fatalf("Error encoding image: %s", err)
+				}
+			}()
+
+			if err := cmd.Run(); err != nil {
+				log.Fatalf("Error running `feh`: %s", err)
+			}
+		}
 	}
 }
 
@@ -223,8 +267,11 @@ var (
 	runUsage    = prefix + "run    <tag used to select command to run (commands are tagged with 'type:command')> [<tag1> ...]"
 	importUsage = prefix + "import <exported-from-keepassx.csv> [<tag1> ...]"
 	exportUsage = prefix + "export lastpass <lastpass.csv> <tag1> [<tag2> ...]"
+	qrUsage     = prefix + "qr     <tag1> [<tag2> ...]"
+	searchUsage = prefix + "<tag1> [<tag2> ...]"
 
-	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, runUsage, importUsage, exportUsage}, "\n")
+	allUsage = strings.Join([]string{createUsage, tagsUsage, deleteUsage, runUsage, importUsage, exportUsage,
+		qrUsage, searchUsage}, "\n")
 )
 
 func parse(cmd string) (args []string, err error) {
