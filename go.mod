@@ -1,6 +1,6 @@
 module github.com/cryptag/cryptag
 
-go 1.14
+go 1.16
 
 require (
 	github.com/boltdb/bolt v0.0.0-20150811140507-0f053fabc061
