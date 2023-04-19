@@ -25,7 +25,7 @@ require (
 	github.com/gorilla/context v0.0.0-20141217160251-215affda49ad
 	github.com/gorilla/handlers v1.3.0
 	github.com/gorilla/mux v0.0.0-20150808061613-ffb3f683aad4
-	github.com/gorilla/websocket v1.4.0 // indirect
+	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
