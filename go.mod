@@ -21,7 +21,7 @@ require (
 	github.com/elimisteve/fun v0.0.0-20170105095019-ed81da85bfef
 	github.com/elimisteve/help v0.0.0-20141213150222-be843dc09b87
 	github.com/fatih/color v0.0.0-20151111120202-9aae6aaa2231
-	github.com/gogo/protobuf v1.2.1 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gorilla/context v0.0.0-20141217160251-215affda49ad
 	github.com/gorilla/handlers v1.3.0
 	github.com/gorilla/mux v0.0.0-20150808061613-ffb3f683aad4
