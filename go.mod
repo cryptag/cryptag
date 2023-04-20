@@ -29,15 +29,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/justinas/alice v0.0.0-20160620152827-8f06f3153579
 	github.com/mattn/go-colorable v0.1.2
 	github.com/mattn/go-shellwords v1.0.10
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mreiferson/go-httpclient v0.0.0-20140425165303-c121dfe45d66 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
-	github.com/prometheus/client_golang v0.9.3 // indirect
+	github.com/prometheus/client_golang v1.11.1 // indirect
 	github.com/qpliu/qrencode-go v0.0.0-20170225035013-ad8353b4581f
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
