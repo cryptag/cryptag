@@ -126,14 +126,16 @@ func main() {
 			log.Fatalf("Error running command `%s`: %v\n", dec, err)
 		}
 
-		err = clipboard.WriteAll(out.Bytes())
+		outBytes := out.Bytes()
+
+		err = clipboard.WriteAll(outBytes)
 		if err != nil {
 			log.Printf("WARNING: Error writing command output `%s`"+
-				" to clipboard: %v\n", err)
+				" to clipboard: %v\n", outBytes, err)
 		} else {
 			log.Printf("Added output of first command\n\n"+
 				"    $ %s\n\nto clipboard:\n\n", dec)
-			color.Println(color.BlackOnCyan(string(out.Bytes())))
+			color.Println(color.BlackOnCyan(string(outBytes)))
 		}
 
 		color.Println(color.TextRows(rows))
