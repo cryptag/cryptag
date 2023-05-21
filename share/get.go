@@ -12,10 +12,10 @@ import (
 	"net/http"
 	"strings"
 
-	minilock "github.com/cathalgarvey/go-minilock"
-	"github.com/cathalgarvey/go-minilock/taber"
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/types"
+	minilock "github.com/cryptag/go-minilock"
+	"github.com/cryptag/go-minilock/taber"
 )
 
 var (

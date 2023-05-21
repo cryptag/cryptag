@@ -12,9 +12,9 @@ import (
 	"net/http"
 	"strings"
 
-	minilock "github.com/cathalgarvey/go-minilock"
 	"github.com/cryptag/cryptag/backend"
 	"github.com/cryptag/cryptag/homedir"
+	minilock "github.com/cryptag/go-minilock"
 )
 
 const (

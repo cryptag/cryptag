@@ -15,11 +15,11 @@ import (
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	minilock "github.com/cathalgarvey/go-minilock"
-	"github.com/cathalgarvey/go-minilock/taber"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/cryptag/cryptag"
 	"github.com/cryptag/cryptag/api"
+	minilock "github.com/cryptag/go-minilock"
+	"github.com/cryptag/go-minilock/taber"
 	gorillacontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
