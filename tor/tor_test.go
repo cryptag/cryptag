@@ -22,7 +22,7 @@ var tests = []urlTextTest{
 }
 
 func TestDoRequest(t *testing.T) {
-	if os.Getenv("RUN_TOR_TESTS") == "0" {
+	if os.Getenv("RUN_TOR_TESTS") != "1" {
 		t.Skip()
 	}
 
