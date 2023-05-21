@@ -7,7 +7,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/cathalgarvey/base58 v0.0.0-20150930172411-5e83fd6f66e3 // indirect
 	github.com/cmars/basen v0.0.0-20150613233007-fe3947df716e // indirect
-	github.com/cncf/xds/go v0.0.0-20210312221358-fbca930ec8ed // indirect
+	github.com/coreos/bbolt v1.3.2 // indirect
 	github.com/coreos/etcd v3.3.25+incompatible
 	github.com/cryptag/go-minilock v0.0.0-20230307201426-f138c5839651 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -17,15 +17,15 @@ require (
 	github.com/elimisteve/clipboard v0.0.0-20150301074713-15989d886538
 	github.com/elimisteve/fun v0.0.0-20170105095019-ed81da85bfef
 	github.com/elimisteve/help v0.0.0-20141213150222-be843dc09b87
-	github.com/envoyproxy/go-control-plane v0.9.8 // indirect
 	github.com/fatih/color v0.0.0-20151111120202-9aae6aaa2231
-	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.1.2 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gorilla/context v0.0.0-20141217160251-215affda49ad
-	github.com/gorilla/handlers v0.0.0-20160410185317-66e6c6f01d8d
+	github.com/gorilla/handlers v1.3.0
 	github.com/gorilla/mux v0.0.0-20150808061613-ffb3f683aad4
-	github.com/grpc-ecosystem/grpc-gateway v1.15.2 // indirect
-	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
+	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/justinas/alice v0.0.0-20160620152827-8f06f3153579
 	github.com/mattn/go-colorable v0.1.2
 	github.com/mattn/go-isatty v0.0.8 // indirect
