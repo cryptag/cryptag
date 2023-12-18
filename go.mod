@@ -24,7 +24,7 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/qpliu/qrencode-go v0.0.0-20170225035013-ad8353b4581f
 	github.com/stretchr/testify v1.8.2
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.17.0
 	golang.org/x/oauth2 v0.8.0
 	google.golang.org/protobuf v1.30.0 // indirect
